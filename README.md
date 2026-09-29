@@ -26,24 +26,27 @@ SmartRide AI is a premium, feature-rich, and high-performance cab booking, carpo
 
 ```text
 ai-cab-booking/
-├── frontend/                # React Vite Frontend Application
-│   ├── src/
-│   │   ├── components/      # UI components (AIChatBot, InteractiveMap, RouteMap, VehicleLoader)
-│   │   ├── context/         # Context providers (LanguageContext, theme states)
-│   │   ├── hooks/           # Custom React hooks (useGPSLocation, useMedia)
-│   │   ├── lib/             # Firebase configuration, AuthContext, Firestore helpers
-│   │   ├── pages/           # Pages divided into auth/ and user/ flows
-│   │   │   ├── auth/        # Splash, Onboarding, Login, SignUp, Privacy/Terms
-│   │   │   └── user/        # Home, Search, Parcel, RideComparison, Commute, Activity, Settings
-│   │   ├── App.jsx          # Route definitions and main controller
-│   │   └── main.jsx         # Render root wrapped in Context Providers
-│   ├── index.html           # Entry HTML injecting Maps scripts dynamically
-│   └── package.json         # Frontend dependencies and run scripts
+├── Web_frontend/            # React Vite Web Frontend Application
+│   ├── src/                 # Web app source code (Components, Pages, Services, Theme)
+│   ├── public/              # Static icons & brand assets
+│   ├── index.html           # Web HTML entrypoint
+│   └── package.json         # Web dependencies & scripts
 │
-└── backend/                 # Firebase and Firestore backend configurations
-    ├── firebase.json        # Service configurations
-    ├── firestore.rules      # Database security validation rules
-    └── firestore.indexes.json
+├── frontend_android_app/    # Native React Native (Expo) Android App
+│   ├── src/                 # Native components, screens, navigators, AI services
+│   ├── App.js               # Root React Native entry
+│   ├── app.json             # Expo project configuration
+│   └── package.json         # React Native dependencies
+│
+├── Backend/                 # Consolidated Node.js / Express API & Firebase
+│   ├── server.js            # Express API & Socket.IO server (Port 5000)
+│   ├── config/              # Database connection & in-memory fallback
+│   ├── models/              # User, Ride, Parcel & Chat schemas
+│   ├── middleware/          # JWT auth middleware
+│   └── firebase/            # Firebase / Firestore configs & security rules
+│
+├── android_native_app/      # Original Native Android Studio (Java/WebView) project
+└── Explainable AI/          # Machine learning & XAI decision engine models
 ```
 
 ---
@@ -78,9 +81,9 @@ ai-cab-booking/
 ### **Prerequisites**
 Make sure you have [Node.js](https://nodejs.org/) installed (v18+ recommended).
 
-### **1. Clone and Navigate to Frontend**
+### **1. Navigate to Web Frontend**
 ```bash
-cd frontend
+cd Web_frontend
 ```
 
 ### **2. Install Dependencies**
@@ -89,7 +92,7 @@ npm install
 ```
 
 ### **3. Set Up Environment Variables**
-Create a `.env` file in the `frontend/` directory with the following variables:
+A `.env` file is located in `Web_frontend/` with the required Firebase and Google Maps configurations:
 ```env
 VITE_FIREBASE_API_KEY=your_api_key
 VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
@@ -100,7 +103,7 @@ VITE_FIREBASE_APP_ID=your_app_id
 VITE_GOOGLE_MAPS_API_KEY=your_google_maps_key
 ```
 
-### **4. Start Local Server**
+### **4. Start Local Development Server**
 ```bash
 npm run dev
 ```
@@ -111,4 +114,4 @@ To compile the production bundle:
 ```bash
 npm run build
 ```
-The compiled output is optimized and saved in the `frontend/dist` directory.
+The compiled output is optimized and saved in the `Web_frontend/dist` directory.
