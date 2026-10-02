@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, Image, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, ArrowRight, Lock } from 'lucide-react-native';
+import { Eye, EyeOff, ArrowRight } from 'lucide-react-native';
 import { useAuth } from '../../lib/AuthContext';
 
 const socials = [
@@ -11,7 +11,6 @@ const socials = [
 
 const Login = () => {
   const navigate = useNavigate();
-  const accent = '#00D8FF';
 
   const { user, loading, loginWithGoogle, loginWithFacebook, loginWithEmail, sendPasswordReset } = useAuth();
   const [email, setEmail] = useState('');
@@ -48,12 +47,15 @@ const Login = () => {
     setError('');
     setIsLoading(true);
     try {
-      await loginWithGoogle();
-      navigate('/user/welcome');
+      const res = await loginWithGoogle();
+      if (res && res.user) {
+        navigate('/user/welcome');
+      }
     } catch (err) {
       if (err.code !== 'auth/cancelled-popup-request') {
         setError(err.message || 'Google Login failed. Please try again.');
       }
+    } finally {
       setIsLoading(false);
     }
   };
@@ -62,12 +64,15 @@ const Login = () => {
     setError('');
     setIsLoading(true);
     try {
-      await loginWithFacebook();
-      navigate('/user/welcome');
+      const res = await loginWithFacebook();
+      if (res && res.user) {
+        navigate('/user/welcome');
+      }
     } catch (err) {
       if (err.code !== 'auth/cancelled-popup-request') {
         setError(err.message || 'Facebook Login failed. Please try again.');
       }
+    } finally {
       setIsLoading(false);
     }
   };

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { api } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -25,10 +26,30 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
+    try {
+      const serverRes = await api.auth.login(email, password);
+      if (serverRes?.user) {
+        const userData = {
+          id: serverRes.user.id,
+          email: serverRes.user.email,
+          name: serverRes.user.name || (email.toLowerCase() === 'bhumanarasimha25@gmail.com' ? 'Bhumana Narasimha' : email.split('@')[0]),
+          phone: serverRes.user.phone || '+91 98765 43210',
+          rating: 4.95,
+          ridesCount: 42,
+          savedMoney: 1840,
+        };
+        await AsyncStorage.setItem('smartride_user', JSON.stringify(userData));
+        setUser(userData);
+        return userData;
+      }
+    } catch (err) {
+      console.warn('Backend login fallback to local session:', err.message);
+    }
+
     const userData = {
       id: 'usr_' + Date.now(),
-      email: email || 'rider@smartride.ai',
-      name: (email ? email.split('@')[0] : 'SmartRider'),
+      email: email || 'bhumanarasimha25@gmail.com',
+      name: (email && email.toLowerCase() === 'bhumanarasimha25@gmail.com' ? 'Bhumana Narasimha' : (email ? email.split('@')[0] : 'Bhumana Narasimha')),
       phone: '+91 98765 43210',
       rating: 4.95,
       ridesCount: 42,
@@ -40,6 +61,26 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signup = async (name, email, phone, password) => {
+    try {
+      const serverRes = await api.auth.register(email, password || 'demo123', name);
+      if (serverRes?.user) {
+        const userData = {
+          id: serverRes.user.id,
+          email: serverRes.user.email,
+          name: serverRes.user.name || name || 'SmartRider',
+          phone: phone || '+91 98765 43210',
+          rating: 5.0,
+          ridesCount: 0,
+          savedMoney: 0,
+        };
+        await AsyncStorage.setItem('smartride_user', JSON.stringify(userData));
+        setUser(userData);
+        return userData;
+      }
+    } catch (err) {
+      console.warn('Backend register fallback to local session:', err.message);
+    }
+
     const userData = {
       id: 'usr_' + Date.now(),
       email,
@@ -56,7 +97,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem('smartride_user');
+      await AsyncStorage.multiRemove(['smartride_user', 'smartride_jwt']);
     } catch (e) {}
     setUser(null);
   };

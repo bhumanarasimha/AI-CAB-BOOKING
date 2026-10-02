@@ -52,7 +52,19 @@ const Activity = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const rideId = location.state?.rideId;
-  const [activeRide, setActiveRide] = useState(null);
+  const initialDetails = location.state?.rideDetails;
+
+  const [activeRide, setActiveRide] = useState(initialDetails ? {
+    id: rideId || 'ride_demo',
+    _id: rideId || 'ride_demo',
+    status: 'searching',
+    vehicleType: initialDetails.rideType || 'SmartRide Premium',
+    price: initialDetails.fare ? `₹${initialDetails.fare}` : '₹406',
+    pickup: initialDetails.pickup || 'Current Location',
+    dropoff: initialDetails.dropoff || 'Destination',
+    eta: `${initialDetails.eta || '8'} min`,
+    driver: { name: 'Rajesh Sharma', rating: 4.9, vehicle: 'Toyota Hyryder (EV)', plate: 'KA-01-MJ-4092' }
+  } : null);
   const [notifications, setNotifications] = useState(NOTIFICATIONS);
   const [showPlateVerify, setShowPlateVerify] = useState(false);
   const [showShareToast, setShowShareToast] = useState(false);

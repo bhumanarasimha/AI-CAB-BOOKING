@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert,
 import { theme } from '../../theme/theme';
 import { Header } from '../../components/common/Header';
 
-export const ParcelScreen = () => {
+export const ParcelScreen = ({ navigation }) => {
   const [pickupAddr, setPickupAddr] = useState('Avadi Commercial Complex, Chennai');
   const [dropAddr, setDropAddr] = useState('Guindy Industrial Estate, Chennai');
   const [recipientPhone, setRecipientPhone] = useState('+91 91234 56789');
@@ -43,6 +43,8 @@ export const ParcelScreen = () => {
       <Header
         title="SmartRide Express"
         subtitle="On-Demand City Parcel Delivery"
+        showBack={Boolean(navigation?.canGoBack?.())}
+        onBack={() => navigation?.goBack?.()}
       />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>

@@ -5,8 +5,8 @@ import { useAuth } from '../../context/AuthContext';
 
 export const LoginScreen = ({ navigation }) => {
   const { login } = useAuth();
-  const [email, setEmail] = useState('demo.rider@smartride.ai');
-  const [password, setPassword] = useState('smartride2026');
+  const [email, setEmail] = useState('bhumanarasimha25@gmail.com');
+  const [password, setPassword] = useState('demo');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -26,7 +26,7 @@ export const LoginScreen = ({ navigation }) => {
   };
 
   const handleDemoBypass = async () => {
-    await login('demo.rider@smartride.ai', 'demo123');
+    await login('bhumanarasimha25@gmail.com', 'demo');
     navigation.replace('MainTabs');
   };
 

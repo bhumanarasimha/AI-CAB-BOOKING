@@ -1,0 +1,62 @@
+[
+  {
+    "_id": "000000000000000000000101",
+    "id": "000000000000000000000101",
+    "userId": "000000000000000000000002",
+    "pickupLocation": "Marina Beach, Chennai",
+    "dropoffLocation": "Guindy Tech Park, Phase 1",
+    "vehicleType": "SmartRide AI (Cab+Metro)",
+    "price": "406",
+    "duration": "61 min",
+    "distance": "14.2 km",
+    "status": "completed",
+    "createdAt": "2026-10-01T07:23:10.671Z",
+    "updatedAt": "2026-10-01T07:23:10.671Z"
+  },
+  {
+    "_id": "000000000000000000000102",
+    "id": "000000000000000000000102",
+    "userId": "000000000000000000000002",
+    "pickupLocation": "Anna Nagar 2nd Avenue",
+    "dropoffLocation": "T. Nagar Shopping Hub",
+    "vehicleType": "Auto",
+    "price": "128",
+    "duration": "22 min",
+    "distance": "6.8 km",
+    "status": "completed",
+    "createdAt": "2026-09-30T07:23:10.671Z",
+    "updatedAt": "2026-09-30T07:23:10.671Z"
+  },
+  {
+    "_id": "01303b63581243d87d41c1a6",
+    "id": "01303b63581243d87d41c1a6",
+    "userId": "000000000000000000000002",
+    "pickup": "Chennai Central Station",
+    "dropoff": "Marina Beach Hub",
+    "pickupLocation": "Chennai Central Station",
+    "dropoffLocation": "Marina Beach Hub",
+    "pickupCoords": null,
+    "dropoffCoords": null,
+    "vehicleType": "SmartRide AI (Cab+Metro)",
+    "price": "320",
+    "duration": "35 min",
+    "distance": "",
+    "status": "searching",
+    "aiInsights": {
+      "latency": 28,
+      "confidence": 0.959268722142386,
+      "agents": 14,
+      "hewro": {
+        "walkingReduced": 240,
+        "effortSaved": 34
+      },
+      "stability": {
+        "road": 92,
+        "vehicle": 98,
+        "route": 87
+      }
+    },
+    "createdAt": "2026-10-02T07:26:01.690Z",
+    "updatedAt": "2026-10-02T07:26:01.690Z"
+  }
+]

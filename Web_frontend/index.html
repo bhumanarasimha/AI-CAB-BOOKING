@@ -7,11 +7,27 @@
     <title>SmartRide AI</title>
     <script type="module">
       const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-      const s = document.createElement('script');
-      s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
-      s.async = true;
-      document.head.appendChild(s);
+      if (key && key !== 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
+        const s = document.createElement('script');
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
+        s.async = true;
+        document.head.appendChild(s);
+      }
     </script>
+    <style>
+      * {
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+      }
+      *::-webkit-scrollbar,
+      ::-webkit-scrollbar,
+      ::-webkit-scrollbar-thumb,
+      ::-webkit-scrollbar-track {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

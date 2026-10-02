@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { AppState } from 'react-native';
 import { UberProvider } from '../providers/UberProvider';
 import { OlaProvider } from '../providers/OlaProvider';
 import { RapidoProvider } from '../providers/RapidoProvider';
@@ -90,13 +91,25 @@ export const useRideRefreshEngine = ({
   }, [originLat, originLng, destination, isLiveMode, activeCategory, userPreferences, weather, urgency]);
 
   useEffect(() => {
-    fetchAndProcess();
+    let ignore = false;
+    const run = async () => {
+      if (!ignore) {
+        await fetchAndProcess();
+      }
+    };
+    run();
+    return () => {
+      ignore = true;
+    };
   }, [fetchAndProcess]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        fetchAndProcess();
+      const isVisible = typeof document !== 'undefined'
+        ? document.visibilityState === 'visible'
+        : AppState.currentState === 'active';
+      if (isVisible) {
+        void fetchAndProcess();
       }
     }, refreshIntervalMs);
 
@@ -105,11 +118,7 @@ export const useRideRefreshEngine = ({
 
   useEffect(() => {
     const ticker = setInterval(() => {
-      setLastUpdatedTime(prev => {
-        const diffSec = Math.max(0, Math.floor((new Date() - prev) / 1000));
-        setSecondsAgo(diffSec);
-        return prev;
-      });
+      setSecondsAgo(sec => sec + 1);
     }, 1000);
 
     return () => clearInterval(ticker);

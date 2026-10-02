@@ -43,23 +43,35 @@ const SignUp = () => {
   };
 
   const handleGoogleSignUp = async () => {
+    setError('');
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      await loginWithGoogle();
-      navigate('/user/welcome');
+      const res = await loginWithGoogle();
+      if (res && res.user) {
+        navigate('/user/welcome');
+      }
     } catch (err) {
-      setError(err.message || 'Google Sign Up failed. Please try again.');
+      if (err.code !== 'auth/cancelled-popup-request') {
+        setError(err.message || 'Google Sign Up failed. Please try again.');
+      }
+    } finally {
       setIsLoading(false);
     }
   };
 
   const handleFacebookSignUp = async () => {
+    setError('');
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      await loginWithFacebook();
-      navigate('/user/welcome');
+      const res = await loginWithFacebook();
+      if (res && res.user) {
+        navigate('/user/welcome');
+      }
     } catch (err) {
-      setError(err.message || 'Facebook Sign Up failed. Please try again.');
+      if (err.code !== 'auth/cancelled-popup-request') {
+        setError(err.message || 'Facebook Sign Up failed. Please try again.');
+      }
+    } finally {
       setIsLoading(false);
     }
   };

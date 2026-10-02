@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 
-const InteractiveMap = ({ center, userLocation, onLocationChange }) => {
+const InteractiveMap = ({ onLocationChange }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

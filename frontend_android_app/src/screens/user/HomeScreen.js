@@ -132,6 +132,45 @@ export const HomeScreen = ({ navigation }) => {
           </View>
         </View>
 
+        {/* Quick Action Services */}
+        <View style={styles.quickServicesGrid}>
+          <TouchableOpacity
+            style={[styles.quickServiceCard, selectedCategory === 'all' && styles.quickServiceCardActive]}
+            onPress={() => setSelectedCategory('all')}
+          >
+            <Text style={styles.quickServiceEmoji}>🚖</Text>
+            <Text style={styles.quickServiceTitle}>All Rides</Text>
+            <Text style={styles.quickServiceSub}>Cheapest</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickServiceCard}
+            onPress={() => navigation.navigate('Parcel')}
+          >
+            <Text style={styles.quickServiceEmoji}>📦</Text>
+            <Text style={styles.quickServiceTitle}>Parcel</Text>
+            <Text style={styles.quickServiceSub}>Express drop</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickServiceCard}
+            onPress={() => navigation.navigate('RideComparison')}
+          >
+            <Text style={styles.quickServiceEmoji}>📊</Text>
+            <Text style={styles.quickServiceTitle}>Compare</Text>
+            <Text style={styles.quickServiceSub}>5 apps live</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickServiceCard}
+            onPress={() => setIsAiModalVisible(true)}
+          >
+            <Text style={styles.quickServiceEmoji}>🤖</Text>
+            <Text style={styles.quickServiceTitle}>Chubby AI</Text>
+            <Text style={styles.quickServiceSub}>Assist</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Live Route Map Simulation */}
         <View style={styles.mapSection}>
           <NativeMapPlaceholder
@@ -356,5 +395,39 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
     color: theme.colors.textInverse,
+  },
+  quickServicesGrid: {
+    flexDirection: 'row',
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 12,
+  },
+  quickServiceCard: {
+    flex: 1,
+    backgroundColor: theme.colors.bgCard,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    borderRadius: theme.radii.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  quickServiceCardActive: {
+    borderColor: theme.colors.brandCyan,
+    backgroundColor: 'rgba(0, 216, 255, 0.08)',
+  },
+  quickServiceEmoji: {
+    fontSize: 18,
+    marginBottom: 4,
+  },
+  quickServiceTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: theme.colors.textMain,
+  },
+  quickServiceSub: {
+    fontSize: 9,
+    color: theme.colors.textMuted,
+    marginTop: 1,
   },
 });

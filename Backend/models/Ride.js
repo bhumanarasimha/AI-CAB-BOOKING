@@ -2,8 +2,7 @@ const mongoose = require('mongoose');
 
 const RideSchema = new mongoose.Schema({
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    type: String,
     required: true
   },
   pickup: {
@@ -24,21 +23,24 @@ const RideSchema = new mongoose.Schema({
   },
   vehicleType: {
     type: String,
-    required: true
+    required: true,
+    default: 'Standard'
   },
   price: {
     type: String,
     required: true
   },
   duration: {
-    type: String
+    type: String,
+    default: ''
   },
   distance: {
-    type: String
+    type: String,
+    default: ''
   },
   status: {
     type: String,
-    enum: ['searching', 'confirmed', 'completed', 'cancelled'],
+    enum: ['searching', 'confirmed', 'in-progress', 'completed', 'cancelled'],
     default: 'searching'
   },
   aiInsights: {

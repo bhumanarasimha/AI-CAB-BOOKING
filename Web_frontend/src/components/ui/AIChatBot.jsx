@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mic, Send, ChevronRight, TrendingDown, Navigation, Zap, Clock, Leaf, DollarSign, Train, Bike, Car, Footprints, ArrowRight, Plus, ShieldCheck, Activity, BarChart2 } from 'lucide-react';
-import { matches } from '../../pages/user/commute/matches';
+import { X, Mic, Send, ChevronRight, TrendingDown, Navigation, Zap, Clock, Leaf, DollarSign, Train, Bike, Car, Footprints, ArrowRight, BarChart2 } from 'lucide-react';
 
 /* ─── helpers ─── */
 const SparkleIcon = ({ size = 16, color = 'currentColor' }) => (
@@ -436,11 +435,6 @@ const BookedCard = ({ context }) => {
 const TransitComparisonCard = ({ onSelectTransitMode, context }) => {
   const city = context?.city || 'local';
   const dropoff = context?.dropoff || 'your destination';
-
-  const cityMatches = useMemo(() => {
-    const matchCityName = city === 'Bengaluru' ? 'Bangalore' : city;
-    return matches.filter(m => m.city.toLowerCase() === matchCityName.toLowerCase());
-  }, [city]);
 
   const transitData = useMemo(() => {
     switch (city) {

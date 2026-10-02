@@ -4,10 +4,11 @@ let socket = null;
 
 export const getSocket = () => {
   if (!socket) {
-    socket = io('http://localhost:5000', {
+    const socketUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SOCKET_URL) || 'http://localhost:5000';
+    socket = io(socketUrl, {
       autoConnect: true,
     });
-    console.log('Socket client initialized');
+    console.log('Socket client initialized at', socketUrl);
   }
   return socket;
 };

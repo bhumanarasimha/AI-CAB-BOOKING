@@ -7,7 +7,7 @@ export const WelcomeScreen = ({ navigation }) => {
   const { login } = useAuth();
 
   const handleDemoBypass = async () => {
-    await login('demo.rider@smartride.ai', 'demo123');
+    await login('bhumanarasimha25@gmail.com', 'demo');
     navigation.replace('MainTabs');
   };
 

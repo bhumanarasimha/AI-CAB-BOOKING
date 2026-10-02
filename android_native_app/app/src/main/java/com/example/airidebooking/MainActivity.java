@@ -58,13 +58,18 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 Uri url = request.getUrl();
-                // Map the root URL to index.html to satisfy React Router's "/" route
+                // Map root and client-side SPA routes (without file extensions) to index.html
                 if (url.getHost() != null && url.getHost().equals("appassets.androidplatform.net")) {
-                    if (url.getPath() != null && (url.getPath().equals("/") || url.getPath().equals(""))) {
+                    String path = url.getPath();
+                    if (path == null || path.isEmpty() || path.equals("/") || !path.contains(".")) {
                         return assetLoader.shouldInterceptRequest(Uri.parse("https://appassets.androidplatform.net/index.html"));
                     }
                 }
-                return assetLoader.shouldInterceptRequest(url);
+                WebResourceResponse response = assetLoader.shouldInterceptRequest(url);
+                if (response == null && url.getHost() != null && url.getHost().equals("appassets.androidplatform.net")) {
+                    return assetLoader.shouldInterceptRequest(Uri.parse("https://appassets.androidplatform.net/index.html"));
+                }
+                return response;
             }
 
             @Override

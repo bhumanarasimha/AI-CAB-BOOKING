@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || 'http://localhost:5000/api';
 
 const getHeaders = () => {
   const token = localStorage.getItem('smartride_jwt');
@@ -197,5 +197,16 @@ export const api = {
       });
       return res.json().catch(() => ({}));
     }
+  },
+  ai: {
+    decide: async (data = {}) => {
+      const res = await fetch(`${API_BASE_URL}/ai/decide`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      });
+      return handleResponse(res);
+    }
   }
 };
+

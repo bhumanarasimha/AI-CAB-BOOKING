@@ -52,25 +52,24 @@ export function calculateHumanEffort(walkDistanceMeters, waitTimeMinutes, transi
  * Optimizes rides using the HEWRO score balanced against cost and time based on user weights.
  * userWeights: { cost: 0-1, time: 0-1, comfort: 0-1 }
  */
-export function optimizeRideScore(farePrice, durationMinutes, effortScore, userWeights = { cost: 0.4, time: 0.3, comfort: 0.3 }) {
-    // Normalize parameters to 0-100 scale for comparison
-    // Fare price normalized (e.g. ₹50 -> 10, ₹500 -> 100)
-    const normCost = Math.min(100, (farePrice / 5));
-    // Time normalized (e.g. 5 mins -> 10, 50 mins -> 100)
-    const normTime = Math.min(100, durationMinutes * 2);
-    // Effort score is already 0-100
-    const normEffort = effortScore;
+export function optimizeRideScore(farePrice, durationMinutes, effortScore, userWeights = {}) {
+    const costWeight = Number(userWeights?.cost ?? userWeights?.fare ?? userWeights?.wFare ?? 0.4);
+    const timeWeight = Number(userWeights?.time ?? userWeights?.wTime ?? 0.3);
+    const comfortWeight = Number(userWeights?.comfort ?? userWeights?.effort ?? userWeights?.wEffort ?? 0.3);
 
-    // HEWRO Cost Formula: weighted sum of normalized variables
-    // Note: Since we want to recommend the BEST option, lower scores represent lower negative impacts.
-    // We can invert this to create a "Recommendation Score" out of 100 (where 100 is perfect)
+    // Normalize parameters to 0-100 scale for comparison
+    const normCost = Math.min(100, Math.max(0, (Number(farePrice || 0) / 5)));
+    const normTime = Math.min(100, Math.max(0, Number(durationMinutes || 0) * 2));
+    const normEffort = Math.min(100, Math.max(0, Number(effortScore || 0)));
+
     const totalDisutility = (
-        (normCost * userWeights.cost) +
-        (normTime * userWeights.time) +
-        (normEffort * userWeights.comfort)
+        (normCost * costWeight) +
+        (normTime * timeWeight) +
+        (normEffort * comfortWeight)
     );
 
-    const recommendationScore = Math.max(10, Math.min(100, Math.round(100 - totalDisutility)));
+    const safeDisutility = isNaN(totalDisutility) ? 50 : totalDisutility;
+    const recommendationScore = Math.max(10, Math.min(100, Math.round(100 - safeDisutility)));
 
     return recommendationScore;
 }

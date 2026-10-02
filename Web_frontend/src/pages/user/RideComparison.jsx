@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ChevronRight, Sparkles, Navigation, ShieldCheck, Zap, Clock, Loader2, Train, Bike, Car, RefreshCw, ChevronDown, ChevronUp, Brain, Info, ArrowDown, ArrowUp } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Sparkles, Navigation, Loader2, Train, Bike, Car, RefreshCw, ChevronDown, ChevronUp, Brain, ArrowDown, ArrowUp } from 'lucide-react';
 import RouteMap from '../../components/ui/RouteMap';
 import VehicleLoader from '../../components/ui/VehicleLoader';
 import { useAuth } from '../../lib/AuthContext';
@@ -77,37 +77,64 @@ const RideComparison = () => {
     }
   }, [rankedOptions, userPreferences]);
 
-  // Keep selected option valid
-  useEffect(() => {
-    if (displayOptions.length > 0) {
-      if (!selectedOptionId || !displayOptions.some(o => o.id === selectedOptionId)) {
-        setSelectedOptionId(displayOptions[0].id);
-      }
-    }
-  }, [displayOptions, selectedOptionId]);
+  // Keep selected option valid dynamically without cascading renders
+  const effectiveSelectedId = (selectedOptionId && displayOptions.some(o => o.id === selectedOptionId))
+    ? selectedOptionId
+    : (displayOptions[0]?.id || null);
 
   const selectedOption = useMemo(() => {
-    return displayOptions.find(o => o.id === selectedOptionId) || displayOptions[0] || topPick;
-  }, [displayOptions, selectedOptionId, topPick]);
+    return displayOptions.find(o => o.id === effectiveSelectedId) || displayOptions[0] || topPick;
+  }, [displayOptions, effectiveSelectedId, topPick]);
 
-  const handleBooking = async () => {
-    if (!selectedOption) return;
-    if (selectedOption.isSmart) {
+  const handleBooking = async (optionToBook = null) => {
+    const opt = optionToBook || selectedOption;
+    if (!opt) return;
+
+    try {
+      setIsBooking(true);
+      const rideData = {
+        rideType: opt.rideType,
+        provider: opt.provider,
+        price: opt.fare,
+        pickup: currentLocation?.address || "Current Location",
+        dropoff: destination,
+        eta: `${opt.eta} min`,
+        category: opt.category || activeCategory,
+        isSmart: opt.isSmart,
+      };
+
+      let rideId;
       try {
-        setIsBooking(true);
-        const rideId = await createRideRequest(user?.uid || 'demo-user-123', {
-          rideType: selectedOption.rideType,
-          price: selectedOption.fare,
-          pickup: currentLocation?.address || "Current Location",
-          dropoff: destination,
-          eta: `${selectedOption.eta} min`
-        });
-        navigate('/user/activity', { state: { rideId, confirmed: true } });
-      } catch {
-        setIsBooking(false);
+        rideId = await createRideRequest(user?.uid || 'demo-user-123', rideData);
+      } catch (err) {
+        console.warn('Backend ride creation fallback to local ride ID:', err);
+        rideId = 'ride_' + Date.now();
       }
-    } else if (selectedOption.url) {
-      window.open(selectedOption.url, '_blank');
+
+      if (!opt.isSmart && opt.url) {
+        try {
+          window.open(opt.url, '_blank');
+        } catch (e) {
+          console.warn('External URL open suppressed or blocked:', e);
+        }
+      }
+
+      navigate('/user/activity', { 
+        state: { 
+          rideId: rideId || 'ride_' + Date.now(), 
+          confirmed: true,
+          rideDetails: {
+            ...opt,
+            pickup: currentLocation?.address || "Current Location",
+            dropoff: destination,
+          }
+        } 
+      });
+    } catch (err) {
+      console.error('Booking failed:', err);
+      navigate('/user/activity', { state: { confirmed: true } });
+    } finally {
+      setIsBooking(false);
     }
   };
 
@@ -310,13 +337,19 @@ const RideComparison = () => {
               <motion.div key={activeCategory + userPreferences} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.25 }} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 
                 {displayOptions.map((opt) => {
-                  const isActive = selectedOptionId === opt.id;
+                  const isActive = effectiveSelectedId === opt.id;
                   const isTopPick = topPick && topPick.id === opt.id;
 
                   return (
                     <motion.button
                       key={opt.id}
-                      onClick={() => setSelectedOptionId(opt.id)}
+                      onClick={() => {
+                        if (isActive) {
+                          handleBooking(opt);
+                        } else {
+                          setSelectedOptionId(opt.id);
+                        }
+                      }}
                       whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.98 }}
                       style={{ 
@@ -395,6 +428,30 @@ const RideComparison = () => {
                           <p style={{ fontSize: '0.68rem', color: 'var(--brand-cyan)', fontWeight: 800, marginTop: '2px' }}>
                             AI Score: {opt.overallScore}
                           </p>
+                          <div style={{ marginTop: '6px' }}>
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleBooking(opt);
+                              }}
+                              style={{
+                                padding: '4px 10px',
+                                background: isActive ? 'linear-gradient(135deg, #00D8FF, #6366F1)' : 'rgba(0, 216, 255, 0.1)',
+                                color: isActive ? '#080C14' : 'var(--brand-cyan)',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontSize: '0.7rem',
+                                fontWeight: 900,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                transition: 'all 0.2s',
+                              }}
+                            >
+                              {opt.isSmart ? 'Book' : 'Select'} <ChevronRight size={12} />
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </motion.button>

@@ -34,9 +34,10 @@
     "id": "000000000000000000000002",
     "email": "bhumanarasimha25@gmail.com",
     "name": "Bhumana Narasimha",
+    "photoURL": "https://ui-avatars.com/api/?name=Bhumana+Narasimha&background=00D8FF&color=080C14",
     "password": "$2a$10$yc7Ckf5QWV0so0NRtEf9zuCTQ8QbchttuWABznQ9H0f1nh5SKU9P6",
     "preferences": {
-      "theme": "dark",
+      "theme": "dark-ai",
       "language": "en"
     },
     "savedPlaces": [
@@ -64,6 +65,7 @@
     "id": "000000000000000000000003",
     "email": "nameisvenkat2005@gmail.com",
     "name": "Venkat",
+    "photoURL": "https://ui-avatars.com/api/?name=Venkat&background=00D8FF&color=080C14",
     "password": "$2a$10$XrtOxh5v5RiOZWhTXONtAOOhxJHEvHAVYv8Ix0Kg3AbtqxiJ3jU4C",
     "preferences": {
       "theme": "dark",

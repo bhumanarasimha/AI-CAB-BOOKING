@@ -213,12 +213,23 @@ export function executeEMMDE(origin, destination, userWeights, context) {
         );
 
         // 4. Recommendation Optimizer Agent (HEWRO integration)
-        // Adjust weights based on stability constraints (e.g. if stability is too low, comfortable rating is penalized)
-        const adjustedWeights = { ...userWeights };
+        // Normalize whatever weights were passed into cost, time, comfort, stability
+        const costWeight = Number(userWeights?.cost ?? userWeights?.fare ?? userWeights?.wFare ?? 0.35);
+        const timeWeight = Number(userWeights?.time ?? userWeights?.wTime ?? 0.25);
+        let comfortWeight = Number(userWeights?.comfort ?? userWeights?.effort ?? userWeights?.wEffort ?? 0.20);
+        const stabilityWeight = Number(userWeights?.stability ?? userWeights?.wStability ?? 0.20);
+
         if (stability.cancellationProbability > 50) {
-            // Penalize comfort/time weights if cancellation risk is massive
-            adjustedWeights.comfort = Math.max(0.1, adjustedWeights.comfort - 0.1);
+            // Penalize comfort weight if cancellation risk is massive
+            comfortWeight = Math.max(0.1, comfortWeight - 0.1);
         }
+
+        const adjustedWeights = {
+            cost: costWeight,
+            time: timeWeight,
+            comfort: comfortWeight,
+            stability: stabilityWeight
+        };
 
         const recommendationScore = optimizeRideScore(fare, duration, effort.effortScore, adjustedWeights);
 
@@ -245,7 +256,9 @@ export function executeEMMDE(origin, destination, userWeights, context) {
     if (bestChoice.mode === 'Bike') {
         reasoning = `Aether-AI recommended ${bestChoice.name} as it bypasses current heavy traffic delays (congestion index ${trafficIndex}/10) saving you ${bestChoice.duration} minutes of travel, while maintaining low cancellation probability (${bestChoice.stability.cancellationProbability}%).`;
     } else if (bestChoice.mode === 'Multimodal') {
-        reasoning = `Selected ${bestChoice.name} because it bypasses congestion via Metro tracks, offering a highly stable travel window (${bestChoice.stability.status}) and cost savings of ₹${evaluatedOptions.find(o => o.mode === 'Cab')?.fare - bestChoice.fare || 50} compared to cab options.`;
+        const cabOption = evaluatedOptions.find(o => o.mode === 'Cab');
+        const costSavings = cabOption ? Math.max(0, cabOption.fare - bestChoice.fare) : 50;
+        reasoning = `Selected ${bestChoice.name} because it bypasses congestion via Metro tracks, offering a highly stable travel window (${bestChoice.stability.status}) and cost savings of ₹${costSavings} compared to cab options.`;
     } else {
         reasoning = `Selected ${bestChoice.name} which matches your comfort preferences, maintaining a low cancellation probability of ${bestChoice.stability.cancellationProbability}% and stable cabin comfort during precipitation index (${precipitation}%).`;
     }
@@ -253,6 +266,7 @@ export function executeEMMDE(origin, destination, userWeights, context) {
     return {
         bestRide: bestChoice,
         allOptions: evaluatedOptions,
+        options: evaluatedOptions,
         contextInfo: {
             trafficIndex,
             precipitation,

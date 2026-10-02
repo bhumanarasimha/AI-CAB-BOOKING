@@ -19,7 +19,7 @@ export const StabilityAgent = {
       };
     }
 
-    let reliabilityCategory = 'High Reliability';
+    let reliabilityCategory;
     if (rawScore >= 90) {
       reliabilityCategory = 'Exceptional Reliability';
     } else if (rawScore >= 75) {

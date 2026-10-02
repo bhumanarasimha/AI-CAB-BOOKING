@@ -17,6 +17,10 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  photoURL: {
+    type: String,
+    default: ''
+  },
   preferences: {
     type: mongoose.Schema.Types.Mixed,
     default: {}

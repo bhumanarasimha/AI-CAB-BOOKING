@@ -35,8 +35,10 @@ export const ExplainabilityAgent = {
     }
 
     // Check stability & pickup distance
-    if (topPick.stabilityScore >= 90) {
-      reasons.push(`✓ Low estimated cancellation risk (${topPick.agentBreakdown.stability.cancellationRisk})`);
+    if (mostReliable && topPick.id === mostReliable.id) {
+      reasons.push(`✓ Highest reliability rating in category (${topPick.stabilityScore}%)`);
+    } else if (topPick.stabilityScore >= 90) {
+      reasons.push(`✓ Low estimated cancellation risk (${topPick.agentBreakdown?.stability?.cancellationRisk || 'Low'})`);
     }
 
     if (topPick.pickupDistance <= 200) {

@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { api } from './api';
+import { auth } from './firebase';
+import { GoogleAuthProvider, FacebookAuthProvider, OAuthProvider, signInWithPopup } from 'firebase/auth';
 
 const AuthContext = createContext();
 
@@ -10,6 +12,13 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const checkUserSession = async () => {
+      // Clear legacy mock demo accounts if stored
+      const storedEmail = localStorage.getItem('smartride_user_email');
+      if (storedEmail && (storedEmail.includes('google.demo') || storedEmail === 'demo@smartride.com')) {
+        localStorage.removeItem('smartride_user_email');
+        localStorage.removeItem('smartride_jwt');
+      }
+
       const token = localStorage.getItem('smartride_jwt');
       if (token) {
         try {
@@ -34,15 +43,63 @@ export const AuthProvider = ({ children }) => {
 
   const loginWithGoogle = async () => {
     try {
+      let email = null;
+      let name = null;
+      let photoURL = null;
+
+      // 1. Attempt real Firebase Google Auth popup if configured
+      if (auth) {
+        try {
+          const provider = new GoogleAuthProvider();
+          provider.setCustomParameters({ prompt: 'select_account' });
+          const result = await signInWithPopup(auth, provider);
+          if (result && result.user) {
+            email = result.user.email;
+            name = result.user.displayName;
+            photoURL = result.user.photoURL;
+          }
+        } catch (fbErr) {
+          console.warn("Firebase Google popup notice:", fbErr);
+          if (fbErr.code === 'auth/popup-closed-by-user' || fbErr.code === 'auth/cancelled-popup-request') {
+            throw new Error('Google sign-in was cancelled.');
+          }
+        }
+      }
+
+      // 2. If Firebase popup was not completed (missing keys, WebView, or domain whitelist), sign in with original email
+      if (!email) {
+        let defaultEmail = localStorage.getItem('smartride_user_email') || 'bhumanarasimha25@gmail.com';
+        if (defaultEmail.includes('demo')) {
+          defaultEmail = 'bhumanarasimha25@gmail.com';
+        }
+
+        const enteredEmail = window.prompt(
+          'Sign in with Google Account:\nEnter your Google Email address:',
+          defaultEmail
+        );
+        if (!enteredEmail) {
+          return null; // User cancelled prompt
+        }
+        email = enteredEmail.trim();
+        name = email.toLowerCase() === 'bhumanarasimha25@gmail.com' ? 'Bhumana Narasimha' : email.split('@')[0];
+      }
+
+      localStorage.setItem('smartride_user_email', email);
+
+      // 3. Connect to backend with real user email
       const data = await api.auth.socialLogin(
-        'google.demo@smartride.com',
-        'Demo Google User',
+        email,
+        name || (email.toLowerCase() === 'bhumanarasimha25@gmail.com' ? 'Bhumana Narasimha' : email.split('@')[0]),
         'google',
-        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150'
+        photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || email)}&background=00D8FF&color=080C14`
       );
+
       const mappedUser = {
         uid: data.user.id || data.user._id,
-        ...data.user
+        ...data.user,
+        email: email,
+        name: name || data.user.name,
+        photoURL: photoURL || data.user.photoURL
       };
       setUser(mappedUser);
       return { user: mappedUser };
@@ -54,15 +111,42 @@ export const AuthProvider = ({ children }) => {
 
   const loginWithFacebook = async () => {
     try {
+      let email = null;
+      let name = null;
+      let photoURL = null;
+
+      if (auth) {
+        try {
+          const provider = new FacebookAuthProvider();
+          const result = await signInWithPopup(auth, provider);
+          if (result && result.user) {
+            email = result.user.email;
+            name = result.user.displayName;
+            photoURL = result.user.photoURL;
+          }
+        } catch (fbErr) {
+          console.warn("Firebase Facebook popup notice:", fbErr);
+        }
+      }
+
+      if (!email) {
+        const enteredEmail = window.prompt('Sign in with Facebook: Enter your email:');
+        if (!enteredEmail) return null;
+        email = enteredEmail.trim();
+        name = email.split('@')[0];
+      }
+
       const data = await api.auth.socialLogin(
-        'facebook.demo@smartride.com',
-        'Demo Facebook User',
+        email,
+        name || 'Facebook User',
         'facebook',
-        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150'
+        photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || email)}&background=6366F1&color=ffffff`
       );
       const mappedUser = {
         uid: data.user.id || data.user._id,
-        ...data.user
+        ...data.user,
+        email,
+        name: name || data.user.name
       };
       setUser(mappedUser);
       return { user: mappedUser };
@@ -74,15 +158,40 @@ export const AuthProvider = ({ children }) => {
 
   const loginWithApple = async () => {
     try {
+      let email = null;
+      let name = null;
+
+      if (auth) {
+        try {
+          const provider = new OAuthProvider('apple.com');
+          const result = await signInWithPopup(auth, provider);
+          if (result && result.user) {
+            email = result.user.email;
+            name = result.user.displayName;
+          }
+        } catch (fbErr) {
+          console.warn("Firebase Apple popup notice:", fbErr);
+        }
+      }
+
+      if (!email) {
+        const enteredEmail = window.prompt('Sign in with Apple: Enter your Apple ID email:');
+        if (!enteredEmail) return null;
+        email = enteredEmail.trim();
+        name = email.split('@')[0];
+      }
+
       const data = await api.auth.socialLogin(
-        'apple.demo@smartride.com',
-        'Demo Apple User',
+        email,
+        name || 'Apple User',
         'apple',
-        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150'
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(name || email)}&background=111111&color=ffffff`
       );
       const mappedUser = {
         uid: data.user.id || data.user._id,
-        ...data.user
+        ...data.user,
+        email,
+        name: name || data.user.name
       };
       setUser(mappedUser);
       return { user: mappedUser };

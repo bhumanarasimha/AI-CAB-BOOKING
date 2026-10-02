@@ -1,9 +1,9 @@
 import { Outlet } from 'react-router-dom';
 
 const MobileContainer = () => (
-  <div style={styles.outerWrapper}>
-    <div style={styles.phoneFrame}>
-      <div style={styles.contentArea}>
+  <div style={styles.outerWrapper} className="no-scrollbar">
+    <div style={styles.phoneFrame} className="no-scrollbar">
+      <div style={styles.contentArea} className="no-scrollbar">
         <Outlet />
       </div>
     </div>
@@ -35,6 +35,8 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
+    scrollbarWidth: 'none',
+    msOverflowStyle: 'none',
   },
   contentArea: {
     flex: 1,
@@ -44,6 +46,8 @@ const styles = {
     flexDirection: 'column',
     overflow: 'hidden',
     position: 'relative',
+    scrollbarWidth: 'none',
+    msOverflowStyle: 'none',
   },
 };
 
