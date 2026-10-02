@@ -90,17 +90,67 @@ const RideComparison = () => {
     const opt = optionToBook || selectedOption;
     if (!opt) return;
 
+    const pickupAddress = currentLocation?.address || "Current Location";
+    const dropoffAddress = destination || "City Center";
+
+    // 1. If external competitor ride (Uber, Ola, Rapido, Namma Yatri)
+    if (!opt.isSmart) {
+      let appDeepLink = opt.deepLink;
+      let webBookingUrl = opt.url;
+
+      const encDrop = encodeURIComponent(dropoffAddress);
+      const encPick = encodeURIComponent(pickupAddress);
+
+      if (opt.providerKey === 'uber') {
+        appDeepLink = `uber://?action=setPickup&pickup=my_location&dropoff[formatted_address]=${encDrop}`;
+        webBookingUrl = `https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[formatted_address]=${encDrop}`;
+      } else if (opt.providerKey === 'ola') {
+        appDeepLink = `olacabs://app/launch?landing_page=bk&drop_name=${encDrop}`;
+        webBookingUrl = `https://book.olacabs.com/?pickup_name=${encPick}&drop_name=${encDrop}`;
+      } else if (opt.providerKey === 'rapido') {
+        appDeepLink = `rapido://ride?drop=${encDrop}`;
+        webBookingUrl = `https://rapido.bike/`;
+      } else if (opt.providerKey === 'nammayatri') {
+        appDeepLink = `nammayatri://ride?drop=${encDrop}`;
+        webBookingUrl = `https://nammayatri.in/`;
+      }
+
+      // Check Android native app bridge
+      if (typeof window !== 'undefined' && window.AndroidApp && typeof window.AndroidApp.openExternalApp === 'function') {
+        window.AndroidApp.openExternalApp(appDeepLink || webBookingUrl, webBookingUrl);
+        return;
+      }
+
+      // On browser / mobile web
+      const targetUrl = webBookingUrl || opt.url;
+      if (targetUrl) {
+        try {
+          const a = document.createElement('a');
+          a.href = targetUrl;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        } catch {
+          window.location.href = targetUrl;
+        }
+      }
+      return;
+    }
+
+    // 2. SmartRide AI In-App Booking Flow
     try {
       setIsBooking(true);
       const rideData = {
         rideType: opt.rideType,
         provider: opt.provider,
         price: opt.fare,
-        pickup: currentLocation?.address || "Current Location",
-        dropoff: destination,
+        pickup: pickupAddress,
+        dropoff: dropoffAddress,
         eta: `${opt.eta} min`,
         category: opt.category || activeCategory,
-        isSmart: opt.isSmart,
+        isSmart: true,
       };
 
       let rideId;
@@ -111,22 +161,14 @@ const RideComparison = () => {
         rideId = 'ride_' + Date.now();
       }
 
-      if (!opt.isSmart && opt.url) {
-        try {
-          window.open(opt.url, '_blank');
-        } catch (e) {
-          console.warn('External URL open suppressed or blocked:', e);
-        }
-      }
-
       navigate('/user/activity', { 
         state: { 
           rideId: rideId || 'ride_' + Date.now(), 
           confirmed: true,
           rideDetails: {
             ...opt,
-            pickup: currentLocation?.address || "Current Location",
-            dropoff: destination,
+            pickup: pickupAddress,
+            dropoff: dropoffAddress,
           }
         } 
       });
@@ -428,28 +470,40 @@ const RideComparison = () => {
                           <p style={{ fontSize: '0.68rem', color: 'var(--brand-cyan)', fontWeight: 800, marginTop: '2px' }}>
                             AI Score: {opt.overallScore}
                           </p>
-                          <div style={{ marginTop: '6px' }}>
+                          <div style={{ marginTop: '8px' }}>
                             <span
                               onClick={(e) => {
                                 e.stopPropagation();
+                                setSelectedOptionId(opt.id);
                                 handleBooking(opt);
                               }}
                               style={{
-                                padding: '4px 10px',
-                                background: isActive ? 'linear-gradient(135deg, #00D8FF, #6366F1)' : 'rgba(0, 216, 255, 0.1)',
-                                color: isActive ? '#080C14' : 'var(--brand-cyan)',
+                                padding: '6px 14px',
+                                background: opt.isSmart 
+                                  ? 'linear-gradient(135deg, #00D8FF, #6366F1)' 
+                                  : opt.providerKey === 'uber' 
+                                    ? '#FFFFFF' 
+                                    : opt.providerKey === 'ola' 
+                                      ? '#10B981' 
+                                      : opt.providerKey === 'rapido' 
+                                        ? '#FBBF24' 
+                                        : '#F59E0B',
+                                color: (opt.providerKey === 'uber' || opt.providerKey === 'rapido' || opt.providerKey === 'nammayatri') 
+                                  ? '#080C14' 
+                                  : (opt.isSmart ? '#080C14' : '#FFFFFF'),
                                 border: 'none',
-                                borderRadius: '8px',
-                                fontSize: '0.7rem',
+                                borderRadius: '10px',
+                                fontSize: '0.74rem',
                                 fontWeight: 900,
                                 cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '3px',
-                                transition: 'all 0.2s',
+                                gap: '5px',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
                               }}
                             >
-                              {opt.isSmart ? 'Book' : 'Select'} <ChevronRight size={12} />
+                              {opt.isSmart ? '⚡ Book AI' : `Open ${opt.provider}`}
+                              <Navigation size={12} />
                             </span>
                           </div>
                         </div>
@@ -552,20 +606,33 @@ const RideComparison = () => {
           <motion.button 
             whileTap={{ scale: 0.98 }}
             disabled={isBooking || isLoading || !selectedOption}
-            onClick={handleBooking}
+            onClick={() => handleBooking(selectedOption)}
             className="btn-primary" 
             style={{ 
               width: '100%', height: '54px', fontSize: '1.05rem', fontWeight: 900, 
               borderRadius: '18px', gap: '10px', 
-              opacity: (isBooking || isLoading || !selectedOption) ? 0.7 : 1 
+              opacity: (isBooking || isLoading || !selectedOption) ? 0.7 : 1,
+              background: selectedOption?.isSmart
+                ? 'linear-gradient(135deg, #00D8FF, #6366F1)'
+                : selectedOption?.providerKey === 'uber'
+                  ? '#FFFFFF'
+                  : selectedOption?.providerKey === 'ola'
+                    ? '#10B981'
+                    : selectedOption?.providerKey === 'rapido'
+                      ? '#FBBF24'
+                      : '#F59E0B',
+              color: (selectedOption?.isSmart || selectedOption?.providerKey === 'uber' || selectedOption?.providerKey === 'rapido' || selectedOption?.providerKey === 'nammayatri')
+                ? '#080C14'
+                : '#FFFFFF',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.3)'
             }}
           >
             {(isBooking || isLoading) ? (
               <Loader2 className="animate-spin" size={20} />
             ) : selectedOption?.isSmart ? (
-              <>Book {selectedOption.rideType} · ₹{selectedOption.fare} <ChevronRight size={20} /></>
+              <>⚡ Book SmartRide AI · ₹{selectedOption.fare} <ChevronRight size={20} /></>
             ) : (
-              <>Open {selectedOption?.rideType} · ₹{selectedOption?.fare} <Navigation size={18} /></>
+              <>Book on {selectedOption?.provider || 'App'} · ₹{selectedOption?.fare} <Navigation size={18} /></>
             )}
           </motion.button>
         </div>

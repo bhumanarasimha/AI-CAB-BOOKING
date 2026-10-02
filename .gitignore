@@ -33,6 +33,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Expo
+# Expo & Scratch
 .expo/
+scratch/
 

@@ -2,10 +2,12 @@ package com.example.airidebooking;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.webkit.GeolocationPermissions;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -27,6 +29,34 @@ public class MainActivity extends AppCompatActivity {
     private String pendingOrigin;
     private GeolocationPermissions.Callback pendingCallback;
 
+    public class WebAppInterface {
+        @JavascriptInterface
+        public void openExternalApp(String appUrl, String fallbackWebUrl) {
+            runOnUiThread(() -> {
+                boolean opened = false;
+                if (appUrl != null && !appUrl.trim().isEmpty()) {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(appUrl.trim()));
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        opened = true;
+                    } catch (Exception ignored) {
+                        opened = false;
+                    }
+                }
+                if (!opened && fallbackWebUrl != null && !fallbackWebUrl.trim().isEmpty()) {
+                    try {
+                        Intent fallbackIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(fallbackWebUrl.trim()));
+                        fallbackIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(fallbackIntent);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,11 +73,16 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setGeolocationEnabled(true);
         webSettings.setMediaPlaybackRequiresUserGesture(false);
         webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        webSettings.setSupportMultipleWindows(true);
+        webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
         
         // Essential for React/Vite local loading
         webSettings.setAllowContentAccess(true);
         webSettings.setAllowFileAccessFromFileURLs(true);
         webSettings.setAllowUniversalAccessFromFileURLs(true);
+
+        // Bridge to allow frontend to open installed cab apps
+        webView.addJavascriptInterface(new WebAppInterface(), "AndroidApp");
 
         final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
                 .setDomain("appassets.androidplatform.net")
@@ -74,7 +109,42 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                return false; // Let WebView handle all navigation
+                Uri url = request.getUrl();
+                if (url != null) {
+                    String host = url.getHost();
+                    if (host != null && host.equals("appassets.androidplatform.net")) {
+                        return false;
+                    }
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, url);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        return true;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                return false;
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                if (url != null) {
+                    Uri uri = Uri.parse(url);
+                    String host = uri.getHost();
+                    if (host != null && host.equals("appassets.androidplatform.net")) {
+                        return false;
+                    }
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        return true;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                return false;
             }
         });
 

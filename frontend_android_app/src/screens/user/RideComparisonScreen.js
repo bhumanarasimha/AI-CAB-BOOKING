@@ -1,10 +1,33 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking } from 'react-native';
 import { theme } from '../../theme/theme';
 import { Header } from '../../components/common/Header';
 
 export const RideComparisonScreen = ({ navigation }) => {
   const [selectedCategory, setSelectedCategory] = useState('cab4');
+
+  const handleOpenProvider = (item) => {
+    const p = (item.provider || '').toLowerCase();
+    if (p.includes('uber')) {
+      Linking.openURL('uber://?action=setPickup&pickup=my_location').catch(() => {
+        Linking.openURL('https://m.uber.com/');
+      });
+    } else if (p.includes('ola')) {
+      Linking.openURL('olacabs://app/launch?landing_page=bk').catch(() => {
+        Linking.openURL('https://book.olacabs.com/');
+      });
+    } else if (p.includes('rapido')) {
+      Linking.openURL('rapido://ride').catch(() => {
+        Linking.openURL('https://rapido.bike/');
+      });
+    } else if (p.includes('namma')) {
+      Linking.openURL('nammayatri://ride').catch(() => {
+        Linking.openURL('https://nammayatri.in/');
+      });
+    } else {
+      navigation.navigate('Activity', { confirmed: true, rideDetails: item });
+    }
+  };
 
   const comparisonData = {
     bike: [
@@ -101,7 +124,23 @@ export const RideComparisonScreen = ({ navigation }) => {
                   <Text style={styles.surgeText}>Surge: {item.surge} • ETA: {item.eta}</Text>
                 </View>
 
-                <Text style={styles.fareAmount}>₹{item.cost}</Text>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={styles.fareAmount}>₹{item.cost}</Text>
+                  <TouchableOpacity
+                    onPress={() => handleOpenProvider(item)}
+                    style={{
+                      marginTop: 6,
+                      backgroundColor: item.isAiPick ? theme.colors.brandCyan : '#FFFFFF',
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <Text style={{ color: '#000000', fontSize: 11, fontWeight: '800' }}>
+                      {item.isAiPick ? '⚡ Book AI' : 'Open App ↗'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
 
               {/* Graphical Relative Price Bar */}
