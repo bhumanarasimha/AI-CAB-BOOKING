@@ -1,6 +1,21 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { View, Text, Pressable, ScrollView, Image, StyleSheet } from 'react-native';
-import { Search, ChevronRight, Clock, MapPin, Star, Users, Navigation } from 'lucide-react-native';
+import { 
+  Search, 
+  ChevronRight, 
+  Clock, 
+  MapPin, 
+  Star, 
+  Users, 
+  Navigation, 
+  Layers, 
+  Radio, 
+  ChevronUp, 
+  ChevronDown, 
+  Maximize2, 
+  Minimize2 
+} from 'lucide-react-native';
 import InteractiveMap from '../../components/ui/InteractiveMap';
 import BottomNavigation from '../../components/layout/BottomNavigation';
 import { useAuth } from '../../lib/AuthContext';
@@ -55,6 +70,7 @@ const Home = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const location = useGPSLocation();
+  const [sheetMode, setSheetMode] = useState('peek'); // 'peek' | 'expanded' | 'fullmap'
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -66,24 +82,35 @@ const Home = () => {
   const currentCity = matches.find(m => location.address?.toLowerCase().includes(m.city.toLowerCase()))?.city || 'Chennai';
   const commuteMatch = matches.find(m => m.city.toLowerCase() === currentCity.toLowerCase());
 
+  // Height of top transparent map area based on sheetMode
+  const getMapSpacerHeight = () => {
+    if (sheetMode === 'fullmap') return 600; // Almost entire screen is live map
+    if (sheetMode === 'expanded') return 110; // Sheet slides up
+    return 300; // Standard peek: generous live map view with cruising cabs
+  };
+
   return (
     <View style={styles.container}>
-      {/* Background Interactive Map */}
+      {/* Background Interactive Live Wallpaper Google Map */}
       <View style={styles.mapLayer}>
         <InteractiveMap 
           center={location.coords} 
           userLocation={location.coords}
+          onSelectCab={(cab) => navigate('/user/ride-comparison', { state: { selectedProvider: cab.type } })}
         />
       </View>
 
-      {/* Top bar */}
+      {/* Floating Glassmorphic Top Header */}
       <View style={styles.topBar}>
-        <View>
-          <Text style={styles.greetingText}>{getGreeting()}</Text>
-          <Text style={styles.userNameText}>{user?.name || user?.displayName || 'Rider'}</Text>
+        <View style={styles.greetingCol}>
+          <View style={styles.greetingBadgeRow}>
+            <View style={styles.pulseDot} />
+            <Text style={styles.greetingText}>{getGreeting()}</Text>
+          </View>
+          <Text numberOfLines={1} style={styles.userNameText}>{user?.name || user?.displayName || 'Bhumana Narasimha'}</Text>
         </View>
         
-        {/* Location Badge */}
+        {/* Location Badge (Tap to pick area) */}
         <Pressable onPress={() => navigate('/user/map-picker')} style={styles.locationBadge}>
           <View style={styles.locationIconBox}>
             <MapPin size={14} color="#00D8FF" />
@@ -96,20 +123,132 @@ const Home = () => {
         </Pressable>
       </View>
 
-      {/* Recenter GPS Button */}
-      <Pressable onPress={() => location.refresh()} style={styles.recenterBtn}>
-        <Navigation size={18} color="#00D8FF" />
-      </Pressable>
+      {/* Live Fleet Radar Pill */}
+      <View style={styles.fleetStatusBadge}>
+        <Radio size={12} color="#00D8FF" />
+        <Text style={styles.fleetStatusText}>LIVE RADAR • 5 CABS ACTIVE</Text>
+      </View>
 
-      <View style={{ height: 160 }} />
+      {/* Floating Map Action Controls on right */}
+      <View style={styles.mapControlsCol}>
+        {/* Recenter GPS Button */}
+        <Pressable 
+          onPress={() => location.refresh()} 
+          style={styles.mapFloatingBtn}
+          accessibilityLabel="Recenter GPS"
+        >
+          <Navigation size={18} color="#00D8FF" />
+        </Pressable>
+
+        {/* Toggle Full Live Wallpaper / Rides Sheet Button */}
+        <Pressable 
+          onPress={() => setSheetMode(prev => prev === 'fullmap' ? 'peek' : 'fullmap')} 
+          style={[styles.mapFloatingBtn, sheetMode === 'fullmap' && styles.mapFloatingBtnActive]}
+          accessibilityLabel="Toggle Full Map"
+        >
+          {sheetMode === 'fullmap' ? (
+            <Layers size={18} color="#00D8FF" />
+          ) : (
+            <Maximize2 size={18} color="#00D8FF" />
+          )}
+        </Pressable>
+      </View>
+
+      {/* Dynamic Map Viewport Spacer */}
+      <View style={{ height: getMapSpacerHeight() }} />
 
       {/* Main Bottom Content Sheet */}
-      <View style={styles.sheetContainer}>
-        <View style={styles.handleArea}>
+      <View style={[styles.sheetContainer, sheetMode === 'fullmap' && styles.sheetContainerMinimized]}>
+        {/* Interactive Handle / Drag Bar */}
+        <Pressable 
+          onPress={() => setSheetMode(prev => prev === 'expanded' ? 'peek' : 'expanded')} 
+          style={styles.handleArea}
+        >
           <View style={styles.handleBar} />
-        </View>
+          <View style={styles.handleTextRow}>
+            {sheetMode === 'expanded' ? (
+              <>
+                <ChevronDown size={13} color="#00D8FF" />
+                <Text style={styles.handleHintText}>Tap to show live map</Text>
+              </>
+            ) : sheetMode === 'fullmap' ? (
+              <>
+                <ChevronUp size={13} color="#00D8FF" />
+                <Text style={styles.handleHintText}>Tap to open ride options</Text>
+              </>
+            ) : (
+              <>
+                <ChevronUp size={13} color="#00D8FF" />
+                <Text style={styles.handleHintText}>Pull up for all rides • Live map active</Text>
+              </>
+            )}
+          </View>
+        </Pressable>
 
         <ScrollView contentContainerStyle={styles.scrollContent} style={{ flex: 1 }}>
+          {/* Search Bar - Quick Ride Entry */}
+          <Pressable onPress={() => navigate('/user/search')} style={styles.searchBar}>
+            <Search size={18} color="#00D8FF" />
+            <Text style={styles.searchText}>Where do you want to go?</Text>
+            <View style={styles.timeBadge}>
+              <Clock size={12} color="#9CA3AF" />
+              <Text style={styles.timeText}>Now</Text>
+            </View>
+          </Pressable>
+
+          {/* AI Recommendation Card */}
+          <Pressable onPress={() => navigate('/user/ride-comparison')} style={styles.aiCard}>
+            <View style={styles.aiHeader}>
+              <View style={styles.aiBadge}>
+                <Text style={styles.aiBadgeText}>Ask Chubby AI</Text>
+              </View>
+              <View style={styles.savingsTag}>
+                <Text style={styles.savingsText}>Save up to 42%</Text>
+              </View>
+            </View>
+
+            <View style={styles.routeRow}>
+              <View style={styles.routeDots}>
+                <View style={styles.cyanDot} />
+                <View style={styles.line} />
+                <View style={styles.indigoDot} />
+              </View>
+
+              <View style={{ flex: 1 }}>
+                <View style={{ marginBottom: 10 }}>
+                  <Text style={styles.routeLabel}>PICKUP</Text>
+                  <Text numberOfLines={1} style={styles.routeText}>{location.address}</Text>
+                </View>
+
+                <View>
+                  <Text style={styles.routeLabel}>DESTINATION</Text>
+                  <Text numberOfLines={1} style={styles.routeText}>
+                    {currentCity.toLowerCase() === 'bangalore' ? 'Google BLR HQ' : 
+                     currentCity.toLowerCase() === 'chennai' ? 'Marina Beach Office Hub' : 
+                     'Central Business District'}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.goBtn}>
+                <ChevronRight size={18} color="#080C14" />
+              </View>
+            </View>
+          </Pressable>
+
+          {/* Quick Places Pills */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.quickScroll}>
+            {quickPlaces.map(p => (
+              <Pressable 
+                key={p} 
+                onPress={() => navigate('/user/ride-comparison', { state: { dropoff: p.split(' ')[1] || p } })}
+                style={styles.quickPill}
+              >
+                <Text style={styles.quickPillText}>{p}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+
           {/* Smart Commute Entry Point */}
           <Pressable 
             onPress={() => navigate(commuteMatch ? '/user/commute/results' : '/user/commute')}
@@ -134,69 +273,6 @@ const Home = () => {
               <Text style={styles.commuteBtnText}>{commuteMatch ? 'Match Now' : 'Join'}</Text>
             </View>
           </Pressable>
-
-          {/* AI Recommendation Card */}
-          <Pressable onPress={() => navigate('/user/ride-comparison')} style={styles.aiCard}>
-            <View style={styles.aiHeader}>
-              <View style={styles.aiBadge}>
-                <Text style={styles.aiBadgeText}>Ask Chubby</Text>
-              </View>
-              <View style={styles.savingsTag}>
-                <Text style={styles.savingsText}>Save 42%</Text>
-              </View>
-            </View>
-
-            <View style={styles.routeRow}>
-              <View style={styles.routeDots}>
-                <View style={styles.cyanDot} />
-                <View style={styles.line} />
-                <View style={styles.indigoDot} />
-              </View>
-
-              <View style={{ flex: 1 }}>
-                <View style={{ marginBottom: 12 }}>
-                  <Text style={styles.routeLabel}>PICKUP</Text>
-                  <Text numberOfLines={1} style={styles.routeText}>{location.address}</Text>
-                </View>
-
-                <View>
-                  <Text style={styles.routeLabel}>DESTINATION</Text>
-                  <Text numberOfLines={1} style={styles.routeText}>
-                    {currentCity.toLowerCase() === 'bangalore' ? 'Google BLR HQ' : 
-                     currentCity.toLowerCase() === 'chennai' ? 'Marina Beach Office Hub' : 
-                     'Central Business District'}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.goBtn}>
-                <ChevronRight size={18} color="#080C14" />
-              </View>
-            </View>
-          </Pressable>
-
-          {/* Search Bar */}
-          <Pressable onPress={() => navigate('/user/search')} style={styles.searchBar}>
-            <Search size={18} color="#9CA3AF" />
-            <Text style={styles.searchText}>Where do you want to go?</Text>
-            <View style={styles.timeBadge}>
-              <Clock size={12} color="#9CA3AF" />
-              <Text style={styles.timeText}>Now</Text>
-            </View>
-          </Pressable>
-
-          {/* Quick Places */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.quickScroll}>
-            {quickPlaces.map(p => (
-              <Pressable 
-                key={p} 
-                onPress={() => navigate('/user/ride-comparison', { state: { dropoff: p.split(' ')[1] || p } })}
-                style={styles.quickPill}
-              >
-                <Text style={styles.quickPillText}>{p}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
 
           {/* Nearby Famous Places */}
           <View style={styles.nearbySection}>
@@ -252,49 +328,80 @@ const styles = StyleSheet.create({
   },
   topBar: {
     position: 'absolute',
-    top: 48,
-    left: 20,
-    right: 20,
-    zIndex: 20,
+    top: 40,
+    left: 16,
+    right: 16,
+    zIndex: 25,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: 'rgba(9, 14, 24, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 216, 255, 0.22)',
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  greetingCol: {
+    flex: 1,
+    marginRight: 10,
+  },
+  greetingBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 2,
+  },
+  pulseDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#10B981',
   },
   greetingText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#9CA3AF',
-    fontWeight: '600',
-    letterSpacing: 1,
+    fontWeight: '700',
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
   },
   userNameText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
     color: '#F1F5F9',
+    letterSpacing: -0.3,
   },
   locationBadge: {
-    backgroundColor: '#0F1623',
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(0, 216, 255, 0.08)',
+    borderColor: 'rgba(0, 216, 255, 0.2)',
     borderWidth: 1,
-    borderRadius: 12,
-    padding: 8,
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    maxWidth: 180,
+    maxWidth: 165,
   },
   locationIconBox: {
-    width: 28,
-    height: 28,
+    width: 26,
+    height: 26,
     borderRadius: 8,
-    backgroundColor: 'rgba(0, 216, 255, 0.1)',
+    backgroundColor: 'rgba(0, 216, 255, 0.15)',
     alignItems: 'center',
-    justify: 'center',
+    justifyContent: 'center',
   },
   locationLabel: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '700',
-    color: '#9CA3AF',
+    color: '#00D8FF',
     textTransform: 'uppercase',
   },
   locationAddress: {
@@ -302,39 +409,100 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#F1F5F9',
   },
-  recenterBtn: {
+  fleetStatusBadge: {
     position: 'absolute',
-    top: 220,
+    top: 116,
+    left: 20,
+    zIndex: 20,
+    backgroundColor: 'rgba(9, 14, 24, 0.82)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 216, 255, 0.25)',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+  },
+  fleetStatusText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#00D8FF',
+    letterSpacing: 0.5,
+  },
+  mapControlsCol: {
+    position: 'absolute',
+    top: 116,
     right: 20,
-    zIndex: 15,
+    zIndex: 20,
+    flexDirection: 'column',
+    gap: 10,
+  },
+  mapFloatingBtn: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#0F1623',
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(12, 18, 30, 0.90)',
+    borderColor: 'rgba(0, 216, 255, 0.25)',
     borderWidth: 1,
     alignItems: 'center',
-    justify: 'center',
+    justifyContent: 'center',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  mapFloatingBtnActive: {
+    backgroundColor: 'rgba(0, 216, 255, 0.2)',
+    borderColor: '#00D8FF',
   },
   sheetContainer: {
     flex: 1,
-    backgroundColor: '#0F1623',
+    backgroundColor: 'rgba(12, 18, 30, 0.92)',
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(0, 216, 255, 0.2)',
     overflow: 'hidden',
+    backdropFilter: 'blur(24px)',
+    WebkitBackdropFilter: 'blur(24px)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.6,
+    shadowRadius: 30,
+    elevation: 15,
+  },
+  sheetContainerMinimized: {
+    maxHeight: 90,
   },
   handleArea: {
-    height: 28,
+    paddingVertical: 10,
     alignItems: 'center',
-    justify: 'center',
+    justifyContent: 'center',
+    gap: 4,
   },
   handleBar: {
-    width: 40,
+    width: 42,
     height: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 3,
+  },
+  handleTextRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  handleHintText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#00D8FF',
+    letterSpacing: 0.3,
   },
   scrollContent: {
     paddingBottom: 100,
