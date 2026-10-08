@@ -210,39 +210,84 @@ const sendEmailOTP = async (email, otp) => {
   const cleanEmail = email.toLowerCase().trim();
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
-  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
-  const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
-  const fromAddress = process.env.SMTP_FROM || `"SmartRide AI Security" <noreply@smartride.ai>`;
+  const resendApiKey = process.env.RESEND_API_KEY;
+  const brevoApiKey = process.env.BREVO_API_KEY;
+  const fromAddress = process.env.SMTP_FROM || `"SmartRide AI Security" <bhumanarasimha25@gmail.com>`;
 
-  console.log(`[SmartRide AI Security] Dispatching verification code to: ${cleanEmail}`);
+  console.log(`[SmartRide AI Security] Dispatching verification code [${otp}] to: ${cleanEmail}`);
 
   let emailSent = false;
   let emailError = null;
 
+  // 1. Try Resend HTTPS API if key configured
+  if (resendApiKey) {
+    try {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: 'SmartRide AI <onboarding@resend.dev>',
+          to: [cleanEmail],
+          subject: `${otp} is your SmartRide AI verification code`,
+          html: `<p>Your SmartRide AI verification code is: <strong>${otp}</strong>. It expires in 10 minutes.</p>`
+        })
+      });
+      if (res.ok) {
+        emailSent = true;
+        console.log(`[Resend API] Verification email sent to ${cleanEmail}`);
+        return { emailSent, emailError: null };
+      }
+    } catch (err) {
+      console.warn(`[Resend API Error]:`, err.message);
+    }
+  }
+
+  // 2. Try Brevo HTTPS API if key configured
+  if (brevoApiKey) {
+    try {
+      const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'api-key': brevoApiKey,
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          sender: { name: "SmartRide AI Security", email: "auth@smartride.ai" },
+          to: [{ email: cleanEmail }],
+          subject: `${otp} is your SmartRide AI verification code`,
+          htmlContent: `<p>Your SmartRide AI verification code is: <strong>${otp}</strong></p>`
+        })
+      });
+      if (res.ok) {
+        emailSent = true;
+        console.log(`[Brevo API] Verification email sent to ${cleanEmail}`);
+        return { emailSent, emailError: null };
+      }
+    } catch (err) {
+      console.warn(`[Brevo API Error]:`, err.message);
+    }
+  }
+
+  // 3. Nodemailer SMTP (Gmail / Custom)
   if (smtpUser && smtpPass) {
     try {
-      const transporter = smtpHost.includes('gmail')
-        ? nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-              user: smtpUser,
-              pass: smtpPass
-            }
-          })
-        : nodemailer.createTransport({
-            host: smtpHost,
-            port: smtpPort,
-            secure: smtpPort === 465,
-            auth: {
-              user: smtpUser,
-              pass: smtpPass
-            }
-          });
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: smtpUser,
+          pass: smtpPass
+        },
+        tls: { rejectUnauthorized: false }
+      });
 
       const htmlContent = `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #080C14; color: #F1F5F9; padding: 36px; border-radius: 16px; max-width: 500px; margin: auto;">
+        <div style="font-family: sans-serif; background-color: #080C14; color: #F1F5F9; padding: 36px; border-radius: 16px; max-width: 500px; margin: auto;">
           <div style="text-align: center; margin-bottom: 24px;">
-            <h1 style="color: #00D8FF; margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -0.5px;">SmartRide AI</h1>
+            <h1 style="color: #00D8FF; margin: 0; font-size: 26px; font-weight: 900;">SmartRide AI</h1>
             <p style="color: #9CA3AF; margin-top: 6px; font-size: 13px;">Security & Account Verification</p>
           </div>
           <div style="background-color: #0F1623; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 26px; text-align: center;">
@@ -250,9 +295,8 @@ const sendEmailOTP = async (email, otp) => {
             <div style="display: inline-block; background: rgba(0, 216, 255, 0.1); border: 2px solid #00D8FF; border-radius: 12px; padding: 14px 28px; margin: 8px 0;">
               <span style="font-size: 32px; font-weight: 900; letter-spacing: 8px; color: #00D8FF;">${otp}</span>
             </div>
-            <p style="font-size: 12px; color: #94A3B8; margin-top: 14px;">This code will expire in <strong>10 minutes</strong>. Do not share this code with anyone.</p>
+            <p style="font-size: 12px; color: #94A3B8; margin-top: 14px;">This code will expire in <strong>10 minutes</strong>.</p>
           </div>
-          <p style="text-align: center; font-size: 11px; color: #64748B; margin-top: 24px;">SmartRide AI Verification Dispatch · If you didn't request this code, you can ignore this email.</p>
         </div>
       `;
 
@@ -260,7 +304,7 @@ const sendEmailOTP = async (email, otp) => {
         from: fromAddress,
         to: cleanEmail,
         subject: `${otp} is your SmartRide AI verification code`,
-        text: `Your SmartRide AI verification code is: ${otp}. It expires in 10 minutes.`,
+        text: `Your SmartRide AI verification code is: ${otp}.`,
         html: htmlContent
       });
       emailSent = true;
