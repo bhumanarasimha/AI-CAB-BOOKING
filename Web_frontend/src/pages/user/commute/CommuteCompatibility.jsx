@@ -14,12 +14,24 @@ const CommuteCompatibility = () => {
       <div style={{ padding: '0 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <button 
           onClick={() => navigate(-1)}
-          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '12px', padding: '10px', color: 'var(--text-main)' }}
+          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '12px', padding: '10px', color: 'var(--text-main)', cursor: 'pointer' }}
+          aria-label="Back"
         >
           <ArrowLeft size={20} />
         </button>
         <h1 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>Compatibility Analysis</h1>
-        <button style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '12px', padding: '10px', color: 'var(--text-main)' }}>
+        <button 
+          onClick={() => {
+            if (navigator.share) {
+              navigator.share({ title: 'SmartRide Commute Match', text: 'Check out my 94% commute compatibility match on SmartRide AI!', url: window.location.href }).catch(() => {});
+            } else {
+              navigator.clipboard?.writeText(window.location.href);
+              alert('Match report link copied to clipboard!');
+            }
+          }}
+          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '12px', padding: '10px', color: 'var(--text-main)', cursor: 'pointer' }}
+          aria-label="Share"
+        >
           <Share2 size={20} />
         </button>
       </div>

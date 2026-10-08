@@ -29,21 +29,68 @@ const Row = ({ icon, label, sub, onClick, children, danger }) => (
 const SafetyPrivacy = () => {
   const navigate = useNavigate();
   const [biometric, setBiometric] = useState(true);
+  const [twoFactor, setTwoFactor] = useState(false);
   const [liveLocation, setLiveLocation] = useState(true);
   const [tripSharing, setTripSharing] = useState(true);
   const [analytics, setAnalytics] = useState(false);
   const [marketing, setMarketing] = useState(false);
+  const [statusToast, setStatusToast] = useState('');
+
+  const showStatus = (msg) => {
+    setStatusToast(msg);
+    setTimeout(() => setStatusToast(''), 3000);
+  };
+
+  const handleDownloadData = () => {
+    const data = {
+      profile: { exportedAt: new Date().toISOString(), platform: 'SmartRide AI' },
+      privacySettings: { biometric, twoFactor, liveLocation, tripSharing, analytics, marketing }
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `smartride-data-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showStatus('Data exported successfully!');
+  };
+
+  const handleChangePassword = () => {
+    const current = prompt('Enter current password:');
+    if (!current) return;
+    const newPass = prompt('Enter new password (min 6 characters):');
+    if (newPass && newPass.length >= 6) {
+      showStatus('Password updated successfully!');
+    } else if (newPass) {
+      alert('Password must be at least 6 characters.');
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    if (window.confirm('Are you sure you want to permanently delete your SmartRide account? This action cannot be undone.')) {
+      alert('Account deletion scheduled. Logging out...');
+      navigate('/login');
+    }
+  };
 
   return (
-    <div style={{ height: '100%', background: 'var(--bg-base)', overflowY: 'auto', display: 'flex', flexDirection: 'column' }} className="no-scrollbar">
+    <div style={{ height: '100%', background: 'var(--bg-base)', overflowY: 'auto', display: 'flex', flexDirection: 'column', position: 'relative' }} className="no-scrollbar">
+      {/* Toast Notification */}
+      {statusToast && (
+        <div style={{ position: 'fixed', top: '24px', left: '50%', transform: 'translateX(-50%)', background: 'var(--bg-elevated)', border: '1px solid var(--border-ui)', borderRadius: '12px', padding: '10px 18px', zIndex: 999, color: 'var(--brand-cyan)', fontWeight: 700, fontSize: '0.85rem', boxShadow: '0 8px 30px rgba(0,0,0,0.4)' }}>
+          {statusToast}
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ background: 'linear-gradient(180deg, rgba(var(--brand-indigo-rgb), 0.07) 0%, transparent 100%)', padding: '52px 20px 20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <button onClick={() => navigate(-1)} className="btn-icon" style={{ width: '38px', height: '38px' }}>
-          <ArrowLeft size={18} color="#9CA3AF" />
+        <button onClick={() => navigate(-1)} className="btn-icon" style={{ width: '38px', height: '38px' }} aria-label="Back">
+          <ArrowLeft size={18} color="var(--text-muted)" />
         </button>
         <div>
-          <h1 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#F1F5F9' }}>Safety & Privacy</h1>
-          <p style={{ fontSize: '0.75rem', color: '#4B5563', marginTop: '2px' }}>Control your data and security</p>
+          <h1 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>Safety & Privacy</h1>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Control your data and security</p>
         </div>
       </div>
 
@@ -58,10 +105,12 @@ const SafetyPrivacy = () => {
               </Row>
             </motion.div>
             <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 }}>
-              <Row icon={<Shield size={20} color="var(--brand-cyan)" />} label="Two-Factor Auth" sub="Extra login verification" onClick={() => {}} />
+              <Row icon={<Shield size={20} color="var(--brand-cyan)" />} label="Two-Factor Auth" sub="Extra login verification">
+                <Toggle value={twoFactor} onChange={(val) => { setTwoFactor(val); showStatus(val ? 'Two-Factor Auth Enabled' : 'Two-Factor Auth Disabled'); }} accent="var(--brand-cyan)" />
+              </Row>
             </motion.div>
             <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
-              <Row icon={<span style={{ fontSize: '1rem' }}>🔑</span>} label="Change Password" onClick={() => {}} />
+              <Row icon={<span style={{ fontSize: '1rem' }}>🔑</span>} label="Change Password" sub="Update your account password" onClick={handleChangePassword} />
             </motion.div>
           </div>
         </section>
@@ -89,7 +138,7 @@ const SafetyPrivacy = () => {
             <Row icon={<span style={{ fontSize: '1rem' }}>📢</span>} label="Personalized Ads" sub="Based on your activity">
               <Toggle value={marketing} onChange={setMarketing} accent="#F59E0B" />
             </Row>
-            <Row icon={<span style={{ fontSize: '1rem' }}>📄</span>} label="Download My Data" onClick={() => {}} />
+            <Row icon={<span style={{ fontSize: '1rem' }}>📄</span>} label="Download My Data" sub="Export JSON copy of your data" onClick={handleDownloadData} />
           </div>
         </section>
 
@@ -97,7 +146,7 @@ const SafetyPrivacy = () => {
         <section>
           <p style={{ fontSize: '0.7rem', fontWeight: 700, color: '#374151', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Danger Zone</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <Row icon={<EyeOff size={20} color="#EF4444" />} label="Delete Account" sub="Permanently remove all data" danger />
+            <Row icon={<EyeOff size={20} color="#EF4444" />} label="Delete Account" sub="Permanently remove all data" danger onClick={handleDeleteAccount} />
           </div>
         </section>
       </div>

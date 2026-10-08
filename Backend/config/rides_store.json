@@ -58,5 +58,175 @@
     },
     "createdAt": "2026-10-02T07:26:01.690Z",
     "updatedAt": "2026-10-02T07:26:01.690Z"
+  },
+  {
+    "_id": "a3628890150f4a998a1a4b78",
+    "id": "a3628890150f4a998a1a4b78",
+    "userId": "000000000000000000000002",
+    "pickup": "Current Location",
+    "dropoff": "Downtown Metro Station",
+    "pickupLocation": "Current Location",
+    "dropoffLocation": "Downtown Metro Station",
+    "pickupCoords": null,
+    "dropoffCoords": null,
+    "vehicleType": "SmartRide AI (Cab+Metro)",
+    "price": "406",
+    "duration": "61 min",
+    "distance": "",
+    "status": "confirmed",
+    "aiInsights": {
+      "latency": 15,
+      "confidence": 0.9670753850352007,
+      "agents": 14,
+      "hewro": {
+        "walkingReduced": 240,
+        "effortSaved": 34
+      },
+      "stability": {
+        "road": 92,
+        "vehicle": 98,
+        "route": 87
+      }
+    },
+    "createdAt": "2026-10-02T08:57:32.121Z",
+    "updatedAt": "2026-10-02T08:57:37.205Z"
+  },
+  {
+    "_id": "989583a700b194eec4c0739f",
+    "id": "989583a700b194eec4c0739f",
+    "userId": "000000000000000000000001",
+    "pickup": "Indiranagar 100ft Road",
+    "dropoff": "Electronic City Phase 1",
+    "pickupLocation": "Indiranagar 100ft Road",
+    "dropoffLocation": "Electronic City Phase 1",
+    "pickupCoords": null,
+    "dropoffCoords": null,
+    "vehicleType": "Uber Go",
+    "price": "245",
+    "duration": "25 min",
+    "distance": "",
+    "status": "confirmed",
+    "aiInsights": {
+      "latency": 18,
+      "confidence": 0.9840246968427218,
+      "agents": 14,
+      "hewro": {
+        "walkingReduced": 240,
+        "effortSaved": 34
+      },
+      "stability": {
+        "road": 92,
+        "vehicle": 98,
+        "route": 87
+      }
+    },
+    "createdAt": "2026-10-04T05:11:35.652Z",
+    "updatedAt": "2026-10-04T05:11:35.658Z"
+  },
+  {
+    "_id": "dc3f1ccb4c8d422a1e65d6c8",
+    "id": "dc3f1ccb4c8d422a1e65d6c8",
+    "userId": "000000000000000000000001",
+    "pickup": "Indiranagar 100ft Road",
+    "dropoff": "Electronic City Phase 1",
+    "pickupLocation": "Indiranagar 100ft Road",
+    "dropoffLocation": "Electronic City Phase 1",
+    "pickupCoords": null,
+    "dropoffCoords": null,
+    "vehicleType": "Uber Go",
+    "price": "245",
+    "duration": "25 min",
+    "distance": "",
+    "status": "confirmed",
+    "aiInsights": {
+      "latency": 20,
+      "confidence": 0.9873523048620453,
+      "agents": 14,
+      "hewro": {
+        "walkingReduced": 240,
+        "effortSaved": 34
+      },
+      "stability": {
+        "road": 92,
+        "vehicle": 98,
+        "route": 87
+      }
+    },
+    "createdAt": "2026-10-04T05:24:11.342Z",
+    "updatedAt": "2026-10-04T05:24:11.350Z"
+  },
+  {
+    "_id": "cbcf176525f434e9a1b14ea7",
+    "id": "cbcf176525f434e9a1b14ea7",
+    "userId": "000000000000000000000001",
+    "pickup": "Indiranagar 100ft Road",
+    "dropoff": "Electronic City Phase 1",
+    "pickupLocation": "Indiranagar 100ft Road",
+    "dropoffLocation": "Electronic City Phase 1",
+    "pickupCoords": null,
+    "dropoffCoords": null,
+    "vehicleType": "Uber Go",
+    "price": "245",
+    "duration": "25 min",
+    "distance": "",
+    "status": "confirmed",
+    "aiInsights": {
+      "latency": 18,
+      "confidence": 0.9636161222692342,
+      "agents": 14,
+      "hewro": {
+        "walkingReduced": 240,
+        "effortSaved": 34
+      },
+      "stability": {
+        "road": 92,
+        "vehicle": 98,
+        "route": 87
+      }
+    },
+    "createdAt": "2026-10-04T05:25:30.681Z",
+    "updatedAt": "2026-10-04T05:25:30.687Z"
+  },
+  {
+    "_id": "000000000000000000000301",
+    "id": "000000000000000000000301",
+    "userId": "000000000000000000000003",
+    "pickupLocation": "OMR IT Corridor, Sholinganallur",
+    "dropoffLocation": "TIDEL Park, Tharamani",
+    "vehicleType": "SmartRide AI (Cab+Metro)",
+    "price": "210",
+    "duration": "32 min",
+    "distance": "11.5 km",
+    "status": "completed",
+    "createdAt": "2026-10-03T08:15:00.000Z",
+    "updatedAt": "2026-10-03T08:47:00.000Z"
+  },
+  {
+    "_id": "000000000000000000000401",
+    "id": "000000000000000000000401",
+    "userId": "000000000000000000000004",
+    "pickupLocation": "Bandra Kurla Complex, Mumbai",
+    "dropoffLocation": "Chhatrapati Shivaji Terminal 2",
+    "vehicleType": "Uber Premier",
+    "price": "680",
+    "duration": "45 min",
+    "distance": "18.2 km",
+    "status": "completed",
+    "createdAt": "2026-10-02T14:30:00.000Z",
+    "updatedAt": "2026-10-02T15:15:00.000Z"
+  },
+  {
+    "_id": "000000000000000000000501",
+    "id": "000000000000000000000501",
+    "userId": "000000000000000000000005",
+    "pickupLocation": "IIT Delhi Main Gate, Hauz Khas",
+    "dropoffLocation": "Connaught Place, Central Delhi",
+    "vehicleType": "Metro + E-Bike",
+    "price": "65",
+    "duration": "28 min",
+    "distance": "12.0 km",
+    "status": "completed",
+    "createdAt": "2026-10-03T11:00:00.000Z",
+    "updatedAt": "2026-10-03T11:28:00.000Z"
   }
 ]

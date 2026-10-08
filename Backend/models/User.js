@@ -13,6 +13,10 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  phone: {
+    type: String,
+    default: ''
+  },
   password: {
     type: String,
     required: true
@@ -37,6 +41,22 @@ const UserSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     default: null
   },
+  isOnline: {
+    type: Boolean,
+    default: false
+  },
+  lastLogin: {
+    type: Date,
+    default: null
+  },
+  activeSessions: [
+    {
+      sessionId: String,
+      token: String,
+      loginTime: { type: Date, default: Date.now },
+      userAgent: { type: String, default: '' }
+    }
+  ],
   createdAt: {
     type: Date,
     default: Date.now

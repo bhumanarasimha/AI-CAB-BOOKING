@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -15,30 +16,70 @@ const CommuteMatchResults = () => {
 
   const filteredMatches = matches.filter(m => m.city.toLowerCase() === currentCity.toLowerCase());
 
+  const [sortBy, setSortBy] = useState('overlap'); // 'overlap' | 'savings' | 'rating'
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+
+  const sortedMatches = [...filteredMatches].sort((a, b) => {
+    if (sortBy === 'savings') {
+      const savA = parseInt(a.savings.replace(/\D/g, '')) || 0;
+      const savB = parseInt(b.savings.replace(/\D/g, '')) || 0;
+      return savB - savA;
+    }
+    if (sortBy === 'rating') {
+      return (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0);
+    }
+    return (parseInt(b.overlap) || 0) - (parseInt(a.overlap) || 0);
+  });
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)', padding: '60px 20px 100px' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button 
             onClick={() => navigate(-1)}
-            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '12px', padding: '10px', color: 'var(--text-main)' }}
+            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '12px', padding: '10px', color: 'var(--text-main)', cursor: 'pointer' }}
+            aria-label="Back"
           >
             <ArrowLeft size={20} />
           </button>
           <div>
             <h1 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>AI Matches</h1>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{filteredMatches.length} potential partners found in {currentCity}</p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{sortedMatches.length} partners found in {currentCity}</p>
           </div>
         </div>
-        <button style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '12px', padding: '10px', color: 'var(--text-main)' }}>
-          <Filter size={20} />
-        </button>
+        <div style={{ position: 'relative' }}>
+          <button 
+            onClick={() => setShowFilterMenu(!showFilterMenu)}
+            style={{ background: showFilterMenu ? 'rgba(0,216,255,0.15)' : 'var(--bg-surface)', border: `1px solid ${showFilterMenu ? 'var(--brand-cyan)' : 'var(--border-ui)'}`, borderRadius: '12px', padding: '10px', color: showFilterMenu ? 'var(--brand-cyan)' : 'var(--text-main)', cursor: 'pointer' }}
+            aria-label="Filter matches"
+          >
+            <Filter size={20} />
+          </button>
+          {showFilterMenu && (
+            <div style={{ position: 'absolute', right: 0, top: '48px', background: 'var(--bg-elevated)', border: '1px solid var(--border-ui)', borderRadius: '14px', padding: '8px', zIndex: 50, minWidth: '160px', boxShadow: '0 8px 30px rgba(0,0,0,0.3)' }}>
+              <p style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', padding: '4px 8px' }}>Sort By</p>
+              {[
+                { id: 'overlap', label: 'Highest Overlap' },
+                { id: 'savings', label: 'Maximum Savings' },
+                { id: 'rating', label: 'Top Rated' }
+              ].map(opt => (
+                <button
+                  key={opt.id}
+                  onClick={() => { setSortBy(opt.id); setShowFilterMenu(false); }}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: 'none', background: sortBy === opt.id ? 'rgba(0,216,255,0.1)' : 'transparent', color: sortBy === opt.id ? 'var(--brand-cyan)' : 'var(--text-main)', fontSize: '0.8rem', fontWeight: 600, textAlign: 'left', cursor: 'pointer', display: 'flex', justifyContent: 'space-between' }}
+                >
+                  {opt.label} {sortBy === opt.id && '✓'}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Match Cards */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {filteredMatches.map((match, idx) => (
+        {sortedMatches.map((match, idx) => (
           <motion.div
             key={match.id}
             initial={{ opacity: 0, y: 20 }}

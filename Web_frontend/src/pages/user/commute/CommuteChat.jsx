@@ -97,9 +97,13 @@ const CommuteChat = () => {
             <p style={{ fontSize: '0.7rem', color: '#10B981' }}>Online · Commuter Match</p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <Phone size={20} color="var(--text-muted)" style={{ cursor: 'pointer' }} />
-          <Video size={20} color="var(--text-muted)" style={{ cursor: 'pointer' }} />
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <button onClick={() => window.open('tel:+919876543210', '_self')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }} aria-label="Call Sarah">
+            <Phone size={20} color="var(--text-muted)" />
+          </button>
+          <button onClick={() => alert('Starting encrypted commuter video check-in...')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }} aria-label="Video Call Sarah">
+            <Video size={20} color="var(--text-muted)" />
+          </button>
         </div>
       </div>
 
@@ -147,7 +151,12 @@ const CommuteChat = () => {
               <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 600 }}>Central Park Gate 4</span>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button style={{ flex: 1, padding: '8px', background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '10px', color: 'var(--text-main)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>Modify</button>
+              <button 
+                onClick={() => setMessage('Can we shift the pickup point to: ')}
+                style={{ flex: 1, padding: '8px', background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '10px', color: 'var(--text-main)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Modify
+              </button>
               <button 
                 onClick={() => {
                   if (chatId && user) {
@@ -187,7 +196,15 @@ const CommuteChat = () => {
 
       {/* Input Area */}
       <div style={{ padding: '0 20px 40px', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-        <button style={{ width: '48px', height: '48px', background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '16px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+        <button 
+          onClick={() => {
+            if (chatId && user) {
+              sendChatMessage(chatId, user.uid, '📍 Shared live coordinates: 12.9716° N, 77.5946° E');
+            }
+          }}
+          aria-label="Share Location"
+          style={{ width: '48px', height: '48px', background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '16px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+        >
           <Plus size={24} />
         </button>
         <div style={{ flex: 1, background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '16px', display: 'flex', alignItems: 'center', padding: '0 16px' }}>
@@ -199,10 +216,17 @@ const CommuteChat = () => {
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             style={{ flex: 1, background: 'transparent', border: 'none', padding: '14px 0', color: 'var(--text-main)', fontSize: '0.95rem', outline: 'none' }}
           />
-          <Mic size={20} color="var(--text-muted)" style={{ cursor: 'pointer' }} />
+          <button
+            onClick={() => setMessage('Voice note recorded: Arriving at pickup point in 5 minutes.')}
+            aria-label="Record voice note"
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }}
+          >
+            <Mic size={20} color="var(--text-muted)" />
+          </button>
         </div>
         <button 
           onClick={handleSend}
+          aria-label="Send message"
           style={{ width: '48px', height: '48px', background: 'var(--brand-indigo)', border: 'none', borderRadius: '16px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(99,102,241,0.3)', cursor: 'pointer' }}
         >
           <Send size={20} />

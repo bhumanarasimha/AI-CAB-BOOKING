@@ -21,13 +21,25 @@ const CommuteSavings = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button 
             onClick={() => navigate(-1)}
-            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '12px', padding: '10px', color: 'var(--text-main)' }}
+            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '12px', padding: '10px', color: 'var(--text-main)', cursor: 'pointer' }}
+            aria-label="Back"
           >
             <ArrowLeft size={20} />
           </button>
           <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)' }}>Impact Dashboard</h1>
         </div>
-        <button style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '12px', padding: '10px', color: 'var(--text-main)' }}>
+        <button 
+          onClick={() => {
+            if (navigator.share) {
+              navigator.share({ title: 'My SmartRide Impact', text: 'I saved ₹4,280 and reduced 12.4kg of CO2 this month with SmartRide AI Commute!', url: window.location.href }).catch(() => {});
+            } else {
+              navigator.clipboard?.writeText(window.location.href);
+              alert('Impact report copied to clipboard!');
+            }
+          }}
+          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '12px', padding: '10px', color: 'var(--text-main)', cursor: 'pointer' }}
+          aria-label="Share"
+        >
           <Share2 size={20} />
         </button>
       </div>

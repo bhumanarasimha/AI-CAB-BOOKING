@@ -80,6 +80,39 @@ export const useRideRefreshEngine = ({
       });
 
       setProcessedResult(decisionResult);
+
+      // ── Persist AI engine snapshot for ExplainableAI.jsx ──
+      try {
+        const snapshot = {
+          topPick: decisionResult.topPick,
+          rankedOptions: decisionResult.rankedOptions.slice(0, 10), // store top 10
+          decisionExplanation: decisionResult.decisionExplanation,
+          weightsUsed: decisionResult.weightsUsed,
+          userPreferences,
+          activeCategory,
+          destination,
+          timestamp: new Date().toISOString(),
+          totalOptions: decisionResult.rankedOptions.length,
+          // Derived metrics for ExplainableAI display
+          avgOverallScore: decisionResult.rankedOptions.length
+            ? Math.round(decisionResult.rankedOptions.reduce((s, o) => s + (o.overallScore || 0), 0) / decisionResult.rankedOptions.length)
+            : 0,
+          avgStabilityScore: decisionResult.rankedOptions.length
+            ? Math.round(decisionResult.rankedOptions.reduce((s, o) => s + (o.stabilityScore || 0), 0) / decisionResult.rankedOptions.length)
+            : 0,
+          avgHumanEffortScore: decisionResult.rankedOptions.length
+            ? Math.round(decisionResult.rankedOptions.reduce((s, o) => s + (o.humanEffortScore || 0), 0) / decisionResult.rankedOptions.length)
+            : 0,
+          minFare: decisionResult.rankedOptions.length
+            ? Math.min(...decisionResult.rankedOptions.map(o => o.fare || 999))
+            : 0,
+          maxFare: decisionResult.rankedOptions.length
+            ? Math.max(...decisionResult.rankedOptions.map(o => o.fare || 0))
+            : 0,
+          contextInputs: { weather, urgency },
+        };
+        localStorage.setItem('emmde_last_snapshot', JSON.stringify(snapshot));
+      } catch (_) { /* storage quota - ignore */ }
     } catch (error) {
       console.error('Error fetching ride data:', error);
     } finally {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, User, Mail, Phone, Camera, ChevronRight, Calendar, CheckCircle2, Lock, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, Camera, ChevronRight, Calendar, CheckCircle2, Lock, ShieldCheck, Users, X } from 'lucide-react';
 import BottomNavigation from '../../components/layout/BottomNavigation';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../lib/AuthContext';
@@ -106,7 +106,7 @@ const Profile = () => {
   };
 
   return (
-    <div style={{ height: '100%', background: 'var(--bg-base)', overflowY: 'auto', display: 'flex', flexDirection: 'column' }} className="no-scrollbar">
+    <div style={{ flex: 1, minHeight: 0, height: '100%', width: '100%', background: 'var(--bg-base)', overflowY: 'auto', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', display: 'flex', flexDirection: 'column' }} className="no-scrollbar">
       
       <AnimatePresence mode="wait">
         {!isEditing ? (
@@ -120,8 +120,29 @@ const Profile = () => {
             {/* Header */}
             <div style={{ background: 'linear-gradient(180deg, rgba(var(--brand-indigo-rgb), 0.09) 0%, transparent 100%)', padding: '52px 20px 24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                 <p style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--text-main)' }}>Profile</p>
-                 <button onClick={() => setIsEditing(true)} style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--brand-cyan)', background: 'transparent', border: 'none', cursor: 'pointer' }}>Edit</button>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                   <button 
+                     onClick={() => navigate(-1)} 
+                     className="btn-icon" 
+                     style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                     aria-label="Go Back"
+                   >
+                     <ArrowLeft size={18} color="var(--text-main)" />
+                   </button>
+                   <p style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main)' }}>Profile</p>
+                 </div>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                   <button onClick={() => setIsEditing(true)} style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--brand-cyan)', background: 'rgba(var(--brand-cyan-rgb),0.1)', border: '1px solid rgba(var(--brand-cyan-rgb),0.25)', padding: '6px 14px', borderRadius: '10px', cursor: 'pointer' }}>Edit</button>
+                   <button
+                     onClick={async () => {
+                       await logout();
+                       navigate('/login');
+                     }}
+                     style={{ fontSize: '0.8rem', fontWeight: 800, color: '#EF4444', background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '6px 14px', borderRadius: '10px', cursor: 'pointer' }}
+                   >
+                     Logout
+                   </button>
+                 </div>
               </div>
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 {/* Avatar */}
@@ -130,7 +151,7 @@ const Profile = () => {
                     <img src={user.photoURL} alt="Profile" style={{ width: '72px', height: '72px', borderRadius: '22px', border: '2px solid var(--brand-indigo)', boxShadow: '0 8px 24px rgba(var(--brand-indigo-rgb), 0.4)' }} />
                   ) : (
                     <div style={{ width: '72px', height: '72px', borderRadius: '22px', background: 'linear-gradient(135deg, var(--brand-indigo), var(--brand-cyan))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', fontWeight: 800, color: 'white', boxShadow: '0 8px 24px rgba(var(--brand-indigo-rgb), 0.4)' }}>
-                      {user?.displayName ? user.displayName.charAt(0) : 'U'}
+                      {(user?.name && user.name.length > 0) ? user.name.charAt(0).toUpperCase() : 'B'}
                     </div>
                   )}
                   <div style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '18px', height: '18px', background: '#10B981', borderRadius: '6px', border: '2px solid var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -138,7 +159,9 @@ const Profile = () => {
                   </div>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <h1 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.01em' }}>{user?.name || user?.displayName || 'Valued Rider'}</h1>
+                  <h1 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.01em' }}>
+                    {(user?.name && user.name !== 'google.user' && user.name !== 'Google Rider' && user.name !== 'Google User') ? user.name : 'Bhumana Narasimha'}
+                  </h1>
                   <p style={{ fontSize: '0.83rem', color: 'var(--text-muted)', marginTop: '2px' }}>{user?.email}</p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
                     <div style={{ width: '6px', height: '6px', borderRadius: '99px', background: 'var(--brand-cyan)' }} />
@@ -186,6 +209,7 @@ const Profile = () => {
                   </div>
                 </section>
               ))}
+
 
               {/* Logout */}
               <motion.button
@@ -380,6 +404,8 @@ const Profile = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+
 
       {!isEditing && <BottomNavigation />}
     </div>

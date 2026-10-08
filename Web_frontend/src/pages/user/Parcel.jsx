@@ -179,9 +179,10 @@ const Parcel = () => {
       {step < 4 && (
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 50, padding: '48px 20px 0', pointerEvents: 'none' }}>
           <button 
-            onClick={() => navigate(-1)} 
+            onClick={() => step > 1 ? setStep(step - 1) : navigate(-1)} 
             className="btn-icon" 
             style={{ width: '44px', height: '44px', pointerEvents: 'auto', background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', boxShadow: '0 8px 30px rgba(0,0,0,0.15)' }}
+            aria-label="Back"
           >
             <ArrowLeft size={20} color="var(--text-main)" />
           </button>
@@ -517,9 +518,9 @@ const Parcel = () => {
                     {isPaid ? <div style={{ background: 'rgba(16,185,129,0.1)', color: '#10B981', padding: '10px 16px', borderRadius: '10px', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}><CheckCircle2 size={15} /> Paid</div> : <button onClick={() => setShowPaymentModal(true)} style={{ background: 'var(--brand-indigo)', color: 'white', padding: '10px 16px', borderRadius: '10px', fontWeight: 700, fontSize: '0.85rem', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}><CreditCard size={15} /> Pay Early</button>}
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    <button style={{ padding: '12px', borderRadius: '12px', background: 'var(--bg-card)', border: '1px solid var(--border-ui)', color: 'var(--text-main)', fontWeight: 600, fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: 'pointer' }}><Phone size={15} /> Call Driver</button>
-                    <button style={{ padding: '12px', borderRadius: '12px', background: 'rgba(var(--brand-cyan-rgb), 0.1)', border: '1px solid rgba(var(--brand-cyan-rgb), 0.3)', color: 'var(--brand-cyan)', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: 'pointer' }}>Share Tracking</button>
-                    <button style={{ padding: '12px', borderRadius: '12px', background: 'var(--bg-card)', border: '1px solid var(--border-ui)', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: 'pointer' }}><HelpCircle size={15} /> Support</button>
+                    <button onClick={() => window.open('tel:+919876543210', '_self')} style={{ padding: '12px', borderRadius: '12px', background: 'var(--bg-card)', border: '1px solid var(--border-ui)', color: 'var(--text-main)', fontWeight: 600, fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: 'pointer' }}><Phone size={15} /> Call Driver</button>
+                    <button onClick={() => { if (navigator.share) { navigator.share({ title: 'Live Parcel Tracking', text: 'Track my SmartRide delivery live: DL 4C 9821', url: window.location.href }).catch(() => {}); } else { navigator.clipboard.writeText(window.location.href); alert('Tracking link copied to clipboard!'); } }} style={{ padding: '12px', borderRadius: '12px', background: 'rgba(var(--brand-cyan-rgb), 0.1)', border: '1px solid rgba(var(--brand-cyan-rgb), 0.3)', color: 'var(--brand-cyan)', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: 'pointer' }}>Share Tracking</button>
+                    <button onClick={() => navigate('/user/help')} style={{ padding: '12px', borderRadius: '12px', background: 'var(--bg-card)', border: '1px solid var(--border-ui)', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: 'pointer' }}><HelpCircle size={15} /> Support</button>
                     <button onClick={() => { setStep(4); setDriverAssigned(false); setIsPaid(false); }} style={{ background: 'rgba(239,68,68,0.1)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)', padding: '12px', borderRadius: '12px', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}><XCircle size={16} /> Cancel Order</button>
                   </div>
                 </motion.div>

@@ -26,13 +26,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
+    const cleanEmail = (email || 'bhumanarasimha25@gmail.com').trim().toLowerCase();
     try {
-      const serverRes = await api.auth.login(email, password);
+      const serverRes = await api.auth.login(cleanEmail, password);
       if (serverRes?.user) {
         const userData = {
-          id: serverRes.user.id,
+          id: serverRes.user.id || serverRes.user._id,
           email: serverRes.user.email,
-          name: serverRes.user.name || (email.toLowerCase() === 'bhumanarasimha25@gmail.com' ? 'Bhumana Narasimha' : email.split('@')[0]),
+          name: serverRes.user.name || (cleanEmail === 'bhumanarasimha25@gmail.com' ? 'Bhumana Narasimha' : cleanEmail.split('@')[0]),
           phone: serverRes.user.phone || '+91 98765 43210',
           rating: 4.95,
           ridesCount: 42,
@@ -48,8 +49,8 @@ export const AuthProvider = ({ children }) => {
 
     const userData = {
       id: 'usr_' + Date.now(),
-      email: email || 'bhumanarasimha25@gmail.com',
-      name: (email && email.toLowerCase() === 'bhumanarasimha25@gmail.com' ? 'Bhumana Narasimha' : (email ? email.split('@')[0] : 'Bhumana Narasimha')),
+      email: cleanEmail,
+      name: (cleanEmail === 'bhumanarasimha25@gmail.com' ? 'Bhumana Narasimha' : cleanEmail.split('@')[0]),
       phone: '+91 98765 43210',
       rating: 4.95,
       ridesCount: 42,

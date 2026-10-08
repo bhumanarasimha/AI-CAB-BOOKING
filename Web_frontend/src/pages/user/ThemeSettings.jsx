@@ -165,7 +165,7 @@ const moods = [
 
 const ThemeSettings = () => {
   const navigate = useNavigate();
-  const [selectedTheme, setSelectedTheme] = useState(localStorage.getItem('app-theme') || 'dark-ai');
+  const [selectedTheme, setSelectedTheme] = useState(localStorage.getItem('app-theme') || 'light');
   const [selectedMood, setSelectedMood] = useState(localStorage.getItem('app-mood') || 'energetic');
   const [textSize, setTextSize] = useState(parseInt(localStorage.getItem('app-text-size')) || 2);
 

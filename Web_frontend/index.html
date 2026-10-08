@@ -5,14 +5,17 @@
     <link rel="icon" type="image/png" href="/app-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SmartRide AI</title>
-    <script type="module">
-      const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-      if (key && key !== 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
-        const s = document.createElement('script');
-        s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
+    <script>
+      (function() {
+        var key = "%VITE_GOOGLE_MAPS_API_KEY%";
+        if (!key || key.indexOf("YOUR_GOOGLE") !== -1 || key.indexOf("%") !== -1) {
+          key = "AIzaSyDZBmGSgFQXoeoNlGpJvu3A4S5p1Zkt3vU";
+        }
+        var s = document.createElement("script");
+        s.src = "https://maps.googleapis.com/maps/api/js?key=" + key + "&libraries=places,geometry";
         s.async = true;
         document.head.appendChild(s);
-      }
+      })();
     </script>
     <style>
       * {

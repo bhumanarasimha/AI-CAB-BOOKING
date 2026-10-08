@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { View, Text, Image, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, Image, StyleSheet, ActivityIndicator, Pressable } from 'react-native';
 import { useNavigate } from 'react-router-dom';
 import appIcon from '../../assets/app-icon.png';
 
@@ -33,9 +33,16 @@ const Splash = () => {
         </View>
       </View>
 
-      {/* Bottom Loading Indicator */}
+      {/* Bottom Loading Indicator & Continue */}
       <View style={styles.loaderContainer}>
         <ActivityIndicator size="small" color="#00D8FF" />
+        <Pressable 
+          onPress={() => navigate('/onboarding')} 
+          style={styles.continueBtn}
+          accessibilityLabel="Continue to Onboarding"
+        >
+          <Text style={styles.continueText}>Continue →</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -44,7 +51,7 @@ const Splash = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#080C14',
+    backgroundColor: 'var(--bg-base, #080C14)',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -67,7 +74,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 100,
-    backgroundColor: 'rgba(0, 216, 255, 0.12)',
+    backgroundColor: 'rgba(0, 180, 216, 0.12)',
   },
   logoContainer: {
     alignItems: 'center',
@@ -77,16 +84,16 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 28,
-    backgroundColor: '#1A2340',
+    backgroundColor: 'var(--bg-surface, #1A2340)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.07)',
+    borderColor: 'var(--border-ui, rgba(255, 255, 255, 0.07))',
     overflow: 'hidden',
     marginBottom: 28,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.15,
     shadowRadius: 20,
     elevation: 8,
   },
@@ -100,24 +107,40 @@ const styles = StyleSheet.create({
   titleText: {
     fontSize: 38,
     fontWeight: '800',
-    color: '#F1F5F9',
+    color: 'var(--text-main, #F1F5F9)',
     letterSpacing: -0.5,
   },
   titleGradient: {
-    color: '#00D8FF',
+    color: 'var(--brand-cyan, #00D8FF)',
     fontWeight: '800',
   },
   subtitleText: {
     fontSize: 12,
     fontWeight: '600',
     letterSpacing: 3,
-    color: '#9CA3AF',
+    color: 'var(--text-muted, #9CA3AF)',
     marginTop: 10,
     textTransform: 'uppercase',
   },
   loaderContainer: {
     position: 'absolute',
     bottom: 64,
+    alignItems: 'center',
+    gap: 12,
+  },
+  continueBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 180, 216, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 180, 216, 0.25)',
+    cursor: 'pointer',
+  },
+  continueText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'var(--brand-cyan, #00D8FF)',
   },
 });
 

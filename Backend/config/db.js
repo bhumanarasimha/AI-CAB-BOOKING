@@ -6,7 +6,7 @@ const connectDB = async () => {
   const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/smartride';
   try {
     const conn = await mongoose.connect(mongoUri, {
-      serverSelectionTimeoutMS: 2000
+      serverSelectionTimeoutMS: 8000
     });
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     isConnected = true;

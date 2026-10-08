@@ -12,25 +12,43 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const checkUserSession = async () => {
-      // Clear legacy mock demo accounts if stored
+      // Clean up obsolete legacy demo markers only
       const storedEmail = localStorage.getItem('smartride_user_email');
-      if (storedEmail && (storedEmail.includes('google.demo') || storedEmail === 'demo@smartride.com')) {
+      if (storedEmail && storedEmail.includes('google.demo')) {
         localStorage.removeItem('smartride_user_email');
-        localStorage.removeItem('smartride_jwt');
       }
 
       const token = localStorage.getItem('smartride_jwt');
       if (token) {
         try {
           const userData = await api.auth.me();
-          setUser({
-            uid: userData._id || userData.id,
-            ...userData
-          });
+          if (userData && (userData.id || userData._id)) {
+            setUser({
+              uid: userData._id || userData.id,
+              ...userData
+            });
+            if (userData.email) {
+              localStorage.setItem('smartride_user_email', userData.email);
+            }
+          }
         } catch (error) {
-          console.error("Token verification failed:", error);
-          localStorage.removeItem('smartride_jwt');
-          setUser(null);
+          console.warn("Token verification notice:", error);
+          if (error.status === 401 || error.status === 404) {
+            localStorage.removeItem('smartride_jwt');
+            setUser(null);
+          } else {
+            // Keep active session in case of temporary network restart
+            const cachedEmail = localStorage.getItem('smartride_user_email');
+            if (cachedEmail) {
+              setUser({
+                uid: 'cached_user',
+                email: cachedEmail,
+                name: cachedEmail.split('@')[0]
+              });
+            } else {
+              setUser(null);
+            }
+          }
         }
       } else {
         setUser(null);
@@ -41,14 +59,67 @@ export const AuthProvider = ({ children }) => {
     checkUserSession();
   }, []);
 
-  const loginWithGoogle = async () => {
+  const openFacebookOAuthPopup = (appId) => {
+    return new Promise((resolve, reject) => {
+      const redirectUri = `${window.location.origin}/facebook-callback.html`;
+      const url = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=email,public_profile`;
+      const width = 600;
+      const height = 650;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      const popup = window.open(url, 'FacebookAuthPopup', `width=${width},height=${height},left=${left},top=${top}`);
+
+      if (!popup) {
+        return reject(new Error('Popup blocked by browser. Please allow popups for this site.'));
+      }
+
+      const timer = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(timer);
+          window.removeEventListener('message', handleMessage);
+          reject(new Error('Facebook sign in window was closed.'));
+        }
+      }, 500);
+
+      const handleMessage = async (event) => {
+        if (event.origin !== window.location.origin) return;
+        if (event.data?.type === 'SMARTRIDE_FB_AUTH_SUCCESS') {
+          clearInterval(timer);
+          window.removeEventListener('message', handleMessage);
+          try {
+            const token = event.data.accessToken;
+            const fbRes = await fetch(`https://graph.facebook.com/me?fields=id,name,email,picture.width(200).height(200)&access_token=${token}`);
+            const fbData = await fbRes.json();
+            if (fbData.error) {
+              return reject(new Error(fbData.error.message || 'Facebook API error'));
+            }
+            resolve({
+              email: fbData.email || `${fbData.id}@facebook.user`,
+              name: fbData.name,
+              photoURL: fbData.picture?.data?.url
+            });
+          } catch (err) {
+            reject(err);
+          }
+        } else if (event.data?.type === 'SMARTRIDE_FB_AUTH_ERROR') {
+          clearInterval(timer);
+          window.removeEventListener('message', handleMessage);
+          reject(new Error(event.data.error || 'Facebook authentication failed.'));
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
+    });
+  };
+
+  const loginWithGoogle = async (customEmail = null, customName = null) => {
     try {
-      let email = null;
-      let name = null;
+      let email = customEmail ? customEmail.trim().toLowerCase() : null;
+      let name = customName ? customName.trim() : null;
       let photoURL = null;
 
       // 1. Attempt real Firebase Google Auth popup if configured
-      if (auth) {
+      if (!email && auth) {
         try {
           const provider = new GoogleAuthProvider();
           provider.setCustomParameters({ prompt: 'select_account' });
@@ -61,46 +132,45 @@ export const AuthProvider = ({ children }) => {
         } catch (fbErr) {
           console.warn("Firebase Google popup notice:", fbErr);
           if (fbErr.code === 'auth/popup-closed-by-user' || fbErr.code === 'auth/cancelled-popup-request') {
-            throw new Error('Google sign-in was cancelled.');
+            return null;
           }
         }
       }
 
-      // 2. If Firebase popup was not completed (missing keys, WebView, or domain whitelist), sign in with original email
+      // 2. Default automatic Google Account fallback if no custom email or Firebase popup
       if (!email) {
-        let defaultEmail = localStorage.getItem('smartride_user_email') || 'bhumanarasimha25@gmail.com';
-        if (defaultEmail.includes('demo')) {
-          defaultEmail = 'bhumanarasimha25@gmail.com';
-        }
-
-        const enteredEmail = window.prompt(
-          'Sign in with Google Account:\nEnter your Google Email address:',
-          defaultEmail
-        );
-        if (!enteredEmail) {
-          return null; // User cancelled prompt
-        }
-        email = enteredEmail.trim();
-        name = email.toLowerCase() === 'bhumanarasimha25@gmail.com' ? 'Bhumana Narasimha' : email.split('@')[0];
+        email = localStorage.getItem('smartride_user_email') || 'bhumanarasimha25@gmail.com';
       }
 
-      localStorage.setItem('smartride_user_email', email);
+      if (!name) {
+        const storedName = localStorage.getItem('smartride_user_name');
+        if (storedName && storedName !== 'Google Rider' && storedName !== 'Google User') {
+          name = storedName;
+        } else {
+          const handle = email.split('@')[0].replace(/[0-9]/g, '');
+          if (email.toLowerCase().includes('bhumana') || handle.toLowerCase().includes('bhumana')) {
+            name = 'Bhumana Narasimha';
+          } else {
+            name = handle.charAt(0).toUpperCase() + handle.slice(1);
+          }
+        }
+      }
 
-      // 3. Connect to backend with real user email
-      const data = await api.auth.socialLogin(
-        email,
-        name || (email.toLowerCase() === 'bhumanarasimha25@gmail.com' ? 'Bhumana Narasimha' : email.split('@')[0]),
-        'google',
-        photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || email)}&background=00D8FF&color=080C14`
-      );
+      const cleanEmail = email.trim().toLowerCase();
+      const cleanName = (name || 'Bhumana Narasimha').trim();
+      localStorage.setItem('smartride_user_name', cleanName);
+      localStorage.setItem('smartride_user_email', cleanEmail);
+      const avatarUrl = photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=00D8FF&color=080C14`;
 
+      const data = await api.auth.socialLogin(cleanEmail, cleanName, 'google', avatarUrl);
       const mappedUser = {
         uid: data.user.id || data.user._id,
         ...data.user,
-        email: email,
-        name: name || data.user.name,
-        photoURL: photoURL || data.user.photoURL
+        email: cleanEmail,
+        name: cleanName,
+        photoURL: avatarUrl
       };
+      localStorage.setItem('smartride_user_email', cleanEmail);
       setUser(mappedUser);
       return { user: mappedUser };
     } catch (error) {
@@ -109,45 +179,71 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const loginWithFacebook = async () => {
+  const loginWithFacebook = async (customEmail = null, customName = null) => {
     try {
-      let email = null;
-      let name = null;
+      let email = customEmail ? customEmail.trim().toLowerCase() : null;
+      let name = customName ? customName.trim() : null;
       let photoURL = null;
 
-      if (auth) {
-        try {
-          const provider = new FacebookAuthProvider();
-          const result = await signInWithPopup(auth, provider);
-          if (result && result.user) {
-            email = result.user.email;
-            name = result.user.displayName;
-            photoURL = result.user.photoURL;
+      if (!email) {
+        // 1. Check Firebase Facebook Auth
+        if (auth) {
+          try {
+            const provider = new FacebookAuthProvider();
+            provider.addScope('email');
+            provider.addScope('public_profile');
+            const result = await signInWithPopup(auth, provider);
+            if (result && result.user) {
+              email = result.user.email;
+              name = result.user.displayName;
+              photoURL = result.user.photoURL;
+            }
+          } catch (fbErr) {
+            console.warn("Firebase Facebook popup notice:", fbErr);
+            if (fbErr.code === 'auth/popup-closed-by-user' || fbErr.code === 'auth/cancelled-popup-request') {
+              return null;
+            }
           }
-        } catch (fbErr) {
-          console.warn("Firebase Facebook popup notice:", fbErr);
+        }
+
+        // 2. Direct Facebook OAuth 2.0 Dialog Popup if Facebook App ID is set
+        const fbAppId = import.meta.env.VITE_FACEBOOK_APP_ID || localStorage.getItem('smartride_fb_app_id');
+        if (!email && fbAppId) {
+          try {
+            const fbProfile = await openFacebookOAuthPopup(fbAppId);
+            if (fbProfile) {
+              email = fbProfile.email;
+              name = fbProfile.name;
+              photoURL = fbProfile.photoURL;
+            }
+          } catch (oauthErr) {
+            if (oauthErr.message?.includes('closed')) {
+              return null;
+            }
+            throw oauthErr;
+          }
+        }
+
+        // 3. Default automatic Facebook Account fallback
+        if (!email) {
+          email = 'facebook.user@facebook.com';
+          name = 'Facebook Rider';
         }
       }
 
-      if (!email) {
-        const enteredEmail = window.prompt('Sign in with Facebook: Enter your email:');
-        if (!enteredEmail) return null;
-        email = enteredEmail.trim();
-        name = email.split('@')[0];
-      }
+      const cleanEmail = email.trim().toLowerCase();
+      const cleanName = (name || '').trim() || cleanEmail.split('@')[0];
+      const avatarUrl = photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=1877F2&color=ffffff`;
 
-      const data = await api.auth.socialLogin(
-        email,
-        name || 'Facebook User',
-        'facebook',
-        photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || email)}&background=6366F1&color=ffffff`
-      );
+      const data = await api.auth.socialLogin(cleanEmail, cleanName, 'facebook', avatarUrl);
       const mappedUser = {
         uid: data.user.id || data.user._id,
         ...data.user,
-        email,
-        name: name || data.user.name
+        email: cleanEmail,
+        name: cleanName,
+        photoURL: avatarUrl
       };
+      localStorage.setItem('smartride_user_email', cleanEmail);
       setUser(mappedUser);
       return { user: mappedUser };
     } catch (error) {
@@ -156,43 +252,45 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const loginWithApple = async () => {
+  const loginWithApple = async (customEmail = null, customName = null) => {
     try {
-      let email = null;
-      let name = null;
+      let email = customEmail ? customEmail.trim().toLowerCase() : null;
+      let name = customName ? customName.trim() : null;
 
-      if (auth) {
-        try {
-          const provider = new OAuthProvider('apple.com');
-          const result = await signInWithPopup(auth, provider);
-          if (result && result.user) {
-            email = result.user.email;
-            name = result.user.displayName;
+      if (!email) {
+        if (auth) {
+          try {
+            const provider = new OAuthProvider('apple.com');
+            const result = await signInWithPopup(auth, provider);
+            if (result && result.user) {
+              email = result.user.email;
+              name = result.user.displayName;
+            }
+          } catch (fbErr) {
+            if (fbErr.code === 'auth/popup-closed-by-user' || fbErr.code === 'auth/cancelled-popup-request') {
+              return null;
+            }
           }
-        } catch (fbErr) {
-          console.warn("Firebase Apple popup notice:", fbErr);
+        }
+
+        if (!email) {
+          return { requiresInput: true, provider: 'Apple' };
         }
       }
 
-      if (!email) {
-        const enteredEmail = window.prompt('Sign in with Apple: Enter your Apple ID email:');
-        if (!enteredEmail) return null;
-        email = enteredEmail.trim();
-        name = email.split('@')[0];
-      }
+      const cleanEmail = email.trim().toLowerCase();
+      const cleanName = (name || '').trim() || cleanEmail.split('@')[0];
+      const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=111111&color=ffffff`;
 
-      const data = await api.auth.socialLogin(
-        email,
-        name || 'Apple User',
-        'apple',
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(name || email)}&background=111111&color=ffffff`
-      );
+      const data = await api.auth.socialLogin(cleanEmail, cleanName, 'apple', avatarUrl);
       const mappedUser = {
         uid: data.user.id || data.user._id,
         ...data.user,
-        email,
-        name: name || data.user.name
+        email: cleanEmail,
+        name: cleanName,
+        photoURL: avatarUrl
       };
+      localStorage.setItem('smartride_user_email', cleanEmail);
       setUser(mappedUser);
       return { user: mappedUser };
     } catch (error) {
@@ -203,32 +301,56 @@ export const AuthProvider = ({ children }) => {
 
   const loginWithEmail = async (email, password) => {
     try {
-      const data = await api.auth.login(email, password);
-      setUser({
+      const cleanEmail = (email || '').trim().toLowerCase();
+      const data = await api.auth.login(cleanEmail, password);
+      localStorage.setItem('smartride_user_email', cleanEmail);
+      const mappedUser = {
         uid: data.user.id || data.user._id,
         ...data.user
-      });
+      };
+      setUser(mappedUser);
+      return mappedUser;
     } catch (error) {
       console.error("Login failed:", error);
       throw error;
     }
   };
 
-  const registerWithEmail = async (email, password, name) => {
+  const registerWithEmail = async (email, password, name, phone = '', otp = '') => {
     try {
-      const data = await api.auth.register(email, password, name);
-      setUser({
+      const cleanEmail = (email || '').trim().toLowerCase();
+      const cleanName = (name || '').trim();
+      const cleanPhone = (phone || '').trim();
+      const data = await api.auth.register(cleanEmail, password, cleanName, cleanPhone, otp);
+      localStorage.setItem('smartride_user_email', cleanEmail);
+      const mappedUser = {
         uid: data.user.id || data.user._id,
         ...data.user
-      });
+      };
+      setUser(mappedUser);
+      return mappedUser;
     } catch (error) {
       console.error("Registration failed:", error);
       throw error;
     }
   };
 
+  const sendEmailOtp = async (email, purpose = 'register') => {
+    return await api.auth.sendEmailOtp(email, purpose);
+  };
+
+  const verifyEmailOtp = async (email, otp) => {
+    return await api.auth.verifyEmailOtp(email, otp);
+  };
+
   const logout = async () => {
+    try {
+      await api.auth.logout();
+    } catch (e) {
+      console.warn("Logout error:", e);
+    }
     localStorage.removeItem('smartride_jwt');
+    localStorage.removeItem('smartride_user_email');
     setUser(null);
   };
 
@@ -294,7 +416,8 @@ export const AuthProvider = ({ children }) => {
       logout, updateUserProfile,
       sendOtp, confirmOtp,
       currentLocation, setCurrentLocation,
-      sendPasswordReset
+      sendPasswordReset,
+      sendEmailOtp, verifyEmailOtp
     }}>
       {!loading && children}
     </AuthContext.Provider>

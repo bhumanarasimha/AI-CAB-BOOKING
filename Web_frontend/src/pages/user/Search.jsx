@@ -29,6 +29,7 @@ const Search = () => {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [recentList, setRecentList] = useState(recentPlaces);
   const inputRef = useRef(null);
   const debounceTimer = useRef(null);
   const autocompleteService = useRef(null);
@@ -175,10 +176,12 @@ const Search = () => {
             {/* Recent Places */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Recent Places</h3>
-              <button style={{ background: 'none', border: 'none', color: 'var(--brand-cyan)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>Clear All</button>
+              {recentList.length > 0 && (
+                <button onClick={() => setRecentList([])} style={{ background: 'none', border: 'none', color: 'var(--brand-cyan)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>Clear All</button>
+              )}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {recentPlaces.map((place, i) => (
+              {recentList.length > 0 ? recentList.map((place, i) => (
                 <motion.button
                   key={i}
                   whileHover={{ background: 'var(--bg-elevated)', x: 4 }}
@@ -193,7 +196,11 @@ const Search = () => {
                     <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{place.address}</p>
                   </div>
                 </motion.button>
-              ))}
+              )) : (
+                <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                  No recent searches
+                </div>
+              )}
             </div>
           </motion.div>
         ) : (

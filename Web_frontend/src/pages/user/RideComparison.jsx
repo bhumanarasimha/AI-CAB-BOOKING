@@ -188,9 +188,12 @@ const RideComparison = () => {
       {/* Map Section */}
       <div style={{ height: '32%', position: 'relative', overflow: 'hidden' }}>
         <RouteMap origin={currentLocation?.coords} destination={destination} travelMode={activeCategory === 'transit' ? 'TRANSIT' : 'DRIVING'} />
-        <div style={{ position: 'absolute', top: '44px', left: '16px', zIndex: 50 }}>
-          <button onClick={() => navigate(-1)} className="btn-icon" style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'var(--bg-surface)', backdropFilter: 'blur(20px)', border: '1px solid var(--border-ui)' }}>
+        <div style={{ position: 'absolute', top: '44px', left: '16px', right: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 50 }}>
+          <button onClick={() => navigate(-1)} className="btn-icon" style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'var(--bg-surface)', backdropFilter: 'blur(20px)', border: '1px solid var(--border-ui)' }} aria-label="Back">
             <ArrowLeft size={18} color="var(--text-main)" />
+          </button>
+          <button onClick={() => setChatOpen(true)} className="btn-icon" style={{ height: '42px', padding: '0 14px', borderRadius: '14px', background: 'var(--bg-surface)', backdropFilter: 'blur(20px)', border: '1px solid var(--border-ui)', display: 'flex', alignItems: 'center', gap: '6px', color: '#00D8FF', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer' }} aria-label="Ask Chubby AI">
+            <Sparkles size={16} color="#00D8FF" /> Chubby AI
           </button>
         </div>
 
@@ -257,6 +260,18 @@ const RideComparison = () => {
         border: '1px solid var(--border-ui)',
         boxShadow: '0 -20px 60px rgba(0,0,0,0.3)'
       }}>
+        {/* Sticky Header with Back Button */}
+        <div style={{ padding: '10px 16px 6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-ui)', background: 'var(--bg-surface)' }}>
+          <button
+            onClick={() => navigate('/user/home')}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.08)', border: '1px solid var(--border-ui)', borderRadius: '12px', padding: '6px 14px', color: 'var(--text-main)', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer' }}
+          >
+            <ArrowLeft size={16} color="#00D8FF" /> Back
+          </button>
+          <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-main)' }}>Compare Fares</span>
+          <div style={{ width: '60px' }} />
+        </div>
+
         {/* Pull Handle */}
         <div style={{ display: 'flex', justifyContent: 'center', padding: '6px' }}>
           <div style={{ width: '36px', height: '4px', borderRadius: '99px', background: 'var(--border-ui)' }} />
@@ -369,7 +384,7 @@ const RideComparison = () => {
         </div>
 
         {/* Dynamic Options List */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }} className="no-scrollbar">
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', padding: '0 16px 80px', display: 'flex', flexDirection: 'column', gap: '10px' }} className="no-scrollbar">
           <AnimatePresence mode="wait">
             {isLoading ? (
               <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ height: '100%', display: 'flex', alignItems: 'center' }}>

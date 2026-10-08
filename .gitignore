@@ -1,39 +1,25 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+# Build & IDE files
+.gradle/
+.idea/
+build/
+app/build/
 local.properties
+*.iml
 
-# Dependencies
+# Node modules & build outputs
 node_modules/
+Backend/node_modules/
+Web_frontend/node_modules/
+Web_frontend/dist/
+frontend_android_app/node_modules/
+frontend_android_app/dist/
+frontend_android_app/.expo/
 
-# Environment variables
+# Environment files
 .env
-.env.*
+Backend/.env
+frontend_android_app/.env
 
-# Build output
-dist/
-dist-ssr/
-
-# Logs
-*.log
-
-# Python cache
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Expo & Scratch
-.expo/
-scratch/
-
+# OS files
+.DS_Store
+Thumbs.db

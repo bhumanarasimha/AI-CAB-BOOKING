@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ArrowLeft } from 'lucide-react';
 
 const slides = [
   {
@@ -88,12 +88,23 @@ const Onboarding = () => {
         </AnimatePresence>
       </div>
 
-      {/* Skip */}
-      <div className="flex justify-end p-6 pt-10 z-10">
+      {/* Top Nav: Back & Skip */}
+      <div className="flex justify-between items-center p-6 pt-10 z-10">
+        <button
+          onClick={() => {
+            if (idx > 0) setIdx(idx - 1);
+            else navigate('/splash');
+          }}
+          className="btn-icon"
+          style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          aria-label="Previous Slide or Back"
+        >
+          <ArrowLeft size={18} color="var(--text-muted)" />
+        </button>
         <button
           onClick={() => navigate('/login')}
-          style={{ color: '#4B5563', fontSize: '0.875rem', fontWeight: 500 }}
-          className="hover:text-white transition-colors"
+          style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: 600 }}
+          className="hover:opacity-80 transition-opacity"
         >
           Skip
         </button>
@@ -113,9 +124,9 @@ const Onboarding = () => {
             {/* Icon Container */}
             <div style={{
               width: '112px', height: '112px', borderRadius: '32px',
-              background: `linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))`,
-              border: `1px solid rgba(255,255,255,0.08)`,
-              boxShadow: `0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px ${s.accentColor}20`,
+              background: `var(--bg-surface)`,
+              border: `1px solid var(--border-ui)`,
+              boxShadow: `0 20px 60px rgba(0,0,0,0.1), 0 0 0 1px ${s.accentColor}20`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               marginBottom: '36px',
             }}>
@@ -131,7 +142,7 @@ const Onboarding = () => {
             <h2 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-main)', lineHeight: 1.15, marginBottom: '16px', whiteSpace: 'pre-line' }}>
               {s.title}
             </h2>
-            <p style={{ fontSize: '0.95rem', color: '#6B7280', lineHeight: 1.7, maxWidth: '280px' }}>
+            <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', lineHeight: 1.7, maxWidth: '280px' }}>
               {s.description}
             </p>
           </motion.div>
@@ -148,7 +159,7 @@ const Onboarding = () => {
                 height: '4px',
                 width: i === idx ? '28px' : '8px',
                 borderRadius: '99px',
-                background: i === idx ? s.accentColor : 'rgba(255,255,255,0.12)',
+                background: i === idx ? s.accentColor : 'var(--border-ui)',
                 transition: 'all 0.3s ease',
                 border: 'none', cursor: 'pointer',
               }}

@@ -151,7 +151,7 @@ class InMemoryStore {
     return user;
   }
 
-  async createUser({ email, password, name, photoURL, preferences, savedPlaces, emergencyContacts, commuteProfile }) {
+  async createUser({ email, password, name, phone, photoURL, preferences, savedPlaces, emergencyContacts, commuteProfile }) {
     if (!email) return null;
     const cleanEmail = email.toLowerCase().trim();
     
@@ -162,6 +162,7 @@ class InMemoryStore {
       if (name && (!existingUser.name || existingUser.name.startsWith('Demo'))) {
         existingUser.name = name;
       }
+      if (phone) existingUser.phone = phone;
       if (photoURL) existingUser.photoURL = photoURL;
       existingUser.updatedAt = new Date();
       this.saveUsers();
@@ -176,6 +177,7 @@ class InMemoryStore {
       id: id,
       email: cleanEmail,
       name: name || cleanEmail.split('@')[0],
+      phone: phone || '',
       photoURL: photoURL || '',
       password: hashedPassword,
       preferences: preferences || { theme: 'dark-ai', language: 'en' },
@@ -202,7 +204,7 @@ class InMemoryStore {
   async updateUser(id, updateData) {
     const user = await this.findUserById(id);
     if (!user) return null;
-    const fieldsToUpdate = ['name', 'photoURL', 'preferences', 'savedPlaces', 'emergencyContacts', 'commuteProfile'];
+    const fieldsToUpdate = ['name', 'phone', 'photoURL', 'preferences', 'savedPlaces', 'emergencyContacts', 'commuteProfile', 'isOnline', 'lastLogin', 'activeSessions'];
     fieldsToUpdate.forEach(field => {
       if (updateData[field] !== undefined) {
         user[field] = updateData[field];
@@ -211,6 +213,64 @@ class InMemoryStore {
     user.updatedAt = new Date();
     this.saveUsers();
     return user;
+  }
+
+  createSession({ userId, email, token, userAgent }) {
+    if (!this.sessions) this.sessions = [];
+    const user = this.users.find(u => (u._id || u.id) === userId || (u.email && email && u.email.toLowerCase() === email.toLowerCase()));
+    const sessionObj = {
+      sessionId: this.generateId(),
+      userId: user ? (user._id || user.id) : userId,
+      email: user ? user.email : email,
+      name: user ? user.name : (email ? email.split('@')[0] : 'User'),
+      token,
+      loginTime: new Date(),
+      userAgent: userAgent || 'Client'
+    };
+
+    if (user) {
+      user.isOnline = true;
+      user.lastLogin = new Date();
+      if (!user.activeSessions) user.activeSessions = [];
+      user.activeSessions.push(sessionObj);
+      this.saveUsers();
+    }
+
+    this.sessions.push(sessionObj);
+    return sessionObj;
+  }
+
+  removeSession(token) {
+    if (!token) return;
+    if (this.sessions) {
+      this.sessions = this.sessions.filter(s => s.token !== token);
+    }
+    this.users.forEach(u => {
+      if (u.activeSessions) {
+        u.activeSessions = u.activeSessions.filter(s => s.token !== token);
+        if (u.activeSessions.length === 0) {
+          u.isOnline = false;
+        }
+      }
+    });
+    this.saveUsers();
+  }
+
+  getActiveSessions() {
+    return this.sessions || [];
+  }
+
+  getActiveUsers() {
+    return this.users
+      .filter(u => u.isOnline || (u.activeSessions && u.activeSessions.length > 0))
+      .map(u => ({
+        id: u._id || u.id,
+        email: u.email,
+        name: u.name,
+        role: u.role || 'Rider',
+        lastLogin: u.lastLogin,
+        activeSessions: u.activeSessions || []
+      }));
   }
 
   async createRide(rideData) {

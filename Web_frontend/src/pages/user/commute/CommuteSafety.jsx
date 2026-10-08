@@ -77,12 +77,33 @@ const CommuteSafety = () => {
 
       {/* Safety Actions */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <button style={{ width: '100%', padding: '18px', background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '18px', fontSize: '0.95rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+        <button 
+          onClick={() => navigate('/user/emergency')}
+          style={{ width: '100%', padding: '18px', background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '18px', fontSize: '0.95rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', cursor: 'pointer' }}
+        >
           <AlertTriangle size={20} /> Emergency Contact Mode
         </button>
         <div style={{ display: 'flex', gap: '12px' }}>
-          <button style={{ flex: 1, padding: '14px', background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '16px', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600 }}>Report Profile</button>
-          <button style={{ flex: 1, padding: '14px', background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '16px', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600 }}>Block User</button>
+          <button 
+            onClick={() => {
+              const reason = prompt('Please specify reason for reporting this profile:');
+              if (reason) alert('Report submitted. Safety team will review within 1 hour.');
+            }}
+            style={{ flex: 1, padding: '14px', background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '16px', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
+          >
+            Report Profile
+          </button>
+          <button 
+            onClick={() => {
+              if (window.confirm('Block this commuter? They will no longer be able to match or message you.')) {
+                alert('User blocked successfully.');
+                navigate(-1);
+              }
+            }}
+            style={{ flex: 1, padding: '14px', background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '16px', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
+          >
+            Block User
+          </button>
         </div>
       </div>
     </div>

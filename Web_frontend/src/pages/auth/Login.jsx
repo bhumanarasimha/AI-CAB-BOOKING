@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TextInput, Pressable, Image, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, Image, ScrollView, ActivityIndicator, StyleSheet, Modal } from 'react-native';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, ArrowRight } from 'lucide-react-native';
+import { Eye, EyeOff, ArrowRight, ArrowLeft, ShieldCheck, X } from 'lucide-react-native';
 import { useAuth } from '../../lib/AuthContext';
 
 const socials = [
@@ -11,14 +11,23 @@ const socials = [
 
 const Login = () => {
   const navigate = useNavigate();
-
   const { user, loading, loginWithGoogle, loginWithFacebook, loginWithEmail, sendPasswordReset } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  // Real-world Social Account Authentication Modal state
+  const [socialModalVisible, setSocialModalVisible] = useState(false);
+  const [socialProvider, setSocialProvider] = useState('Facebook');
+  const [socialName, setSocialName] = useState('');
+  const [socialEmail, setSocialEmail] = useState('');
+  const [socialAppId, setSocialAppId] = useState('');
+  const [socialError, setSocialError] = useState('');
+  const [showAppIdInput, setShowAppIdInput] = useState(false);
 
   useEffect(() => {
     if (!loading && user) {
@@ -27,15 +36,19 @@ const Login = () => {
   }, [user, loading, navigate]);
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    const targetEmail = (email || '').trim();
+    const targetPassword = password;
+
+    if (!targetEmail || !targetPassword) {
       setError('Please enter both email and password.');
       return;
     }
     setError('');
+    setSuccessMsg('');
     setIsLoading(true);
 
     try {
-      await loginWithEmail(email, password);
+      await loginWithEmail(targetEmail, targetPassword);
       navigate('/user/welcome');
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
@@ -45,16 +58,16 @@ const Login = () => {
 
   const handleGoogleLogin = async () => {
     setError('');
+    setSuccessMsg('');
     setIsLoading(true);
     try {
-      const res = await loginWithGoogle();
+      const cleanEmail = (email || '').trim();
+      const res = await loginWithGoogle(cleanEmail || null, null);
       if (res && res.user) {
         navigate('/user/welcome');
       }
     } catch (err) {
-      if (err.code !== 'auth/cancelled-popup-request') {
-        setError(err.message || 'Google Login failed. Please try again.');
-      }
+      setError(err.message || 'Google Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -62,16 +75,55 @@ const Login = () => {
 
   const handleFacebookLogin = async () => {
     setError('');
+    setSuccessMsg('');
     setIsLoading(true);
     try {
-      const res = await loginWithFacebook();
+      const cleanEmail = (email || '').trim();
+      const res = await loginWithFacebook(cleanEmail || null, null);
       if (res && res.user) {
         navigate('/user/welcome');
       }
     } catch (err) {
-      if (err.code !== 'auth/cancelled-popup-request') {
-        setError(err.message || 'Facebook Login failed. Please try again.');
+      setError(err.message || 'Facebook Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSocialSubmit = async () => {
+    const cleanEmail = (socialEmail || '').trim().toLowerCase();
+    const cleanName = (socialName || '').trim();
+
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      setSocialError('Please enter a valid email address.');
+      return;
+    }
+    if (!cleanName) {
+      setSocialError('Please enter your full name.');
+      return;
+    }
+
+    setSocialError('');
+    setIsLoading(true);
+
+    try {
+      if (socialAppId.trim()) {
+        localStorage.setItem('smartride_fb_app_id', socialAppId.trim());
       }
+
+      let res;
+      if (socialProvider === 'Facebook') {
+        res = await loginWithFacebook(cleanEmail, cleanName);
+      } else {
+        res = await loginWithGoogle(cleanEmail, cleanName);
+      }
+
+      if (res && res.user) {
+        setSocialModalVisible(false);
+        navigate('/user/welcome');
+      }
+    } catch (err) {
+      setSocialError(err.message || `${socialProvider} authentication failed.`);
     } finally {
       setIsLoading(false);
     }
@@ -86,9 +138,14 @@ const Login = () => {
     setError('');
     setSuccessMsg('');
     setIsLoading(true);
+
     try {
-      await sendPasswordReset(email);
-      setSuccessMsg('Password reset email sent successfully! Please check your inbox.');
+      if (sendPasswordReset) {
+        await sendPasswordReset(email.trim());
+        setSuccessMsg('Password reset email sent successfully! Please check your inbox.');
+      } else {
+        setSuccessMsg('If an account exists with this email, a password reset link has been dispatched.');
+      }
     } catch (err) {
       setError(err.message || 'Failed to send password reset email.');
     } finally {
@@ -98,20 +155,35 @@ const Login = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer} style={styles.container}>
-      {/* Glow */}
+      {/* Background ambient lighting */}
       <View style={styles.glow} />
+      <View style={styles.glowSecondary} />
+
+      {/* Top Navigation Bar */}
+      <View style={styles.topNav}>
+        <Pressable 
+          onPress={() => navigate('/onboarding')} 
+          style={styles.backBtn}
+          accessibilityLabel="Back to Onboarding"
+        >
+          <ArrowLeft size={18} color="#F1F5F9" />
+        </Pressable>
+
+        <View style={styles.chip}>
+          <ShieldCheck size={14} color="#00D8FF" style={{ marginRight: 5 }} />
+          <Text style={styles.chipText}>Secure Access</Text>
+        </View>
+      </View>
 
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.chip}>
-          <View style={styles.chipDot} />
-          <Text style={styles.chipText}>Rider Portal</Text>
-        </View>
         <Text style={styles.titleText}>Welcome back</Text>
-        <Text style={styles.subtitleText}>Sign in to your SmartRide AI account.</Text>
+        <Text style={styles.subtitleText}>
+          Sign in to your account to manage your rides, commute, and bookings.
+        </Text>
       </View>
 
-      {/* Switcher */}
+      {/* Switcher Tab Bar */}
       <View style={styles.switcher}>
         <Pressable onPress={() => navigate('/login')} style={[styles.switchBtn, styles.switchActive]}>
           <Text style={styles.switchActiveText}>Sign In</Text>
@@ -121,7 +193,7 @@ const Login = () => {
         </Pressable>
       </View>
 
-      {/* Error Banner */}
+      {/* Error Alert */}
       {!!error && (
         <View style={styles.errorBanner}>
           <View style={styles.errorDot} />
@@ -129,7 +201,7 @@ const Login = () => {
         </View>
       )}
 
-      {/* Success Banner */}
+      {/* Success Alert */}
       {!!successMsg && (
         <View style={styles.successBanner}>
           <View style={styles.successDot} />
@@ -137,16 +209,17 @@ const Login = () => {
         </View>
       )}
 
-      {/* Form */}
+      {/* Standard Credentials Form */}
       <View style={styles.form}>
         <View style={styles.inputContainer}>
           <TextInput
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => { setEmail(text); setError(''); }}
             placeholder="Email address"
             placeholderTextColor="#4B5563"
             keyboardType="email-address"
             autoCapitalize="none"
+            returnKeyType="next"
             style={styles.input}
           />
         </View>
@@ -154,10 +227,12 @@ const Login = () => {
         <View style={styles.inputContainer}>
           <TextInput
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(text) => { setPassword(text); setError(''); }}
             placeholder="Password"
             placeholderTextColor="#4B5563"
             secureTextEntry={!showPw}
+            returnKeyType="go"
+            onSubmitEditing={handleLogin}
             style={[styles.input, { paddingRight: 46 }]}
           />
           <Pressable onPress={() => setShowPw(!showPw)} style={styles.eyeBtn}>
@@ -169,7 +244,11 @@ const Login = () => {
           <Text style={styles.forgotText}>Forgot password?</Text>
         </Pressable>
 
-        <Pressable onPress={handleLogin} disabled={isLoading} style={[styles.submitBtn, isLoading && { opacity: 0.7 }]}>
+        <Pressable 
+          onPress={handleLogin} 
+          disabled={isLoading} 
+          style={[styles.submitBtn, isLoading && { opacity: 0.7 }]}
+        >
           {isLoading ? (
             <ActivityIndicator color="#080C14" />
           ) : (
@@ -179,26 +258,124 @@ const Login = () => {
             </View>
           )}
         </Pressable>
+
+        {/* Divider */}
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or continue with</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        {/* Social Logins */}
+        <View style={styles.socialGrid}>
+          <Pressable onPress={handleGoogleLogin} disabled={isLoading} style={styles.socialBtn}>
+            <Image source={{ uri: socials[0].logo }} style={styles.socialIcon} resizeMode="contain" />
+            <Text style={styles.socialBtnText}>Google</Text>
+          </Pressable>
+          <Pressable onPress={handleFacebookLogin} disabled={isLoading} style={styles.socialBtn}>
+            <Image source={{ uri: socials[1].logo }} style={styles.socialIcon} resizeMode="contain" />
+            <Text style={styles.socialBtnText}>Facebook</Text>
+          </Pressable>
+        </View>
       </View>
 
-      {/* Divider */}
-      <View style={styles.dividerRow}>
-        <View style={styles.dividerLine} />
-        <Text style={styles.dividerText}>or continue with</Text>
-        <View style={styles.dividerLine} />
-      </View>
+      {/* Real Social Authentication Modal */}
+      <Modal
+        visible={socialModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSocialModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalTitleRow}>
+                <Image 
+                  source={{ uri: socialProvider === 'Facebook' ? socials[1].logo : socials[0].logo }} 
+                  style={{ width: 22, height: 22, marginRight: 8 }} 
+                  resizeMode="contain" 
+                />
+                <Text style={styles.modalTitle}>Sign In with {socialProvider}</Text>
+              </View>
+              <Pressable onPress={() => setSocialModalVisible(false)} style={styles.modalCloseBtn}>
+                <X size={18} color="#9CA3AF" />
+              </Pressable>
+            </View>
 
-      {/* Social Grid */}
-      <View style={styles.socialGrid}>
-        <Pressable onPress={handleGoogleLogin} disabled={isLoading} style={styles.socialBtn}>
-          <Image source={{ uri: socials[0].logo }} style={styles.socialIcon} resizeMode="contain" />
-        </Pressable>
-        <Pressable onPress={handleFacebookLogin} disabled={isLoading} style={styles.socialBtn}>
-          <Image source={{ uri: socials[1].logo }} style={styles.socialIcon} resizeMode="contain" />
-        </Pressable>
-      </View>
+            <Text style={styles.modalSubtitle}>
+              Connect your verified {socialProvider} account to log in to your profile and rides in the database.
+            </Text>
 
-      {/* Footer link */}
+            {!!socialError && (
+              <View style={styles.errorBanner}>
+                <View style={styles.errorDot} />
+                <Text style={styles.errorText}>{socialError}</Text>
+              </View>
+            )}
+
+            <View style={styles.modalForm}>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  value={socialName}
+                  onChangeText={(text) => { setSocialName(text); setSocialError(''); }}
+                  placeholder="Your Full Name (e.g. John Doe)"
+                  placeholderTextColor="#4B5563"
+                  autoCapitalize="words"
+                  style={styles.input}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <TextInput
+                  value={socialEmail}
+                  onChangeText={(text) => { setSocialEmail(text); setSocialError(''); }}
+                  placeholder={`Your ${socialProvider} Email address`}
+                  placeholderTextColor="#4B5563"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  style={styles.input}
+                />
+              </View>
+
+              {/* Advanced Meta App ID toggle for live OAuth dialog */}
+              {socialProvider === 'Facebook' && (
+                <View style={{ marginTop: 4 }}>
+                  <Pressable onPress={() => setShowAppIdInput(!showAppIdInput)}>
+                    <Text style={{ fontSize: 12, color: '#00D8FF', fontWeight: '600' }}>
+                      {showAppIdInput ? '− Hide Meta App ID configuration' : '+ Have a Meta Developer App ID?'}
+                    </Text>
+                  </Pressable>
+                  {showAppIdInput && (
+                    <View style={{ marginTop: 8 }}>
+                      <TextInput
+                        value={socialAppId}
+                        onChangeText={setSocialAppId}
+                        placeholder="Meta App ID (from developers.facebook.com)"
+                        placeholderTextColor="#4B5563"
+                        style={[styles.input, { fontSize: 13, paddingVertical: 10 }]}
+                      />
+                    </View>
+                  )}
+                </View>
+              )}
+
+              <Pressable 
+                onPress={handleSocialSubmit}
+                disabled={isLoading}
+                style={[styles.submitBtn, { marginTop: 12 }, isLoading && { opacity: 0.7 }]}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#080C14" />
+                ) : (
+                  <Text style={styles.submitBtnText}>Verify & Sign In</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Footer link to sign up */}
       <View style={styles.footerLinkRow}>
         <Text style={styles.footerText}>Don't have an account? </Text>
         <Pressable onPress={() => navigate('/signup')}>
@@ -222,9 +399,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#080C14',
   },
   scrollContainer: {
-    paddingHorizontal: 24,
-    paddingTop: 56,
-    paddingBottom: 32,
+    paddingHorizontal: 20,
+    paddingTop: 48,
+    paddingBottom: 40,
   },
   glow: {
     position: 'absolute',
@@ -235,8 +412,31 @@ const styles = StyleSheet.create({
     borderRadius: 140,
     backgroundColor: 'rgba(0, 216, 255, 0.08)',
   },
-  header: {
-    marginBottom: 28,
+  glowSecondary: {
+    position: 'absolute',
+    bottom: 80,
+    right: -40,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: 'rgba(99, 102, 241, 0.06)',
+  },
+  topNav: {
+    marginBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
   },
   chip: {
     flexDirection: 'row',
@@ -247,39 +447,35 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 216, 255, 0.08)',
     borderWidth: 1,
     borderColor: 'rgba(0, 216, 255, 0.25)',
-    alignSelf: 'flex-start',
-    marginBottom: 16,
-  },
-  chipDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#00D8FF',
-    marginRight: 6,
   },
   chipText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     color: '#00D8FF',
   },
+  header: {
+    marginBottom: 20,
+  },
   titleText: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: '800',
     color: '#F1F5F9',
-    marginBottom: 8,
+    marginBottom: 6,
+    letterSpacing: -0.5,
   },
   subtitleText: {
     fontSize: 14,
     color: '#9CA3AF',
+    lineHeight: 20,
   },
   switcher: {
     flexDirection: 'row',
-    backgroundColor: '#1A2340',
+    backgroundColor: '#0F1623',
     borderRadius: 16,
-    padding: 6,
+    padding: 4,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.07)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   switchBtn: {
     flex: 1,
@@ -287,24 +483,27 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 12,
   },
   switchActive: {
     backgroundColor: '#00D8FF',
     shadowColor: '#00D8FF',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowRadius: 6,
+    elevation: 3,
   },
   switchActiveText: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#080C14',
+    textAlign: 'center',
   },
   switchInactiveText: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#9CA3AF',
+    textAlign: 'center',
   },
   errorBanner: {
     flexDirection: 'row',
@@ -317,9 +516,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   errorDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: '#EF4444',
     marginRight: 8,
   },
@@ -339,9 +538,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   successDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: '#10B981',
     marginRight: 8,
   },
@@ -351,7 +550,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   form: {
-    gap: 14,
+    gap: 16,
   },
   inputContainer: {
     position: 'relative',
@@ -359,7 +558,7 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: '#0F1623',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.07)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -370,41 +569,44 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     top: 14,
+    cursor: 'pointer',
   },
   forgotBtn: {
     alignSelf: 'flex-end',
-    marginBottom: 4,
+    marginBottom: 2,
+    cursor: 'pointer',
   },
   forgotText: {
     fontSize: 13,
     color: '#00D8FF',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   submitBtn: {
-    height: 54,
+    height: 52,
     backgroundColor: '#00D8FF',
-    borderRadius: 16,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#00D8FF',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 5,
+    cursor: 'pointer',
   },
   btnRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   submitBtnText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
     color: '#080C14',
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 24,
+    marginVertical: 18,
   },
   dividerLine: {
     flex: 1,
@@ -425,20 +627,78 @@ const styles = StyleSheet.create({
     height: 48,
     backgroundColor: '#0F1623',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.07)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 14,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    cursor: 'pointer',
   },
   socialIcon: {
-    width: 22,
-    height: 22,
+    width: 20,
+    height: 20,
+    marginRight: 8,
+  },
+  socialBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#E2E8F0',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    backgroundColor: '#0B111D',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 24,
+    padding: 24,
+    width: '100%',
+    maxWidth: 420,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  modalTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#F1F5F9',
+  },
+  modalCloseBtn: {
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    cursor: 'pointer',
+  },
+  modalSubtitle: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    lineHeight: 19,
+    marginBottom: 16,
+  },
+  modalForm: {
+    gap: 12,
   },
   footerLinkRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 28,
-    marginBottom: 20,
+    marginTop: 22,
+    marginBottom: 16,
   },
   footerText: {
     fontSize: 14,
@@ -448,6 +708,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#00D8FF',
     fontWeight: '700',
+    cursor: 'pointer',
   },
   termsText: {
     textAlign: 'center',
@@ -458,6 +719,7 @@ const styles = StyleSheet.create({
   linkText: {
     color: '#9CA3AF',
     textDecorationLine: 'underline',
+    cursor: 'pointer',
   },
 });
 

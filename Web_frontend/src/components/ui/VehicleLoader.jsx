@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.05)',
     alignItems: 'center',
-    justify: 'center',
+    justifyContent: 'center',
     position: 'relative',
     overflow: 'hidden',
   },

@@ -30,6 +30,7 @@ import PerformanceTest from './pages/user/PerformanceTest';
 import HelpCenter from './pages/user/HelpCenter';
 import Reviews from './pages/user/Reviews';
 import Welcome from './pages/user/Welcome';
+import MyRides from './pages/user/MyRides';
 import CommuteDashboard from './pages/user/commute/CommuteDashboard';
 import CreateCommuteProfile from './pages/user/commute/CreateCommuteProfile';
 import CommuteMatchResults from './pages/user/commute/CommuteMatchResults';
@@ -150,9 +151,9 @@ function App() {
   const { user, loading } = useAuth();
   
   useEffect(() => {
-    // Load saved theme
-    const savedTheme = localStorage.getItem('app-theme') || 'dark-ai';
-    const vars = themeVars[savedTheme];
+    // Load saved theme (defaults to bright light mode)
+    const savedTheme = localStorage.getItem('app-theme') || 'light';
+    const vars = themeVars[savedTheme] || themeVars['light'];
     if (vars) {
       Object.entries(vars).forEach(([key, value]) => {
         document.documentElement.style.setProperty(key, value);
@@ -209,6 +210,7 @@ function App() {
           <Route path="/user/reviews" element={<Reviews />} />
           
           <Route path="/user/rides" element={<CommuteDashboard />} />
+          <Route path="/user/my-rides" element={<MyRides />} />
           <Route path="/user/activity" element={<Activity />} />
 
           {/* Commute Flow */}

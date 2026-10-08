@@ -1,9 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
-import { Navigation, Car, Crosshair, Radio, Plus, Minus, Layers } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Navigation, Crosshair, Plus, Minus, Layers, Radio } from 'lucide-react';
 
+const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyDZBmGSgFQXoeoNlGpJvu3A4S5p1Zkt3vU';
+
+// Premium Dark Cyber Map Styling for Google Maps
 const DARK_MAP_STYLE = [
   { elementType: "geometry", stylers: [{ color: "#090d16" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#090d16" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#090d16" }, { weight: 3 }] },
   { elementType: "labels.text.fill", stylers: [{ color: "#748290" }] },
   { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#00d8ff" }] },
   { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#4f657d" }] },
@@ -19,121 +22,322 @@ const DARK_MAP_STYLE = [
   { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#3e526a" }] }
 ];
 
-const INITIAL_CABS = [
-  { id: 1, type: 'SmartRide AI', name: 'SmartRide EV', x: 44, y: 36, icon: '⚡', color: '#00D8FF', angle: 45, rating: '4.9', eta: '2 min', fare: '₹149' },
-  { id: 2, type: 'Uber', name: 'Uber Go', x: 68, y: 30, icon: '🚗', color: '#FFFFFF', angle: 110, rating: '4.8', eta: '3 min', fare: '₹165' },
-  { id: 3, type: 'Ola', name: 'Ola Mini', x: 28, y: 55, icon: '🚕', color: '#10B981', angle: -25, rating: '4.7', eta: '4 min', fare: '₹155' },
-  { id: 4, type: 'Rapido', name: 'Rapido Bike', x: 76, y: 65, icon: '🏍️', color: '#FBBF24', angle: 85, rating: '4.9', eta: '1 min', fare: '₹59' },
-  { id: 5, type: 'Namma Yatri', name: 'Namma Auto', x: 52, y: 72, icon: '🛺', color: '#F59E0B', angle: -50, rating: '4.8', eta: '3 min', fare: '₹85' }
+// Clean Modern Daylight Light Map Styling for Google Maps
+const LIGHT_MAP_STYLE = [
+  { elementType: "geometry", stylers: [{ color: "#f8fafc" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#ffffff" }, { weight: 3 }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#475569" }] },
+  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#0284c7" }] },
+  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#64748b" }] },
+  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#e2f2e9" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#e2e8f0" }] },
+  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#334155" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+  { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#00b4d8" }, { weight: 0.8 }] },
+  { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#0284c7" }] },
+  { featureType: "transit", elementType: "geometry", stylers: [{ color: "#f1f5f9" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#dbeafe" }] },
+  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#0284c7" }] }
 ];
 
-const InteractiveMap = ({ center, userLocation, onLocationChange, onSelectCab }) => {
+const INITIAL_CABS = [
+  { id: 1, type: 'SmartRide AI', name: 'SmartRide EV', latOffset: 0.0022, lngOffset: -0.0018, icon: '⚡', color: '#00D8FF', rating: '4.9', eta: '2 min', fare: '₹149' },
+  { id: 2, type: 'Uber', name: 'Uber Go', latOffset: -0.0025, lngOffset: 0.0031, icon: '🚗', color: '#FFFFFF', rating: '4.8', eta: '3 min', fare: '₹165' },
+  { id: 3, type: 'Ola', name: 'Ola Mini', latOffset: 0.0035, lngOffset: 0.0022, icon: '🚕', color: '#10B981', rating: '4.7', eta: '4 min', fare: '₹155' },
+  { id: 4, type: 'Rapido', name: 'Rapido Bike', latOffset: -0.0018, lngOffset: -0.0035, icon: '🏍️', color: '#FBBF24', rating: '4.9', eta: '1 min', fare: '₹59' },
+  { id: 5, type: 'Namma Yatri', name: 'Namma Auto', latOffset: 0.0015, lngOffset: 0.0042, icon: '🛺', color: '#F59E0B', rating: '4.8', eta: '3 min', fare: '₹85' }
+];
+
+// Helper to load Google Maps SDK dynamically if not yet ready
+const loadGoogleMapsSDK = () => {
+  return new Promise((resolve, reject) => {
+    if (typeof window !== 'undefined' && window.google && window.google.maps) {
+      return resolve(window.google.maps);
+    }
+    const existing = document.getElementById('google-maps-js-sdk');
+    if (existing) {
+      existing.addEventListener('load', () => resolve(window.google?.maps));
+      existing.addEventListener('error', reject);
+      return;
+    }
+    const script = document.createElement('script');
+    script.id = 'google-maps-js-sdk';
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&libraries=places,geometry`;
+    script.async = true;
+    script.onload = () => resolve(window.google?.maps);
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+};
+
+const InteractiveMap = ({ 
+  center, 
+  userLocation, 
+  onLocationChange, 
+  onSelectCab, 
+  showMarkerPin = false,
+  showControls = false,
+  theme = 'dark'
+}) => {
   const mapContainerRef = useRef(null);
-  const googleMapInstanceRef = useRef(null);
-  const [useGoogleMaps, setUseGoogleMaps] = useState(false);
-  const [cabs, setCabs] = useState(INITIAL_CABS);
+  const mapInstanceRef = useRef(null);
+  const userMarkerRef = useRef(null);
+  const userCircleRef = useRef(null);
+  const cabMarkersRef = useRef([]);
+
+  const [isMapReady, setIsMapReady] = useState(false);
+  const [mapTheme, setMapTheme] = useState(theme); // 'dark' | 'standard' | 'satellite'
   const [selectedCab, setSelectedCab] = useState(null);
+  const [activeCoords, setActiveCoords] = useState(center || userLocation || { lat: 13.0118, lng: 80.0526 });
   const [zoomLevel, setZoomLevel] = useState(15);
+  const [locationAccuracy, setLocationAccuracy] = useState(null);
 
-  const coords = center || userLocation || { lat: 13.0118, lng: 80.0526 };
-
-  // 1. Attempt Google Maps SDK Mount if available
+  // 1. Live GPS tracking: detect present user location
   useEffect(() => {
-    let checkInterval;
-    const tryInitGoogleMaps = () => {
-      if (typeof window !== 'undefined' && window.google && window.google.maps && mapContainerRef.current) {
-        try {
-          if (!googleMapInstanceRef.current) {
-            const map = new window.google.maps.Map(mapContainerRef.current, {
-              center: { lat: coords.lat, lng: coords.lng },
-              zoom: zoomLevel,
-              styles: DARK_MAP_STYLE,
-              disableDefaultUI: true,
-              zoomControl: false,
-              mapTypeControl: false,
-              streetViewControl: false,
-              fullscreenControl: false,
-              gestureHandling: 'greedy'
-            });
+    if (!navigator.geolocation) return;
 
-            googleMapInstanceRef.current = map;
-            setUseGoogleMaps(true);
+    const onSuccess = (pos) => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const accuracy = pos.coords.accuracy;
+      setLocationAccuracy(accuracy);
 
-            // User Location Marker
-            new window.google.maps.Marker({
-              position: { lat: coords.lat, lng: coords.lng },
-              map,
-              title: "Your Location",
-              icon: {
-                path: window.google.maps.SymbolPath.CIRCLE,
-                scale: 8,
-                fillColor: '#00D8FF',
-                fillOpacity: 1,
-                strokeColor: '#FFFFFF',
-                strokeWeight: 3,
-              }
-            });
+      const newCoords = { lat, lng };
+      setActiveCoords(newCoords);
 
-            if (onLocationChange) {
-              map.addListener('center_changed', () => {
-                const c = map.getCenter();
-                onLocationChange({ lat: c.lat(), lng: c.lng() });
-              });
-            }
-          } else {
-            googleMapInstanceRef.current.setCenter({ lat: coords.lat, lng: coords.lng });
-          }
-        } catch (e) {
-          console.warn("Google Maps init fallback to dark live wallpaper:", e);
-          setUseGoogleMaps(false);
-        }
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.panTo(newCoords);
+      }
+      if (onLocationChange) {
+        onLocationChange(newCoords);
       }
     };
 
-    tryInitGoogleMaps();
-    checkInterval = setInterval(tryInitGoogleMaps, 1000);
-    return () => clearInterval(checkInterval);
-  }, [coords.lat, coords.lng, zoomLevel, onLocationChange]);
+    const onError = (err) => {
+      console.warn("GPS Geolocation notice:", err.message);
+    };
 
-  // 2. Animate nearby cabs to simulate real-time roaming traffic
+    // Quick initial position
+    navigator.geolocation.getCurrentPosition(onSuccess, onError, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 10000
+    });
+
+    // Continuous real-time location watch
+    const watchId = navigator.geolocation.watchPosition(onSuccess, onError, {
+      enableHighAccuracy: true,
+      maximumAge: 5000
+    });
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [onLocationChange]);
+
+  // Sync external center updates
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCabs(prev => prev.map(cab => {
-        const dx = (Math.random() - 0.49) * 2.2;
-        const dy = (Math.random() - 0.49) * 2.2;
-        const newX = Math.max(12, Math.min(88, cab.x + dx));
-        const newY = Math.max(15, Math.min(85, cab.y + dy));
-        const newAngle = Math.round(Math.atan2(dy, dx) * (180 / Math.PI));
-        return {
-          ...cab,
-          x: newX,
-          y: newY,
-          angle: newAngle
-        };
-      }));
-    }, 2600);
+    if (center && (center.lat !== activeCoords.lat || center.lng !== activeCoords.lng)) {
+      setActiveCoords(center);
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.panTo(center);
+      }
+    }
+  }, [center]);
 
-    return () => clearInterval(interval);
+  // 2. Initialize real Google Map
+  useEffect(() => {
+    let isCancelled = false;
+
+    loadGoogleMapsSDK()
+      .then((maps) => {
+        if (isCancelled || !mapContainerRef.current) return;
+
+        if (!mapInstanceRef.current) {
+          const map = new maps.Map(mapContainerRef.current, {
+            center: { lat: activeCoords.lat, lng: activeCoords.lng },
+            zoom: zoomLevel,
+            styles: mapTheme === 'dark' ? DARK_MAP_STYLE : LIGHT_MAP_STYLE,
+            mapTypeId: mapTheme === 'satellite' ? 'hybrid' : 'roadmap',
+            disableDefaultUI: true,
+            zoomControl: false,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false,
+            gestureHandling: 'greedy'
+          });
+
+          mapInstanceRef.current = map;
+          setIsMapReady(true);
+
+          // Listen to user map interactions
+          if (onLocationChange) {
+            map.addListener('idle', () => {
+              const c = map.getCenter();
+              onLocationChange({ lat: c.lat(), lng: c.lng() });
+            });
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn("Google Maps load notice:", err);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
   }, []);
 
-  // Compute OpenStreetMap / CartoDB dark tile URL based on current coordinates
-  const latRad = (coords.lat * Math.PI) / 180;
-  const n = Math.pow(2, zoomLevel);
-  const tileX = Math.floor(((coords.lng + 180) / 360) * n);
-  const tileY = Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n);
+  // 3. Sync theme prop from parent
+  useEffect(() => {
+    if (theme) {
+      setMapTheme(theme);
+    }
+  }, [theme]);
+
+  // Update map style / theme when user toggles or theme changes
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    const map = mapInstanceRef.current;
+
+    if (mapTheme === 'dark') {
+      map.setMapTypeId('roadmap');
+      map.setOptions({ styles: DARK_MAP_STYLE });
+    } else if (mapTheme === 'satellite') {
+      map.setMapTypeId('hybrid');
+      map.setOptions({ styles: null });
+    } else {
+      map.setMapTypeId('roadmap');
+      map.setOptions({ styles: LIGHT_MAP_STYLE });
+    }
+  }, [mapTheme]);
+
+  // 4. Render User Location Radar & Beacon on Google Map
+  useEffect(() => {
+    if (!mapInstanceRef.current || !window.google?.maps) return;
+    const maps = window.google.maps;
+    const map = mapInstanceRef.current;
+
+    // Remove existing user marker & circle
+    if (userMarkerRef.current) userMarkerRef.current.setMap(null);
+    if (userCircleRef.current) userCircleRef.current.setMap(null);
+
+    // Glowing translucent accuracy radar circle
+    userCircleRef.current = new maps.Circle({
+      strokeColor: '#007AFF',
+      strokeOpacity: 0.8,
+      strokeWeight: 2,
+      fillColor: '#007AFF',
+      fillOpacity: 0.18,
+      map,
+      center: activeCoords,
+      radius: Math.max(30, Math.min(100, locationAccuracy || 50))
+    });
+
+    // High-visibility Official Blue Dot user location beacon
+    userMarkerRef.current = new maps.Marker({
+      position: activeCoords,
+      map,
+      title: "Your Present Location",
+      zIndex: 999,
+      icon: {
+        path: maps.SymbolPath.CIRCLE,
+        scale: 10,
+        fillColor: '#1A73E8',
+        fillOpacity: 1,
+        strokeColor: '#FFFFFF',
+        strokeWeight: 3.5
+      }
+    });
+  }, [activeCoords, locationAccuracy, isMapReady]);
+
+  // 5. Render nearby real-time cabs on Google Map
+  useEffect(() => {
+    if (!mapInstanceRef.current || !window.google?.maps) return;
+    const maps = window.google.maps;
+    const map = mapInstanceRef.current;
+
+    // Clean up old markers
+    cabMarkersRef.current.forEach(m => m.setMap(null));
+    cabMarkersRef.current = [];
+
+    INITIAL_CABS.forEach(cab => {
+      const cabPos = {
+        lat: activeCoords.lat + cab.latOffset,
+        lng: activeCoords.lng + cab.lngOffset
+      };
+
+      const marker = new maps.Marker({
+        position: cabPos,
+        map,
+        title: `${cab.name} (${cab.type})`,
+        zIndex: 10,
+        icon: {
+          path: maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 5,
+          fillColor: cab.color === '#FFFFFF' ? '#E2E8F0' : cab.color,
+          fillOpacity: 1,
+          strokeColor: '#080C14',
+          strokeWeight: 1.5,
+          rotation: Math.random() * 360
+        }
+      });
+
+      marker.addListener('click', () => {
+        setSelectedCab(cab);
+        if (onSelectCab) onSelectCab(cab);
+      });
+
+      cabMarkersRef.current.push(marker);
+    });
+
+    return () => {
+      cabMarkersRef.current.forEach(m => m.setMap(null));
+    };
+  }, [activeCoords, isMapReady, onSelectCab]);
+
+  // Recenter Google Map to user's exact present GPS location
+  const handleRecenter = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          const freshCoords = { lat, lng };
+          setActiveCoords(freshCoords);
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.panTo(freshCoords);
+            mapInstanceRef.current.setZoom(16);
+          }
+        },
+        () => {
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.panTo(activeCoords);
+            mapInstanceRef.current.setZoom(16);
+          }
+        },
+        { enableHighAccuracy: true }
+      );
+    } else if (mapInstanceRef.current) {
+      mapInstanceRef.current.panTo(activeCoords);
+      mapInstanceRef.current.setZoom(16);
+    }
+  };
 
   const handleZoom = (delta) => {
-    const nextZoom = Math.min(17, Math.max(13, zoomLevel + delta));
-    setZoomLevel(nextZoom);
-    if (googleMapInstanceRef.current) {
-      googleMapInstanceRef.current.setZoom(nextZoom);
+    if (mapInstanceRef.current) {
+      const currentZoom = mapInstanceRef.current.getZoom() || zoomLevel;
+      const nextZoom = Math.min(19, Math.max(12, currentZoom + delta));
+      mapInstanceRef.current.setZoom(nextZoom);
+      setZoomLevel(nextZoom);
+    } else {
+      setZoomLevel(prev => Math.min(19, Math.max(12, prev + delta)));
     }
   };
 
   return (
     <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'hidden', background: '#080C14', userSelect: 'none' }}>
       
-      {/* Google Maps Container (Active when SDK loaded) */}
+      {/* 1. Real Google Maps Container */}
       <div 
         ref={mapContainerRef} 
         style={{ 
@@ -141,300 +345,234 @@ const InteractiveMap = ({ center, userLocation, onLocationChange, onSelectCab })
           inset: 0, 
           width: '100%', 
           height: '100%', 
-          zIndex: useGoogleMaps ? 1 : 0,
-          opacity: useGoogleMaps ? 1 : 0,
-          transition: 'opacity 0.6s ease'
+          zIndex: 1
         }} 
       />
 
-      {/* Dynamic Live Wallpaper Map (Active by default or alongside Google Maps) */}
-      {!useGoogleMaps && (
-        <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1, overflow: 'hidden' }}>
-          
-          {/* Real CartoDB Dark Matter Street Tile Grid */}
+      {/* Center Fixed Pin (for MapPicker / destination choosing) */}
+      {showMarkerPin && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -100%)',
+          zIndex: 20,
+          pointerEvents: 'none'
+        }}>
           <div style={{
-            position: 'absolute',
-            inset: '-20%',
-            width: '140%',
-            height: '140%',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gridTemplateRows: 'repeat(3, 1fr)',
-            opacity: 0.94,
-            filter: 'contrast(1.2) brightness(0.92)',
+            width: '28px',
+            height: '28px',
+            borderRadius: '50% 50% 50% 0',
+            background: '#00D8FF',
+            transform: 'rotate(-45deg)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 0 20px #00D8FF'
           }}>
-            {[-1, 0, 1].flatMap(dy => 
-              [-1, 0, 1].map(dx => (
-                <div 
-                  key={`${dx}_${dy}`}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    backgroundImage: `url(https://a.basemaps.cartocdn.com/rastertiles/dark_all/${zoomLevel}/${tileX + dx}/${tileY + dy}.png)`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundColor: '#090D16'
-                  }}
-                />
-              ))
-            )}
+            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#080C14' }} />
           </div>
+        </div>
+      )}
 
-          {/* Glowing Cyberpunk Arterial Routes & Street Vectors */}
-          <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', opacity: 0.5 }}>
-            <defs>
-              <linearGradient id="routeGlow" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#00D8FF" stopOpacity="0.8" />
-                <stop offset="50%" stopColor="#6366F1" stopOpacity="0.6" />
-                <stop offset="100%" stopColor="#10B981" stopOpacity="0.4" />
-              </linearGradient>
-              <filter id="neonBlur" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="3" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-            </defs>
-
-            {/* Simulated Live Traffic Arteries */}
-            <path d="M -60 180 Q 200 240 500 210" stroke="url(#routeGlow)" strokeWidth="3" fill="none" filter="url(#neonBlur)" strokeDasharray="8 4" opacity="0.8" />
-            <path d="M 140 -20 Q 220 340 260 900" stroke="#00D8FF" strokeWidth="2.5" fill="none" opacity="0.6" strokeDasharray="6 4" />
-            <path d="M -20 460 Q 220 420 500 520" stroke="#10B981" strokeWidth="2" fill="none" opacity="0.6" />
-            <path d="M 340 80 Q 200 480 90 900" stroke="#6366F1" strokeWidth="2" fill="none" opacity="0.4" />
-          </svg>
-
-          {/* Chembarambakkam Area Landmarks & Road Badges */}
-          <div style={{ position: 'absolute', top: '24%', left: '18%', pointerEvents: 'none', zIndex: 6, opacity: 0.85 }}>
-            <div style={{ background: 'rgba(9, 13, 22, 0.8)', border: '1px solid rgba(0, 216, 255, 0.25)', borderRadius: '6px', padding: '2px 7px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#00D8FF' }} />
-              <span style={{ fontSize: '0.62rem', color: '#9CA3AF', fontWeight: 600 }}>NH 48 Bangalore Hwy</span>
-            </div>
-          </div>
-
-          <div style={{ position: 'absolute', top: '38%', right: '14%', pointerEvents: 'none', zIndex: 6, opacity: 0.85 }}>
-            <div style={{ background: 'rgba(9, 13, 22, 0.8)', border: '1px solid rgba(99, 102, 241, 0.25)', borderRadius: '6px', padding: '2px 7px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#6366F1' }} />
-              <span style={{ fontSize: '0.62rem', color: '#9CA3AF', fontWeight: 600 }}>Saveetha Tech Park</span>
-            </div>
-          </div>
-
-          {/* User Location Center Beacon & Sonar Radar Waves */}
-          <div style={{
+      {/* Floating Selected Cab Card */}
+      {selectedCab && (
+        <div 
+          onClick={() => {
+            if (onSelectCab) onSelectCab(selectedCab);
+          }}
+          style={{
             position: 'absolute',
-            top: '42%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            pointerEvents: 'none',
-            zIndex: 10
-          }}>
-            {/* Sonar Radar Wave 1 */}
+            bottom: '120px',
+            left: '20px',
+            right: '20px',
+            maxWidth: '380px',
+            margin: '0 auto',
+            background: 'rgba(10, 16, 28, 0.94)',
+            backdropFilter: 'blur(20px)',
+            border: `1.5px solid ${selectedCab.color}`,
+            borderRadius: '16px',
+            padding: '14px 18px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            boxShadow: '0 12px 36px rgba(0,0,0,0.7)',
+            zIndex: 30,
+            cursor: 'pointer'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              width: '130px',
-              height: '130px',
-              transform: 'translate(-50%, -50%)',
-              borderRadius: '50%',
-              border: '1.5px solid rgba(0, 216, 255, 0.45)',
-              background: 'radial-gradient(circle, rgba(0, 216, 255, 0.14) 0%, transparent 70%)',
-              animation: 'ping 2.8s cubic-bezier(0, 0, 0.2, 1) infinite'
-            }} />
-
-            {/* Sonar Radar Wave 2 */}
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              width: '220px',
-              height: '220px',
-              transform: 'translate(-50%, -50%)',
-              borderRadius: '50%',
-              border: '1px solid rgba(0, 216, 255, 0.22)',
-              animation: 'ping 4.2s cubic-bezier(0, 0, 0.2, 1) infinite',
-              animationDelay: '1.4s'
-            }} />
-
-            {/* Center Pulsing GPS Dot */}
-            <div style={{
-              position: 'relative',
-              width: '22px',
-              height: '22px',
-              borderRadius: '50%',
-              background: '#00D8FF',
-              boxShadow: '0 0 20px #00D8FF, 0 0 45px rgba(0, 216, 255, 0.7)',
-              border: '3.5px solid #FFFFFF',
+              width: '42px',
+              height: '42px',
+              borderRadius: '12px',
+              background: 'rgba(255,255,255,0.06)',
+              border: `1px solid ${selectedCab.color}`,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              fontSize: '20px'
             }}>
-              <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#080C14' }} />
+              {selectedCab.icon}
             </div>
-
-            {/* Location Label Floating Pill */}
-            <div style={{
-              position: 'absolute',
-              top: '28px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: 'rgba(8, 12, 20, 0.88)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(0, 216, 255, 0.35)',
-              borderRadius: '99px',
-              padding: '3px 10px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              whiteSpace: 'nowrap',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.6)'
-            }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#00D8FF', animation: 'pulse 1.5s infinite' }} />
-              <span style={{ fontSize: '0.62rem', fontWeight: 800, color: '#F1F5F9', letterSpacing: '0.04em' }}>YOU ARE HERE</span>
-            </div>
-          </div>
-
-          {/* Animated Cruising Cabs Around You */}
-          {cabs.map(cab => (
-            <div 
-              key={cab.id}
-              onClick={() => setSelectedCab(selectedCab?.id === cab.id ? null : cab)}
-              style={{
-                position: 'absolute',
-                top: `${cab.y}%`,
-                left: `${cab.x}%`,
-                transform: `translate(-50%, -50%) rotate(${cab.angle}deg)`,
-                transition: 'top 2.6s linear, left 2.6s linear, transform 1s ease',
-                pointerEvents: 'auto',
-                cursor: 'pointer',
-                zIndex: selectedCab?.id === cab.id ? 20 : 8
-              }}
-            >
-              <div style={{
-                position: 'relative',
-                width: '34px',
-                height: '34px',
-                borderRadius: '11px',
-                background: 'rgba(15, 22, 35, 0.95)',
-                border: `1.8px solid ${cab.color}`,
-                boxShadow: `0 0 16px ${cab.color}66`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '16px'
-              }}>
-                {cab.icon}
-                {/* Cab Headlight Beam */}
-                <div style={{
-                  position: 'absolute',
-                  top: '-12px',
-                  width: '16px',
-                  height: '16px',
-                  background: `radial-gradient(ellipse at bottom, ${cab.color}77 0%, transparent 80%)`,
-                  borderRadius: '50% 50% 0 0',
-                  pointerEvents: 'none'
-                }} />
+            <div>
+              <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF' }}>{selectedCab.name}</div>
+              <div style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '2px' }}>
+                <span style={{ color: '#00D8FF' }}>ETA {selectedCab.eta}</span> · ★ {selectedCab.rating}
               </div>
-
-              {/* Floating Cab Info Tooltip when tapped */}
-              {selectedCab?.id === cab.id && (
-                <div 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (onSelectCab) onSelectCab(cab);
-                  }}
-                  style={{
-                    position: 'absolute',
-                    top: '-60px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: 'rgba(10, 16, 28, 0.95)',
-                    backdropFilter: 'blur(16px)',
-                    border: `1px solid ${cab.color}`,
-                    borderRadius: '12px',
-                    padding: '6px 12px',
-                    whiteSpace: 'nowrap',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
-                    pointerEvents: 'auto',
-                    zIndex: 25
-                  }}
-                >
-                  <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span>{cab.name}</span>
-                    <span style={{ color: '#FBBF24' }}>★ {cab.rating}</span>
-                  </div>
-                  <div style={{ fontSize: '0.62rem', color: '#9CA3AF', marginTop: '2px', display: 'flex', gap: '8px' }}>
-                    <span style={{ color: '#00D8FF' }}>ETA {cab.eta}</span>
-                    <span style={{ color: '#10B981', fontWeight: 700 }}>Est. {cab.fare}</span>
-                  </div>
-                </div>
-              )}
             </div>
-          ))}
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#10B981' }}>{selectedCab.fare}</div>
+            <div style={{ fontSize: '0.7rem', color: '#00D8FF', fontWeight: 700 }}>Tap to Book →</div>
+          </div>
+        </div>
+      )}
 
-          {/* Interactive Zoom Controls on Map */}
+      {/* Optional Top Floating Map Controls (when standalone) */}
+      {showControls && (
+        <>
           <div style={{
             position: 'absolute',
-            top: '120px',
+            top: '110px',
             right: '16px',
             zIndex: 15,
             display: 'flex',
             flexDirection: 'column',
             gap: '8px'
           }}>
+            {/* Recenter My Location Button */}
+            <button
+              onClick={handleRecenter}
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '12px',
+                background: 'rgba(10, 16, 28, 0.9)',
+                backdropFilter: 'blur(16px)',
+                border: '1.5px solid rgba(0, 216, 255, 0.4)',
+                color: '#00D8FF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 6px 18px rgba(0,0,0,0.5)',
+                transition: 'all 0.2s ease'
+              }}
+              title="Recenter to My Present Location"
+            >
+              <Crosshair size={20} color="#00D8FF" />
+            </button>
+
+            {/* Map Type Switcher (Dark / Standard / Satellite) */}
+            <button
+              onClick={() => {
+                if (mapTheme === 'dark') setMapTheme('satellite');
+                else if (mapTheme === 'satellite') setMapTheme('standard');
+                else setMapTheme('dark');
+              }}
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '12px',
+                background: 'rgba(10, 16, 28, 0.9)',
+                backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: '#F1F5F9',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 6px 18px rgba(0,0,0,0.5)'
+              }}
+              title={`Current: ${mapTheme.toUpperCase()} - Tap to switch to ${mapTheme === 'dark' ? 'Satellite' : (mapTheme === 'satellite' ? 'Standard Google Map' : 'Dark Mode')}`}
+            >
+              <Layers size={18} color={mapTheme === 'satellite' ? '#10B981' : (mapTheme === 'dark' ? '#00D8FF' : '#F59E0B')} />
+            </button>
+
+            {/* Zoom In */}
             <button
               onClick={() => handleZoom(1)}
               style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '10px',
-                background: 'rgba(12, 18, 30, 0.85)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
+                width: '40px',
+                height: '40px',
+                borderRadius: '12px',
+                background: 'rgba(10, 16, 28, 0.9)',
+                backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
                 color: '#F1F5F9',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
+                boxShadow: '0 6px 18px rgba(0,0,0,0.5)'
               }}
               title="Zoom In"
             >
-              <Plus size={16} color="#00D8FF" />
+              <Plus size={18} color="#00D8FF" />
             </button>
+
+            {/* Zoom Out */}
             <button
               onClick={() => handleZoom(-1)}
               style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '10px',
-                background: 'rgba(12, 18, 30, 0.85)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                color: '#F1F5F9',
+                width: '40px',
+                height: '40px',
+                borderRadius: '12px',
+                background: 'rgba(10, 16, 28, 0.9)',
+                backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: '#9CA3AF',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
+                boxShadow: '0 6px 18px rgba(0,0,0,0.5)'
               }}
               title="Zoom Out"
             >
-              <Minus size={16} color="#9CA3AF" />
+              <Minus size={18} color="#9CA3AF" />
             </button>
           </div>
 
-        </div>
+          {/* Floating Live GPS & Google Maps Status Pill */}
+          <div style={{
+            position: 'absolute',
+            top: '64px',
+            left: '16px',
+            zIndex: 15,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            background: 'rgba(8, 12, 20, 0.88)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(0, 216, 255, 0.3)',
+            borderRadius: '99px',
+            padding: '4px 10px',
+            boxShadow: '0 4px 14px rgba(0,0,0,0.6)',
+            pointerEvents: 'none'
+          }}>
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#00D8FF', animation: 'pulse 1.8s infinite' }} />
+            <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#00D8FF', letterSpacing: '0.04em' }}>
+              GOOGLE MAPS LIVE
+            </span>
+            <span style={{ fontSize: '0.62rem', color: '#9CA3AF' }}>
+              · {mapTheme === 'dark' ? 'Night View' : (mapTheme === 'satellite' ? 'Satellite View' : 'Standard View')}
+            </span>
+          </div>
+        </>
       )}
 
-      {/* Top and Bottom Subtle Map Vignettes */}
+      {/* Top and Bottom Subtle Vignettes for UI readability */}
       <div style={{
         position: 'absolute',
         top: 0,
         left: 0,
         right: 0,
-        height: '90px',
-        background: 'linear-gradient(to bottom, rgba(8, 12, 20, 0.8) 0%, transparent 100%)',
+        height: '80px',
+        background: mapTheme === 'dark'
+          ? 'linear-gradient(to bottom, rgba(8, 12, 20, 0.75) 0%, transparent 100%)'
+          : 'linear-gradient(to bottom, rgba(248, 250, 252, 0.8) 0%, transparent 100%)',
         pointerEvents: 'none',
         zIndex: 2
       }} />
@@ -444,8 +582,10 @@ const InteractiveMap = ({ center, userLocation, onLocationChange, onSelectCab })
         bottom: 0,
         left: 0,
         right: 0,
-        height: '100px',
-        background: 'linear-gradient(to top, rgba(8, 12, 20, 0.85) 0%, transparent 100%)',
+        height: '90px',
+        background: mapTheme === 'dark'
+          ? 'linear-gradient(to top, rgba(8, 12, 20, 0.8) 0%, transparent 100%)'
+          : 'linear-gradient(to top, rgba(248, 250, 252, 0.85) 0%, transparent 100%)',
         pointerEvents: 'none',
         zIndex: 2
       }} />

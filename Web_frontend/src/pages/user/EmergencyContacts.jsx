@@ -111,7 +111,7 @@ const EmergencyContacts = () => {
                   <p style={{ fontSize: '0.76rem', color: '#4B5563', marginTop: '1px' }}>{c.relation} · {c.phone}</p>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button style={{ width: '32px', height: '32px', borderRadius: '9px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                  <button onClick={() => window.open(`tel:${c.phone}`, '_self')} aria-label={`Call ${c.name}`} style={{ width: '32px', height: '32px', borderRadius: '9px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                     <Phone size={14} color="#10B981" />
                   </button>
                   <button onClick={() => removeContact(c.id)} style={{ width: '32px', height: '32px', borderRadius: '9px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>

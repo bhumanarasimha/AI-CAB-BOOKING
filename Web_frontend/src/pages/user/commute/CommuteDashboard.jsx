@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MapPin, Clock, ChevronRight,
   TrendingUp, Plus,
-  ArrowRightLeft, Loader2
+  ArrowRightLeft, Loader2, ArrowLeft
 } from 'lucide-react';
 import BottomNavigation from '../../../components/layout/BottomNavigation';
 
@@ -61,16 +61,25 @@ const CommuteDashboard = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)', paddingBottom: '100px' }}>
-      {/* Header */}
-      <div style={{ padding: '60px 20px 20px' }}>
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
+      {/* Header with Back Button */}
+      <div style={{ padding: '52px 20px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <button 
+          onClick={() => navigate(-1)}
+          className="btn-icon"
+          style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          aria-label="Go Back"
         >
-          <p style={{ fontSize: '0.75rem', color: 'var(--brand-cyan)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '4px' }}>
+          <ArrowLeft size={18} color="var(--text-main)" />
+        </button>
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ flex: 1 }}
+        >
+          <p style={{ fontSize: '0.75rem', color: 'var(--brand-cyan)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '2px' }}>
             Smart Commute
           </p>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+          <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
             Find Your <span style={{ color: 'var(--brand-indigo)' }}>Perfect Match</span>
           </h1>
         </motion.div>
@@ -300,12 +309,13 @@ const CommuteDashboard = () => {
         whileTap={{ scale: 0.9 }}
         onClick={() => navigate('/user/commute/create-profile')}
         style={{
-          position: 'fixed', bottom: '110px', right: '20px',
+          position: 'absolute', bottom: '90px', right: '20px',
           width: '56px', height: '56px', borderRadius: '20px',
           background: 'var(--brand-indigo)', border: 'none',
           color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center',
-          boxShadow: '0 8px 24px rgba(99,102,241,0.4)', zIndex: 10
+          boxShadow: '0 8px 24px rgba(99,102,241,0.4)', zIndex: 10, cursor: 'pointer'
         }}
+        aria-label="Create Commute Profile"
       >
         <Plus size={24} />
       </motion.button>
