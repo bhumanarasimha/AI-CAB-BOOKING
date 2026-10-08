@@ -6,13 +6,12 @@ import { useAuth } from '../../lib/AuthContext';
 
 const socials = [
   { label: 'Google', logo: 'https://www.svgrepo.com/show/475656/google-color.svg' },
-  { label: 'Facebook', logo: 'https://www.svgrepo.com/show/475647/facebook-color.svg' },
 ];
 
 const SignUp = () => {
   const navigate = useNavigate();
 
-  const { registerWithEmail, sendEmailOtp, loginWithGoogle, loginWithFacebook } = useAuth();
+  const { registerWithEmail, sendEmailOtp, loginWithGoogle } = useAuth();
   
   // Navigation / Step state: 'form' | 'otp'
   const [step, setStep] = useState('form');
@@ -34,7 +33,6 @@ const SignUp = () => {
 
   // Social Modal states
   const [socialModalVisible, setSocialModalVisible] = useState(false);
-  const [socialProvider, setSocialProvider] = useState('Google');
   const [socialName, setSocialName] = useState('');
   const [socialEmail, setSocialEmail] = useState('');
   const [socialError, setSocialError] = useState('');
@@ -107,7 +105,12 @@ const SignUp = () => {
     const cleanEmail = (email || '').trim().toLowerCase();
     const cleanPassword = password || '';
     const cleanPhone = (phone || '').trim();
-    const cleanOtp = (otp || '').trim() || '123456';
+    const cleanOtp = (otp || '').trim();
+
+    if (!cleanOtp || cleanOtp.length < 6) {
+      setError('Please enter the 6-digit verification code sent to your email.');
+      return;
+    }
 
     setError('');
     setIsLoading(true);
@@ -118,10 +121,7 @@ const SignUp = () => {
       localStorage.setItem('smartride_user_name', cleanName);
       navigate('/user/welcome');
     } catch (err) {
-      console.warn("Registration notice, activating session:", err);
-      localStorage.setItem('smartride_user_email', cleanEmail);
-      localStorage.setItem('smartride_user_name', cleanName);
-      navigate('/user/welcome');
+      setError(err.message || 'Verification failed. Please check your verification code and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -164,23 +164,6 @@ const SignUp = () => {
     }
   };
 
-  const handleFacebookSignUp = async () => {
-    setError('');
-    setIsLoading(true);
-    try {
-      const cleanEmail = (email || '').trim().toLowerCase();
-      const cleanName = (name || '').trim();
-      const res = await loginWithFacebook(cleanEmail || null, cleanName || null);
-      if (res && res.user) {
-        navigate('/user/welcome');
-      }
-    } catch (err) {
-      setError(err.message || 'Facebook Sign Up failed. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleSocialSubmit = async () => {
     const cleanEmail = (socialEmail || '').trim().toLowerCase();
     const cleanName = (socialName || '').trim();
@@ -198,19 +181,13 @@ const SignUp = () => {
     setIsLoading(true);
 
     try {
-      let res;
-      if (socialProvider === 'Facebook') {
-        res = await loginWithFacebook(cleanEmail, cleanName);
-      } else {
-        res = await loginWithGoogle(cleanEmail, cleanName);
-      }
-
+      const res = await loginWithGoogle(cleanEmail, cleanName);
       if (res && res.user) {
         setSocialModalVisible(false);
         navigate('/user/welcome');
       }
     } catch (err) {
-      setSocialError(err.message || `${socialProvider} authentication failed.`);
+      setSocialError(err.message || 'Google authentication failed.');
     } finally {
       setIsLoading(false);
     }
@@ -369,15 +346,11 @@ const SignUp = () => {
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Social Grid */}
+          {/* Social Grid - Google Only */}
           <View style={styles.socialGrid}>
             <Pressable onPress={handleGoogleSignUp} disabled={isLoading} style={styles.socialBtn}>
               <Image source={{ uri: socials[0].logo }} style={styles.socialIcon} resizeMode="contain" />
-              <Text style={styles.socialBtnText}>Google</Text>
-            </Pressable>
-            <Pressable onPress={handleFacebookSignUp} disabled={isLoading} style={styles.socialBtn}>
-              <Image source={{ uri: socials[1].logo }} style={styles.socialIcon} resizeMode="contain" />
-              <Text style={styles.socialBtnText}>Facebook</Text>
+              <Text style={styles.socialBtnText}>Continue with Google</Text>
             </Pressable>
           </View>
 
@@ -454,7 +427,7 @@ const SignUp = () => {
         </View>
       )}
 
-      {/* Social Authentication Modal */}
+      {/* Google Authentication Modal */}
       <Modal
         visible={socialModalVisible}
         transparent={true}
@@ -466,11 +439,11 @@ const SignUp = () => {
             <View style={styles.modalHeader}>
               <View style={styles.modalTitleRow}>
                 <Image
-                  source={{ uri: socialProvider === 'Facebook' ? socials[1].logo : socials[0].logo }}
+                  source={{ uri: socials[0].logo }}
                   style={{ width: 22, height: 22, marginRight: 8 }}
                   resizeMode="contain"
                 />
-                <Text style={styles.modalTitle}>Sign In with {socialProvider}</Text>
+                <Text style={styles.modalTitle}>Sign In with Google</Text>
               </View>
               <Pressable onPress={() => setSocialModalVisible(false)} style={styles.modalCloseBtn}>
                 <X size={18} color="#9CA3AF" />
@@ -478,7 +451,7 @@ const SignUp = () => {
             </View>
 
             <Text style={styles.modalSubtitle}>
-              Connect your verified {socialProvider} account to continue with SmartRide AI.
+              Connect your verified Google account to continue with SmartRide AI.
             </Text>
 
             {!!socialError && (
@@ -504,7 +477,7 @@ const SignUp = () => {
                 <TextInput
                   value={socialEmail}
                   onChangeText={(text) => { setSocialEmail(text); setSocialError(''); }}
-                  placeholder={`Your ${socialProvider} Email address`}
+                  placeholder="Your Google Email address"
                   placeholderTextColor="#4B5563"
                   keyboardType="email-address"
                   autoCapitalize="none"
@@ -520,7 +493,7 @@ const SignUp = () => {
                 {isLoading ? (
                   <ActivityIndicator color="#080C14" />
                 ) : (
-                  <Text style={styles.submitBtnText}>Continue with {socialProvider}</Text>
+                  <Text style={styles.submitBtnText}>Continue with Google</Text>
                 )}
               </Pressable>
             </View>
@@ -669,9 +642,6 @@ const styles = StyleSheet.create({
   form: {
     gap: 12,
   },
-  inputContainer: {
-    position: 'relative',
-  },
   input: {
     backgroundColor: '#0F1623',
     borderWidth: 1,
@@ -721,14 +691,13 @@ const styles = StyleSheet.create({
   },
   socialGrid: {
     flexDirection: 'row',
-    gap: 12,
   },
   socialBtn: {
     flex: 1,
-    height: 48,
+    height: 50,
     backgroundColor: '#0F1623',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: 14,
     flexDirection: 'row',
     alignItems: 'center',
@@ -738,11 +707,11 @@ const styles = StyleSheet.create({
   socialIcon: {
     width: 20,
     height: 20,
-    marginRight: 8,
+    marginRight: 10,
   },
   socialBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: '#E2E8F0',
   },
   footerLinkRow: {

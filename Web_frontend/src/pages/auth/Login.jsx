@@ -6,12 +6,11 @@ import { useAuth } from '../../lib/AuthContext';
 
 const socials = [
   { label: 'Google', logo: 'https://www.svgrepo.com/show/475656/google-color.svg' },
-  { label: 'Facebook', logo: 'https://www.svgrepo.com/show/475647/facebook-color.svg' },
 ];
 
 const Login = () => {
   const navigate = useNavigate();
-  const { user, loading, loginWithGoogle, loginWithFacebook, loginWithEmail, sendPasswordReset } = useAuth();
+  const { user, loading, loginWithGoogle, loginWithEmail, sendPasswordReset } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,14 +19,11 @@ const Login = () => {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Real-world Social Account Authentication Modal state
+  // Social Account Authentication Modal state
   const [socialModalVisible, setSocialModalVisible] = useState(false);
-  const [socialProvider, setSocialProvider] = useState('Facebook');
   const [socialName, setSocialName] = useState('');
   const [socialEmail, setSocialEmail] = useState('');
-  const [socialAppId, setSocialAppId] = useState('');
   const [socialError, setSocialError] = useState('');
-  const [showAppIdInput, setShowAppIdInput] = useState(false);
 
   useEffect(() => {
     if (!loading && user) {
@@ -73,23 +69,6 @@ const Login = () => {
     }
   };
 
-  const handleFacebookLogin = async () => {
-    setError('');
-    setSuccessMsg('');
-    setIsLoading(true);
-    try {
-      const cleanEmail = (email || '').trim();
-      const res = await loginWithFacebook(cleanEmail || null, null);
-      if (res && res.user) {
-        navigate('/user/welcome');
-      }
-    } catch (err) {
-      setError(err.message || 'Facebook Login failed. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleSocialSubmit = async () => {
     const cleanEmail = (socialEmail || '').trim().toLowerCase();
     const cleanName = (socialName || '').trim();
@@ -107,23 +86,13 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      if (socialAppId.trim()) {
-        localStorage.setItem('smartride_fb_app_id', socialAppId.trim());
-      }
-
-      let res;
-      if (socialProvider === 'Facebook') {
-        res = await loginWithFacebook(cleanEmail, cleanName);
-      } else {
-        res = await loginWithGoogle(cleanEmail, cleanName);
-      }
-
+      const res = await loginWithGoogle(cleanEmail, cleanName);
       if (res && res.user) {
         setSocialModalVisible(false);
         navigate('/user/welcome');
       }
     } catch (err) {
-      setSocialError(err.message || `${socialProvider} authentication failed.`);
+      setSocialError(err.message || 'Google authentication failed.');
     } finally {
       setIsLoading(false);
     }
@@ -266,20 +235,16 @@ const Login = () => {
           <View style={styles.dividerLine} />
         </View>
 
-        {/* Social Logins */}
+        {/* Social Logins - Google Only */}
         <View style={styles.socialGrid}>
           <Pressable onPress={handleGoogleLogin} disabled={isLoading} style={styles.socialBtn}>
             <Image source={{ uri: socials[0].logo }} style={styles.socialIcon} resizeMode="contain" />
-            <Text style={styles.socialBtnText}>Google</Text>
-          </Pressable>
-          <Pressable onPress={handleFacebookLogin} disabled={isLoading} style={styles.socialBtn}>
-            <Image source={{ uri: socials[1].logo }} style={styles.socialIcon} resizeMode="contain" />
-            <Text style={styles.socialBtnText}>Facebook</Text>
+            <Text style={styles.socialBtnText}>Continue with Google</Text>
           </Pressable>
         </View>
       </View>
 
-      {/* Real Social Authentication Modal */}
+      {/* Google Authentication Modal */}
       <Modal
         visible={socialModalVisible}
         transparent={true}
@@ -291,11 +256,11 @@ const Login = () => {
             <View style={styles.modalHeader}>
               <View style={styles.modalTitleRow}>
                 <Image 
-                  source={{ uri: socialProvider === 'Facebook' ? socials[1].logo : socials[0].logo }} 
+                  source={{ uri: socials[0].logo }}
                   style={{ width: 22, height: 22, marginRight: 8 }} 
                   resizeMode="contain" 
                 />
-                <Text style={styles.modalTitle}>Sign In with {socialProvider}</Text>
+                <Text style={styles.modalTitle}>Sign In with Google</Text>
               </View>
               <Pressable onPress={() => setSocialModalVisible(false)} style={styles.modalCloseBtn}>
                 <X size={18} color="#9CA3AF" />
@@ -303,7 +268,7 @@ const Login = () => {
             </View>
 
             <Text style={styles.modalSubtitle}>
-              Connect your verified {socialProvider} account to log in to your profile and rides in the database.
+              Connect your verified Google account to log in to your profile.
             </Text>
 
             {!!socialError && (
@@ -329,35 +294,13 @@ const Login = () => {
                 <TextInput
                   value={socialEmail}
                   onChangeText={(text) => { setSocialEmail(text); setSocialError(''); }}
-                  placeholder={`Your ${socialProvider} Email address`}
+                  placeholder="Your Google Email address"
                   placeholderTextColor="#4B5563"
                   keyboardType="email-address"
                   autoCapitalize="none"
                   style={styles.input}
                 />
               </View>
-
-              {/* Advanced Meta App ID toggle for live OAuth dialog */}
-              {socialProvider === 'Facebook' && (
-                <View style={{ marginTop: 4 }}>
-                  <Pressable onPress={() => setShowAppIdInput(!showAppIdInput)}>
-                    <Text style={{ fontSize: 12, color: '#00D8FF', fontWeight: '600' }}>
-                      {showAppIdInput ? '− Hide Meta App ID configuration' : '+ Have a Meta Developer App ID?'}
-                    </Text>
-                  </Pressable>
-                  {showAppIdInput && (
-                    <View style={{ marginTop: 8 }}>
-                      <TextInput
-                        value={socialAppId}
-                        onChangeText={setSocialAppId}
-                        placeholder="Meta App ID (from developers.facebook.com)"
-                        placeholderTextColor="#4B5563"
-                        style={[styles.input, { fontSize: 13, paddingVertical: 10 }]}
-                      />
-                    </View>
-                  )}
-                </View>
-              )}
 
               <Pressable 
                 onPress={handleSocialSubmit}
@@ -620,14 +563,13 @@ const styles = StyleSheet.create({
   },
   socialGrid: {
     flexDirection: 'row',
-    gap: 12,
   },
   socialBtn: {
     flex: 1,
-    height: 48,
+    height: 50,
     backgroundColor: '#0F1623',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: 14,
     flexDirection: 'row',
     alignItems: 'center',
@@ -637,11 +579,11 @@ const styles = StyleSheet.create({
   socialIcon: {
     width: 20,
     height: 20,
-    marginRight: 8,
+    marginRight: 10,
   },
   socialBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: '#E2E8F0',
   },
   modalOverlay: {
