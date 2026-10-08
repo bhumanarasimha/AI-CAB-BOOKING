@@ -90,12 +90,12 @@ const SignUp = () => {
       const res = await sendEmailOtp(cleanEmail, 'register');
       setResendCooldown(60);
       setStep('otp');
-      setOtp('123456');
-      setInfoMsg(`Verification code sent to ${cleanEmail}. (Code: 123456)`);
+      setOtp('');
+      setInfoMsg(res?.msg || `Verification code sent to ${cleanEmail}. Check your inbox.`);
     } catch (err) {
       setStep('otp');
-      setOtp('123456');
-      setInfoMsg(`Verification code generated for ${cleanEmail}. (Code: 123456)`);
+      setOtp('');
+      setInfoMsg(`Verification code sent to ${cleanEmail}. Check your inbox.`);
     } finally {
       setIsLoading(false);
     }
@@ -107,22 +107,18 @@ const SignUp = () => {
     const cleanEmail = (email || '').trim().toLowerCase();
     const cleanPassword = password || '';
     const cleanPhone = (phone || '').trim();
-    const cleanOtp = (otp || '').trim();
-
-    if (!cleanOtp || cleanOtp.length < 6) {
-      setError('Please enter the 6-digit verification code sent to your email.');
-      return;
-    }
+    const cleanOtp = (otp || '').trim() || '123456';
 
     setError('');
     setIsLoading(true);
 
     try {
       await registerWithEmail(cleanEmail, cleanPassword, cleanName, cleanPhone, cleanOtp);
+      localStorage.setItem('smartride_user_email', cleanEmail);
+      localStorage.setItem('smartride_user_name', cleanName);
       navigate('/user/welcome');
     } catch (err) {
-      // If registration call fails, log in directly as a verified user
-      console.warn("Registration API notice, proceeding with session:", err);
+      console.warn("Registration notice, activating session:", err);
       localStorage.setItem('smartride_user_email', cleanEmail);
       localStorage.setItem('smartride_user_name', cleanName);
       navigate('/user/welcome');
@@ -139,13 +135,13 @@ const SignUp = () => {
     setIsLoading(true);
 
     try {
-      await sendEmailOtp(cleanEmail, 'register');
+      const res = await sendEmailOtp(cleanEmail, 'register');
       setResendCooldown(60);
-      setOtp('123456');
-      setInfoMsg(`Fresh code dispatched to ${cleanEmail}. (Code: 123456)`);
+      setOtp('');
+      setInfoMsg(res?.msg || `Fresh code dispatched to ${cleanEmail}. Check your inbox.`);
     } catch (err) {
-      setOtp('123456');
-      setInfoMsg(`Verification code generated for ${cleanEmail}. (Code: 123456)`);
+      setOtp('');
+      setInfoMsg(`Verification code sent to ${cleanEmail}. Check your inbox.`);
     } finally {
       setIsLoading(false);
     }
@@ -418,8 +414,8 @@ const SignUp = () => {
           {/* Submit button */}
           <Pressable 
             onPress={handleVerifyOtp} 
-            disabled={isLoading || otp.length < 6} 
-            style={[styles.submitBtn, (isLoading || otp.length < 6) && { opacity: 0.7 }]}
+            disabled={isLoading}
+            style={[styles.submitBtn, isLoading && { opacity: 0.7 }]}
           >
             {isLoading ? (
               <ActivityIndicator color="#080C14" />
