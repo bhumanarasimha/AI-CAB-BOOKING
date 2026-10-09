@@ -1,89 +1,60 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
+const { getSequelize } = require('../config/db');
 
-const UserSchema = new mongoose.Schema({
+const sequelize = getSequelize();
+
+const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.STRING,
+    primaryKey: true,
+    defaultValue: () => 'user_' + Date.now() + '_' + Math.floor(Math.random() * 1000)
+  },
   email: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    lowercase: true
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
   },
   name: {
-    type: String,
-    default: ''
+    type: DataTypes.STRING,
+    defaultValue: ''
   },
   phone: {
-    type: String,
-    default: ''
+    type: DataTypes.STRING,
+    defaultValue: ''
   },
   password: {
-    type: String,
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  role: {
+    type: DataTypes.STRING,
+    defaultValue: 'rider'
+  },
+  provider: {
+    type: DataTypes.STRING,
+    defaultValue: 'email'
   },
   photoURL: {
-    type: String,
-    default: ''
-  },
-  preferences: {
-    type: mongoose.Schema.Types.Mixed,
-    default: {}
-  },
-  savedPlaces: {
-    type: Array,
-    default: []
-  },
-  emergencyContacts: {
-    type: Array,
-    default: []
-  },
-  commuteProfile: {
-    type: mongoose.Schema.Types.Mixed,
-    default: null
+    type: DataTypes.TEXT,
+    allowNull: true
   },
   isOnline: {
-    type: Boolean,
-    default: false
-  },
-  lastLogin: {
-    type: Date,
-    default: null
-  },
-  activeSessions: [
-    {
-      sessionId: String,
-      token: String,
-      loginTime: { type: Date, default: Date.now },
-      userAgent: { type: String, default: '' }
-    }
-  ],
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   }
+}, {
+  timestamps: true
 });
 
-// Hash password before saving
-UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    return next();
-  }
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (err) {
-    next(err);
-  }
-});
-
-// Compare password method
-UserSchema.methods.comparePassword = async function (enteredPassword) {
+User.prototype.comparePassword = async function (enteredPassword) {
+  if (!this.password) return false;
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model('User', UserSchema);
+User.hashPassword = async function (plainPassword) {
+  const salt = await bcrypt.genSalt(10);
+  return await bcrypt.hash(plainPassword, salt);
+};
+
+module.exports = User;

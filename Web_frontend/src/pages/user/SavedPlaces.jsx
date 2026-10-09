@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Home, Briefcase, MapPin, Plus, Edit2, Trash2, Check, X, Loader2 } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
-import { updateSavedPlaces } from '../../lib/firestore';
+
+const updateSavedPlaces = (userId, places) => Promise.resolve(places);
 
 const initialPlaces = [
   { id: 'home', type: 'Home', address: 'Block C, Silver Oak Apartments, Sector 4', icon: 'Home', color: 'var(--brand-cyan)' },

@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, Phone, Trash2, ShieldAlert, Loader2 } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
-import { updateEmergencyContacts } from '../../lib/firestore';
+
+const updateEmergencyContacts = (userId, contacts) => Promise.resolve(contacts);
 
 const EmergencyContacts = () => {
   const navigate = useNavigate();

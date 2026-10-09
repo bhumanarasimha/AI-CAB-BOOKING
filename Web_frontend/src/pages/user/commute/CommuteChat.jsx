@@ -6,7 +6,10 @@ import {
   Sparkles, CheckCheck
 } from 'lucide-react';
 import { useAuth } from '../../../lib/AuthContext';
-import { createChatSession, subscribeToChat, sendChatMessage } from '../../../lib/firestore';
+
+const createChatSession = (userId, peerId) => Promise.resolve('chat_' + Date.now());
+const subscribeToChat = (chatId, callback) => () => {};
+const sendChatMessage = (chatId, senderId, text) => Promise.resolve();
 
 const CommuteChat = () => {
   const navigate = useNavigate();

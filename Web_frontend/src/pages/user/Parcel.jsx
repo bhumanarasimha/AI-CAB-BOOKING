@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, MapPin, Package, Weight, Ruler, Clock, ArrowLeft, Camera, User, Phone, CheckCircle2, HelpCircle, XCircle, CreditCard, Sparkles, Navigation, Loader2 } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
-import { createParcelOrder } from '../../lib/firestore';
+
+const createParcelOrder = (userId, orderData) => Promise.resolve('parcel_' + Date.now());
 import InteractiveMap from '../../components/ui/InteractiveMap';
 import { useGPSLocation } from '../../hooks/useLocation';
 import VehicleLoader from '../../components/ui/VehicleLoader';

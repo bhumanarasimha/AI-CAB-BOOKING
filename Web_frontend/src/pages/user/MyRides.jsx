@@ -4,7 +4,10 @@ import { ArrowLeft, Clock, CheckCircle2, XCircle, Star, Loader2 } from 'lucide-r
 import BottomNavigation from '../../components/layout/BottomNavigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../lib/AuthContext';
-import { getUserRides } from '../../lib/firestore';
+
+const getUserRides = (userId) => Promise.resolve([
+  { id: 'ride_1', rideType: 'SmartRide AI EV', price: '₹406', pickup: 'Current Location', dropoff: 'City Center Mall', status: 'completed', createdAt: new Date() }
+]);
 
 const MyRides = () => {
   const navigate = useNavigate();

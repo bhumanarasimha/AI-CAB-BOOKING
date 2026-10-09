@@ -16,7 +16,6 @@
     "@react-navigation/stack": "^7.1.1",
     "clsx": "^2.1.1",
     "expo": "~52.0.35",
-    "firebase": "^12.13.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.14.0",
     "lucide-react-native": "^0.475.0",

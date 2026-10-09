@@ -5,7 +5,8 @@ import { ArrowLeft, ChevronRight, Sparkles, Navigation, Loader2, Train, Bike, Ca
 import RouteMap from '../../components/ui/RouteMap';
 import VehicleLoader from '../../components/ui/VehicleLoader';
 import { useAuth } from '../../lib/AuthContext';
-import { createRideRequest } from '../../lib/firestore';
+
+const createRideRequest = (userId, rideData) => Promise.resolve('ride_' + Date.now());
 import AIChatBot from '../../components/ui/AIChatBot';
 import { useRideRefreshEngine } from '../../services/refresh/useRideRefreshEngine';
 

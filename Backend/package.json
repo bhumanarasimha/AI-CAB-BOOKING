@@ -1,7 +1,7 @@
 {
   "name": "smartride-backend",
   "version": "1.0.0",
-  "description": "SmartRide AI MongoDB Backend Server",
+  "description": "SmartRide AI MySQL Backend Server",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -13,8 +13,9 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.2.1",
+    "mysql2": "^3.12.0",
     "nodemailer": "^10.0.14",
+    "sequelize": "^6.37.5",
     "socket.io": "^4.7.4"
   }
 }
