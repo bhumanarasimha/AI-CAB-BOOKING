@@ -1,16 +1,12 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TextInput, Pressable, Image, ScrollView, ActivityIndicator, StyleSheet, Modal } from 'react-native';
+import { View, Text, TextInput, Pressable, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, ArrowRight, ArrowLeft, ShieldCheck, X } from 'lucide-react-native';
+import { Eye, EyeOff, ArrowRight, ArrowLeft, ShieldCheck } from 'lucide-react-native';
 import { useAuth } from '../../lib/AuthContext';
-
-const socials = [
-  { label: 'Google', logo: 'https://www.svgrepo.com/show/475656/google-color.svg' },
-];
 
 const Login = () => {
   const navigate = useNavigate();
-  const { user, loading, loginWithGoogle, loginWithEmail, sendPasswordReset } = useAuth();
+  const { user, loading, loginWithEmail, sendPasswordReset } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,12 +14,6 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-
-  // Social Account Authentication Modal state
-  const [socialModalVisible, setSocialModalVisible] = useState(false);
-  const [socialName, setSocialName] = useState('');
-  const [socialEmail, setSocialEmail] = useState('');
-  const [socialError, setSocialError] = useState('');
 
   useEffect(() => {
     if (!loading && user) {
@@ -48,52 +38,6 @@ const Login = () => {
       navigate('/user/welcome');
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    setError('');
-    setSuccessMsg('');
-    setIsLoading(true);
-    try {
-      const cleanEmail = (email || '').trim();
-      const res = await loginWithGoogle(cleanEmail || null, null);
-      if (res && res.user) {
-        navigate('/user/welcome');
-      }
-    } catch (err) {
-      setError(err.message || 'Google Login failed. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSocialSubmit = async () => {
-    const cleanEmail = (socialEmail || '').trim().toLowerCase();
-    const cleanName = (socialName || '').trim();
-
-    if (!cleanEmail || !cleanEmail.includes('@')) {
-      setSocialError('Please enter a valid email address.');
-      return;
-    }
-    if (!cleanName) {
-      setSocialError('Please enter your full name.');
-      return;
-    }
-
-    setSocialError('');
-    setIsLoading(true);
-
-    try {
-      const res = await loginWithGoogle(cleanEmail, cleanName);
-      if (res && res.user) {
-        setSocialModalVisible(false);
-        navigate('/user/welcome');
-      }
-    } catch (err) {
-      setSocialError(err.message || 'Google authentication failed.');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -158,7 +102,7 @@ const Login = () => {
           <Text style={styles.switchActiveText}>Sign In</Text>
         </Pressable>
         <Pressable onPress={() => navigate('/signup')} style={styles.switchBtn}>
-          <Text style={styles.switchInactiveText}>Sign Up</Text>
+          <Text style={styles.switchInactiveText}>Register</Text>
         </Pressable>
       </View>
 
@@ -227,102 +171,13 @@ const Login = () => {
             </View>
           )}
         </Pressable>
-
-        {/* Divider */}
-        <View style={styles.dividerRow}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or continue with</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        {/* Social Logins - Google Only */}
-        <View style={styles.socialGrid}>
-          <Pressable onPress={handleGoogleLogin} disabled={isLoading} style={styles.socialBtn}>
-            <Image source={{ uri: socials[0].logo }} style={styles.socialIcon} resizeMode="contain" />
-            <Text style={styles.socialBtnText}>Continue with Google</Text>
-          </Pressable>
-        </View>
       </View>
-
-      {/* Google Authentication Modal */}
-      <Modal
-        visible={socialModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setSocialModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalTitleRow}>
-                <Image 
-                  source={{ uri: socials[0].logo }}
-                  style={{ width: 22, height: 22, marginRight: 8 }} 
-                  resizeMode="contain" 
-                />
-                <Text style={styles.modalTitle}>Sign In with Google</Text>
-              </View>
-              <Pressable onPress={() => setSocialModalVisible(false)} style={styles.modalCloseBtn}>
-                <X size={18} color="#9CA3AF" />
-              </Pressable>
-            </View>
-
-            <Text style={styles.modalSubtitle}>
-              Connect your verified Google account to log in to your profile.
-            </Text>
-
-            {!!socialError && (
-              <View style={styles.errorBanner}>
-                <View style={styles.errorDot} />
-                <Text style={styles.errorText}>{socialError}</Text>
-              </View>
-            )}
-
-            <View style={styles.modalForm}>
-              <View style={styles.inputContainer}>
-                <TextInput
-                  value={socialName}
-                  onChangeText={(text) => { setSocialName(text); setSocialError(''); }}
-                  placeholder="Your Full Name (e.g. John Doe)"
-                  placeholderTextColor="#4B5563"
-                  autoCapitalize="words"
-                  style={styles.input}
-                />
-              </View>
-
-              <View style={styles.inputContainer}>
-                <TextInput
-                  value={socialEmail}
-                  onChangeText={(text) => { setSocialEmail(text); setSocialError(''); }}
-                  placeholder="Your Google Email address"
-                  placeholderTextColor="#4B5563"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  style={styles.input}
-                />
-              </View>
-
-              <Pressable 
-                onPress={handleSocialSubmit}
-                disabled={isLoading}
-                style={[styles.submitBtn, { marginTop: 12 }, isLoading && { opacity: 0.7 }]}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#080C14" />
-                ) : (
-                  <Text style={styles.submitBtnText}>Verify & Sign In</Text>
-                )}
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
 
       {/* Footer link to sign up */}
       <View style={styles.footerLinkRow}>
         <Text style={styles.footerText}>Don't have an account? </Text>
         <Pressable onPress={() => navigate('/signup')}>
-          <Text style={styles.signupText}>Sign up</Text>
+          <Text style={styles.signupText}>Register Now</Text>
         </Pressable>
       </View>
 
@@ -546,100 +401,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#080C14',
   },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 18,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  dividerText: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginHorizontal: 12,
-  },
-  socialGrid: {
-    flexDirection: 'row',
-  },
-  socialBtn: {
-    flex: 1,
-    height: 50,
-    backgroundColor: '#0F1623',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-  },
-  socialIcon: {
-    width: 20,
-    height: 20,
-    marginRight: 10,
-  },
-  socialBtnText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#E2E8F0',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalCard: {
-    backgroundColor: '#0B111D',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: 24,
-    padding: 24,
-    width: '100%',
-    maxWidth: 420,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  modalTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#F1F5F9',
-  },
-  modalCloseBtn: {
-    padding: 6,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    cursor: 'pointer',
-  },
-  modalSubtitle: {
-    fontSize: 13,
-    color: '#9CA3AF',
-    lineHeight: 19,
-    marginBottom: 16,
-  },
-  modalForm: {
-    gap: 12,
-  },
   footerLinkRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 22,
+    marginTop: 28,
     marginBottom: 16,
   },
   footerText: {
