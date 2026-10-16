@@ -23,6 +23,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
@@ -108,22 +110,27 @@ public class MainActivity extends AppCompatActivity {
         // Bridge to allow frontend to open installed cab apps
         webView.addJavascriptInterface(new WebAppInterface(this), "AndroidApp");
 
+        final Map<String, String> responseHeaders = new HashMap<>();
+        responseHeaders.put("Access-Control-Allow-Origin", "*");
+        responseHeaders.put("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        responseHeaders.put("Access-Control-Allow-Headers", "*");
+
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 Uri url = request.getUrl();
                 if (url != null && Objects.equals(url.getHost(), APP_ASSETS_HOST)) {
                     String rawPath = url.getPath();
-                    String cleanPath = (rawPath != null && rawPath.startsWith("/")) ? rawPath.substring(1) : (rawPath != null ? rawPath : "");
-                    String targetPath = cleanPath.isEmpty() ? "index.html" : cleanPath;
+                    String initialPath = (rawPath != null && rawPath.startsWith("/")) ? rawPath.substring(1) : (rawPath != null ? rawPath : "");
+                    String targetPath = initialPath.isEmpty() ? "index.html" : initialPath;
 
                     try {
                         InputStream is = getAssets().open(targetPath);
-                        return new WebResourceResponse(getMimeType(targetPath), "UTF-8", is);
+                        return new WebResourceResponse(getMimeType(targetPath), "UTF-8", 200, "OK", responseHeaders, is);
                     } catch (Exception e) {
                         try {
                             InputStream is = getAssets().open("index.html");
-                            return new WebResourceResponse("text/html", "UTF-8", is);
+                            return new WebResourceResponse("text/html", "UTF-8", 200, "OK", responseHeaders, is);
                         } catch (Exception ex) {
                             Log.e(TAG, "Error opening index.html asset fallback", ex);
                         }
