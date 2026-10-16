@@ -2,15 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/app-icon.png" />
+    <link rel="icon" type="image/png" href="./app-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SmartRide AI</title>
     <script>
       (function() {
-        var key = "%VITE_GOOGLE_MAPS_API_KEY%";
-        if (!key || key.indexOf("YOUR_GOOGLE") !== -1 || key.indexOf("%") !== -1) {
-          key = "AIzaSyDZBmGSgFQXoeoNlGpJvu3A4S5p1Zkt3vU";
-        }
+        var key = "AIzaSyDZBmGSgFQXoeoNlGpJvu3A4S5p1Zkt3vU";
         var s = document.createElement("script");
         s.src = "https://maps.googleapis.com/maps/api/js?key=" + key + "&libraries=places,geometry";
         s.async = true;
@@ -34,6 +31,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <script type="module" src="./src/main.jsx"></script>
   </body>
 </html>
