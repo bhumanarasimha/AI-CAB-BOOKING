@@ -3,14 +3,11 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 import { AuthProvider } from './lib/AuthContext'
-import ErrorBoundary from './components/common/ErrorBoundary'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ErrorBoundary>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </ErrorBoundary>
+    <AuthProvider>
+      <App />
+    </AuthProvider>
   </StrictMode>,
 )

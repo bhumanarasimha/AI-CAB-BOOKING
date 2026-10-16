@@ -11,6 +11,7 @@ import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -20,11 +21,15 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.webkit.WebViewAssetLoader;
+
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private static final String APP_ASSETS_HOST = "appassets.androidplatform.net";
 
     private WebView webView;
     private String pendingOrigin;
@@ -90,17 +95,33 @@ public class MainActivity extends AppCompatActivity {
         // Bridge to allow frontend to open installed cab apps
         webView.addJavascriptInterface(new WebAppInterface(this), "AndroidApp");
 
+        final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
+                .setDomain(APP_ASSETS_HOST)
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .addPathHandler("/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .build();
+
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                Uri url = request.getUrl();
+                if (url != null && Objects.equals(url.getHost(), APP_ASSETS_HOST)) {
+                    WebResourceResponse response = assetLoader.shouldInterceptRequest(url);
+                    if (response != null) {
+                        return response;
+                    }
+                    return assetLoader.shouldInterceptRequest(Uri.parse("https://" + APP_ASSETS_HOST + "/index.html"));
+                }
+                return super.shouldInterceptRequest(view, request);
+            }
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri url = request.getUrl();
                 if (url != null) {
-                    String scheme = url.getScheme();
-                    // Load local assets inside WebView
-                    if ("file".equalsIgnoreCase(scheme) || url.toString().contains("android_asset")) {
+                    if (Objects.equals(url.getHost(), APP_ASSETS_HOST)) {
                         return false;
                     }
-                    // Open external URLs (maps, external apps) via Android Intent
                     try {
                         Intent intent = new Intent(Intent.ACTION_VIEW, url);
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -151,8 +172,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Load native local index.html directly from APK assets
-        webView.loadUrl("file:///android_asset/index.html");
+        // Load via the virtual domain to support React Router and ES Modules
+        webView.loadUrl("https://" + APP_ASSETS_HOST + "/index.html");
     }
 
     @Override
