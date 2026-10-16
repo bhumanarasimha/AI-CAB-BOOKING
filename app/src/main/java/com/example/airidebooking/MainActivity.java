@@ -4,12 +4,15 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.webkit.ConsoleMessage;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -77,6 +80,12 @@ public class MainActivity extends AppCompatActivity {
 
         webView = findViewById(R.id.webview);
 
+        // Dark background matching app theme on startup
+        webView.setBackgroundColor(Color.parseColor("#080C14"));
+
+        // Enable Chrome Inspect Debugging
+        WebView.setWebContentsDebuggingEnabled(true);
+
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
@@ -97,7 +106,6 @@ public class MainActivity extends AppCompatActivity {
 
         final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
                 .setDomain(APP_ASSETS_HOST)
-                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
                 .addPathHandler("/", new WebViewAssetLoader.AssetsPathHandler(this))
                 .build();
 
@@ -110,9 +118,17 @@ public class MainActivity extends AppCompatActivity {
                     if (response != null) {
                         return response;
                     }
-                    return assetLoader.shouldInterceptRequest(Uri.parse("https://" + APP_ASSETS_HOST + "/index.html"));
+                    String path = url.getPath();
+                    if (path == null || path.equals("/") || !path.contains(".")) {
+                        return assetLoader.shouldInterceptRequest(Uri.parse("https://" + APP_ASSETS_HOST + "/index.html"));
+                    }
                 }
                 return super.shouldInterceptRequest(view, request);
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                Log.e(TAG, "WebView Error: " + error.getDescription() + " on URL: " + request.getUrl());
             }
 
             @Override
@@ -136,6 +152,14 @@ public class MainActivity extends AppCompatActivity {
         });
 
         webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+                Log.d("[WebConsole]", consoleMessage.message() + " -- From line "
+                        + consoleMessage.lineNumber() + " of "
+                        + consoleMessage.sourceId());
+                return true;
+            }
+
             @Override
             public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
                 if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
