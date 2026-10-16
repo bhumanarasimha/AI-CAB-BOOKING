@@ -21,8 +21,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.webkit.WebViewAssetLoader;
 
+import java.io.InputStream;
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
@@ -68,6 +68,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private String getMimeType(String filePath) {
+        if (filePath.endsWith(".html") || filePath.endsWith(".htm")) return "text/html";
+        if (filePath.endsWith(".js")) return "text/javascript";
+        if (filePath.endsWith(".css")) return "text/css";
+        if (filePath.endsWith(".png")) return "image/png";
+        if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) return "image/jpeg";
+        if (filePath.endsWith(".svg")) return "image/svg+xml";
+        if (filePath.endsWith(".json")) return "application/json";
+        if (filePath.endsWith(".woff2")) return "font/woff2";
+        if (filePath.endsWith(".ttf")) return "font/ttf";
+        return "text/html";
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     @SuppressWarnings("deprecation")
     @Override
@@ -95,21 +108,26 @@ public class MainActivity extends AppCompatActivity {
         // Bridge to allow frontend to open installed cab apps
         webView.addJavascriptInterface(new WebAppInterface(this), "AndroidApp");
 
-        final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
-                .setDomain(APP_ASSETS_HOST)
-                .addPathHandler("/", new WebViewAssetLoader.AssetsPathHandler(this))
-                .build();
-
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 Uri url = request.getUrl();
                 if (url != null && Objects.equals(url.getHost(), APP_ASSETS_HOST)) {
-                    WebResourceResponse response = assetLoader.shouldInterceptRequest(url);
-                    if (response != null) {
-                        return response;
+                    String rawPath = url.getPath();
+                    String cleanPath = (rawPath != null && rawPath.startsWith("/")) ? rawPath.substring(1) : (rawPath != null ? rawPath : "");
+                    String targetPath = cleanPath.isEmpty() ? "index.html" : cleanPath;
+
+                    try {
+                        InputStream is = getAssets().open(targetPath);
+                        return new WebResourceResponse(getMimeType(targetPath), "UTF-8", is);
+                    } catch (Exception e) {
+                        try {
+                            InputStream is = getAssets().open("index.html");
+                            return new WebResourceResponse("text/html", "UTF-8", is);
+                        } catch (Exception ex) {
+                            Log.e(TAG, "Error opening index.html asset fallback", ex);
+                        }
                     }
-                    return assetLoader.shouldInterceptRequest(Uri.parse("https://" + APP_ASSETS_HOST + "/index.html"));
                 }
                 return super.shouldInterceptRequest(view, request);
             }
