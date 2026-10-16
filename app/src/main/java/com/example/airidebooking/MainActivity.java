@@ -11,7 +11,6 @@ import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
-import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -22,16 +21,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
-    private static final String APP_ASSETS_HOST = "appassets.androidplatform.net";
 
     private WebView webView;
     private String pendingOrigin;
@@ -70,19 +63,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private String getMimeType(String filePath) {
-        if (filePath.endsWith(".html") || filePath.endsWith(".htm")) return "text/html";
-        if (filePath.endsWith(".js")) return "text/javascript";
-        if (filePath.endsWith(".css")) return "text/css";
-        if (filePath.endsWith(".png")) return "image/png";
-        if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) return "image/jpeg";
-        if (filePath.endsWith(".svg")) return "image/svg+xml";
-        if (filePath.endsWith(".json")) return "application/json";
-        if (filePath.endsWith(".woff2")) return "font/woff2";
-        if (filePath.endsWith(".ttf")) return "font/ttf";
-        return "text/html";
-    }
-
     @SuppressLint("SetJavaScriptEnabled")
     @SuppressWarnings("deprecation")
     @Override
@@ -102,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setSupportMultipleWindows(false);
         webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
 
-        // Essential for React/Vite local loading
+        // Essential for React/Vite local asset loading
         webSettings.setAllowContentAccess(true);
         webSettings.setAllowFileAccessFromFileURLs(true);
         webSettings.setAllowUniversalAccessFromFileURLs(true);
@@ -110,42 +90,17 @@ public class MainActivity extends AppCompatActivity {
         // Bridge to allow frontend to open installed cab apps
         webView.addJavascriptInterface(new WebAppInterface(this), "AndroidApp");
 
-        final Map<String, String> responseHeaders = new HashMap<>();
-        responseHeaders.put("Access-Control-Allow-Origin", "*");
-        responseHeaders.put("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        responseHeaders.put("Access-Control-Allow-Headers", "*");
-
         webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                Uri url = request.getUrl();
-                if (url != null && Objects.equals(url.getHost(), APP_ASSETS_HOST)) {
-                    String rawPath = url.getPath();
-                    String initialPath = (rawPath != null && rawPath.startsWith("/")) ? rawPath.substring(1) : (rawPath != null ? rawPath : "");
-                    String targetPath = initialPath.isEmpty() ? "index.html" : initialPath;
-
-                    try {
-                        InputStream is = getAssets().open(targetPath);
-                        return new WebResourceResponse(getMimeType(targetPath), "UTF-8", 200, "OK", responseHeaders, is);
-                    } catch (Exception e) {
-                        try {
-                            InputStream is = getAssets().open("index.html");
-                            return new WebResourceResponse("text/html", "UTF-8", 200, "OK", responseHeaders, is);
-                        } catch (Exception ex) {
-                            Log.e(TAG, "Error opening index.html asset fallback", ex);
-                        }
-                    }
-                }
-                return super.shouldInterceptRequest(view, request);
-            }
-
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri url = request.getUrl();
                 if (url != null) {
-                    if (Objects.equals(url.getHost(), APP_ASSETS_HOST)) {
+                    String scheme = url.getScheme();
+                    // Load local assets inside WebView
+                    if ("file".equalsIgnoreCase(scheme) || url.toString().contains("android_asset")) {
                         return false;
                     }
+                    // Open external URLs (maps, external apps) via Android Intent
                     try {
                         Intent intent = new Intent(Intent.ACTION_VIEW, url);
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -165,7 +120,10 @@ public class MainActivity extends AppCompatActivity {
                 if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     pendingOrigin = origin;
                     pendingCallback = callback;
-                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    }, LOCATION_PERMISSION_REQUEST_CODE);
                 } else {
                     callback.invoke(origin, true, false);
                 }
@@ -193,8 +151,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Load via the virtual domain to support React Router
-        webView.loadUrl("https://" + APP_ASSETS_HOST + "/index.html");
+        // Load native local index.html directly from APK assets
+        webView.loadUrl("file:///android_asset/index.html");
     }
 
     @Override
