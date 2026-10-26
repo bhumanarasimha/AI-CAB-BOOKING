@@ -1,0 +1,104 @@
+-- SmartRide AI - MySQL Database Schema
+CREATE DATABASE IF NOT EXISTS smartride_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE smartride_db;
+
+-- Table: Users
+CREATE TABLE IF NOT EXISTS Users (
+    id VARCHAR(100) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) DEFAULT '',
+    role VARCHAR(20) DEFAULT 'rider',
+    provider VARCHAR(20) DEFAULT 'email',
+    photoURL VARCHAR(255) DEFAULT '',
+    preferences JSON DEFAULT NULL,
+    savedPlaces JSON DEFAULT NULL,
+    emergencyContacts JSON DEFAULT NULL,
+    commuteProfile JSON DEFAULT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Table: Rides
+CREATE TABLE IF NOT EXISTS Rides (
+    id VARCHAR(100) PRIMARY KEY,
+    userId VARCHAR(100) NOT NULL,
+    pickup VARCHAR(255) NOT NULL,
+    destination VARCHAR(255) NOT NULL,
+    provider VARCHAR(50) NOT NULL,
+    cabType VARCHAR(50) NOT NULL,
+    fare DECIMAL(10,2) NOT NULL,
+    etaMinutes INT DEFAULT 5,
+    status VARCHAR(20) DEFAULT 'CONFIRMED',
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (userId) REFERENCES Users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Table: Parcels
+CREATE TABLE IF NOT EXISTS Parcels (
+    id VARCHAR(100) PRIMARY KEY,
+    userId VARCHAR(100) NOT NULL,
+    senderName VARCHAR(100) NOT NULL,
+    senderPhone VARCHAR(20) NOT NULL,
+    receiverName VARCHAR(100) NOT NULL,
+    receiverPhone VARCHAR(20) NOT NULL,
+    itemType VARCHAR(50) NOT NULL,
+    weight VARCHAR(20) DEFAULT '1kg',
+    pickup VARCHAR(255) NOT NULL,
+    destination VARCHAR(255) NOT NULL,
+    fare DECIMAL(10,2) NOT NULL,
+    status VARCHAR(20) DEFAULT 'PENDING',
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (userId) REFERENCES Users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Table: Chats
+CREATE TABLE IF NOT EXISTS Chats (
+    id VARCHAR(100) PRIMARY KEY,
+    user1Id VARCHAR(100) NOT NULL,
+    user2Id VARCHAR(100) NOT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user1Id) REFERENCES Users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user2Id) REFERENCES Users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Table: Messages
+CREATE TABLE IF NOT EXISTS Messages (
+    id VARCHAR(100) PRIMARY KEY,
+    chatId VARCHAR(100) NOT NULL,
+    senderId VARCHAR(100) NOT NULL,
+    text TEXT NOT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (chatId) REFERENCES Chats(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Table: PerformanceLogs
+CREATE TABLE IF NOT EXISTS PerformanceLogs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event VARCHAR(100) NOT NULL,
+    durationMs INT DEFAULT 0,
+    payload JSON DEFAULT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Table: CabEstimates
+CREATE TABLE IF NOT EXISTS CabEstimates (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    provider VARCHAR(50) NOT NULL,
+    cabType VARCHAR(50) NOT NULL,
+    baseFare DECIMAL(10,2) NOT NULL,
+    perKmRate DECIMAL(10,2) NOT NULL,
+    perMinRate DECIMAL(10,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Sample Cab Rates Data
+INSERT INTO CabEstimates (provider, cabType, baseFare, perKmRate, perMinRate) VALUES
+('Uber', 'Go', 40.00, 12.00, 1.50),
+('Uber', 'Premier', 70.00, 18.00, 2.00),
+('Ola', 'Mini', 35.00, 11.50, 1.20),
+('Ola', 'Prime Sedan', 65.00, 17.00, 1.80),
+('Rapido', 'Auto', 25.00, 9.00, 1.00),
+('Namma Yatri', 'Auto', 30.00, 10.00, 1.00),
+('SmartRide AI', 'AI Economy', 30.00, 10.50, 1.10)
+ON DUPLICATE KEY UPDATE baseFare=VALUES(baseFare);

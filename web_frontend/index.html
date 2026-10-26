@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark-ai">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartRide AI - Next-Gen Multi-Provider Cab & Parcel Mobility Platform</title>
+  <meta name="description" content="Aggregates live cab fares and ETAs across Uber, Ola, Rapido, Namma Yatri, and SmartRide EV with multi-agent AI optimization, parcel logistics, and smart carpooling." />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="assets/smartride-icon.svg" />
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css?v=2.5" />
+</head>
+<body>
+
+  <!-- ==========================================================================
+       Site Header
+       ========================================================================== -->
+  <header class="site-header" role="banner">
+    <a href="#" class="brand" id="brand-logo" aria-label="SmartRide AI Homepage">
+      <img src="assets/smartride-icon.svg" alt="SmartRide AI Logo" class="brand-icon" />
+      <div class="brand-title">
+        SmartRide<span>AI</span>
+        <span class="brand-badge">Mobility Hub</span>
+      </div>
+    </a>
+
+    <!-- Live Telemetry & Backend Status -->
+    <div class="status-pill-group">
+      <div class="status-pill" id="backend-status-pill" title="Shared Backend Connection">
+        <span class="status-dot online" id="backend-status-dot"></span>
+        <span id="backend-status-text">Connecting...</span>
+      </div>
+      <div class="status-pill" title="GPS High Precision Radar">
+        <span>📡</span>
+        <span>GPS Beacon Active</span>
+      </div>
+    </div>
+
+    <!-- Header Actions -->
+    <div class="header-actions">
+      <!-- Theme Switcher -->
+      <select id="theme-picker" class="icon-btn" style="width: auto; padding: 0 10px; font-size: 13px; font-weight: 600;" aria-label="Select Theme">
+        <option value="dark-ai">🌌 Dark AI</option>
+        <option value="midnight">🌑 Midnight</option>
+        <option value="aurora">✨ Aurora</option>
+        <option value="ocean">🌊 Ocean</option>
+        <option value="sunset">🌅 Sunset</option>
+        <option value="light">☀️ Light</option>
+      </select>
+
+      <!-- Emergency SOS Quick Trigger -->
+      <button class="icon-btn" id="emergency-sos-btn" style="background: rgba(239, 68, 68, 0.2); border-color: var(--danger); color: var(--danger);" title="Emergency SOS" aria-label="Emergency SOS">
+        🚨
+      </button>
+
+      <!-- User Profile Badge -->
+      <div class="user-badge" id="header-user-btn" aria-label="User Profile">
+        <img src="https://ui-avatars.com/api/?name=Rider&background=00D8FF&color=080C14" alt="User Avatar" class="user-avatar" id="header-user-avatar" />
+        <span class="user-name" id="header-user-name">Rider</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       Navigation Bar Tabs
+       ========================================================================== -->
+  <nav class="nav-tabs" role="navigation" aria-label="Main Application Sections">
+    <button class="nav-tab-btn active" data-tab="rides" id="tab-rides">
+      <span>🚖</span> Rides & Compare
+    </button>
+    <button class="nav-tab-btn" data-tab="radar" id="tab-radar">
+      <span>🗺️</span> Fleet Radar
+    </button>
+    <button class="nav-tab-btn" data-tab="parcel" id="tab-parcel">
+      <span>📦</span> Parcel Express
+    </button>
+    <button class="nav-tab-btn" data-tab="commute" id="tab-commute">
+      <span>👥</span> Smart Commute
+    </button>
+    <button class="nav-tab-btn" data-tab="activity" id="tab-activity">
+      <span>📊</span> My Rides & Activity
+    </button>
+    <button class="nav-tab-btn" data-tab="xai" id="tab-xai">
+      <span>🧠</span> Explainable AI
+    </button>
+    <button class="nav-tab-btn" data-tab="profile" id="tab-profile">
+      <span>🛡️</span> Profile & Safety
+    </button>
+  </nav>
+
+  <!-- ==========================================================================
+       Main Content Container
+       ========================================================================== -->
+  <main class="app-container" role="main">
+
+    <!-- ========================================================================
+         SECTION 1: Rides & Multi-Provider Comparison (Core Feature)
+         ======================================================================== -->
+    <section class="app-section active" id="section-rides" aria-labelledby="heading-rides">
+      <div class="app-grid">
+
+        <!-- Left Column: Search & Quoting Matrix -->
+        <div class="search-panel">
+          
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h1 class="card-title" id="heading-rides"><span>⚡</span> Real-Time Multi-Provider Fares</h1>
+                <p class="card-subtitle">Instant comparison across Uber, Ola, Rapido, Namma Yatri & SmartRide EV</p>
+              </div>
+              <div style="font-size: 11px; font-weight: 700; color: var(--brand-cyan); background: rgba(0,216,255,0.1); padding: 4px 10px; border-radius: var(--radius-pill);" id="refresh-timer-badge">
+                Auto-refresh in 10s
+              </div>
+            </div>
+
+            <!-- Route Inputs -->
+            <div class="route-input-group">
+              <div class="route-connector"></div>
+
+              <div class="input-row">
+                <span class="input-marker" title="Pickup Location"></span>
+                <input type="text" id="pickup-input" class="route-input" value="Express Avenue, Royapettah" placeholder="Enter pickup location..." aria-label="Pickup location" />
+                <button class="quick-swap-btn" id="swap-locations-btn" title="Swap locations" aria-label="Swap pickup and destination">⇄</button>
+              </div>
+
+              <div class="input-row">
+                <span class="input-marker dropoff" title="Dropoff Destination"></span>
+                <input type="text" id="dropoff-input" class="route-input" value="Tidel Park, OMR Tech Corridor" placeholder="Where do you want to go?" aria-label="Destination location" />
+                <button class="route-send-btn" id="search-route-btn" title="Send & Find Fares" aria-label="Send Route Search">
+                  <span class="send-arrow">➔</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Quick Places Chips -->
+            <div class="quick-chips">
+              <span style="font-size: 11px; font-weight: 600; color: var(--text-dim); margin-right: 4px;">Suggestions:</span>
+              <button class="chip-btn quick-place-chip" data-place="Airport Terminal 2">✈️ Airport</button>
+              <button class="chip-btn quick-place-chip" data-place="Marina Beach Promenade">🏖️ Marina Beach</button>
+              <button class="chip-btn quick-place-chip" data-place="Central Railway Station">🚆 Central Station</button>
+              <button class="chip-btn quick-place-chip" data-place="Phoenix MarketCity Mall">🛍️ Phoenix Mall</button>
+            </div>
+
+            <!-- Vehicle Categories Selector -->
+            <div class="category-pills" role="radiogroup" aria-label="Vehicle Category">
+              <div class="category-pill" data-cat="all" role="radio" aria-checked="false">
+                <span class="category-icon">⚡</span>
+                <span class="category-name">All</span>
+              </div>
+              <div class="category-pill" data-cat="bike" role="radio" aria-checked="false">
+                <span class="category-icon">🏍️</span>
+                <span class="category-name">Bike</span>
+              </div>
+              <div class="category-pill" data-cat="auto" role="radio" aria-checked="false">
+                <span class="category-icon">🛺</span>
+                <span class="category-name">Auto</span>
+              </div>
+              <div class="category-pill active" data-cat="cab4" role="radio" aria-checked="true">
+                <span class="category-icon">🚗</span>
+                <span class="category-name">Cab (4S)</span>
+              </div>
+              <div class="category-pill" data-cat="cab7" role="radio" aria-checked="false">
+                <span class="category-icon">🚐</span>
+                <span class="category-name">SUV (7S)</span>
+              </div>
+              <div class="category-pill" data-cat="transit" role="radio" aria-checked="false">
+                <span class="category-icon">🚇</span>
+                <span class="category-name">Transit</span>
+              </div>
+            </div>
+
+            <!-- AI Strategy Filters -->
+            <div class="strategy-bar">
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">AI Strategy:</span>
+              <button class="strategy-chip active" data-strategy="balanced">✨ AI Best Overall</button>
+              <button class="strategy-chip" data-strategy="cheapest">💰 Cheapest</button>
+              <button class="strategy-chip" data-strategy="fastest">⚡ Fastest</button>
+              <button class="strategy-chip" data-strategy="reliable">🛡️ Reliable</button>
+              <button class="strategy-chip" data-strategy="effort">🚶‍♂️ Lowest Effort</button>
+            </div>
+
+            <!-- Live Quote Cards Container -->
+            <div class="quotes-container" id="quotes-container" role="region" aria-live="polite">
+              <!-- Dynamically populated by app.js -->
+            </div>
+
+            <!-- Booking Bar -->
+            <div class="booking-bar">
+              <button class="btn-primary" id="book-ride-btn" aria-label="Confirm and Book Selected Ride">
+                <span>⚡</span> Confirm & Book Ride
+              </button>
+              <button class="btn-secondary" id="deeplink-btn" style="display: none;" title="Open in Native App" aria-label="Launch Competitor App">
+                <span>🚀</span> Launch App
+              </button>
+              <button class="icon-btn" id="manual-refresh-btn" title="Refresh Live Fares" aria-label="Refresh Fares">
+                🔄
+              </button>
+            </div>
+
+            <!-- Famous Places Explorer -->
+            <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border-ui);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h4 style="font-size: 14px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                  <span>🏖️</span> Popular City Destinations
+                </h4>
+                <span style="font-size: 11px; color: var(--brand-cyan); font-weight: 600;">1-Tap Destination</span>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="famous-place-card chip-btn" data-place="Marina Beach Promenade" style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: var(--radius-md); text-align: left; height: auto;">
+                  <span style="font-size: 24px;">🏖️</span>
+                  <div>
+                    <strong style="font-size: 12px; display: block; color: var(--text-main);">Marina Beach</strong>
+                    <span style="font-size: 11px; color: var(--text-muted);">2.5 km • 8 mins</span>
+                  </div>
+                </div>
+
+                <div class="famous-place-card chip-btn" data-place="Kapaleeshwarar Temple" style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: var(--radius-md); text-align: left; height: auto;">
+                  <span style="font-size: 24px;">🛕</span>
+                  <div>
+                    <strong style="font-size: 12px; display: block; color: var(--text-main);">Kapaleeshwarar</strong>
+                    <span style="font-size: 11px; color: var(--text-muted);">4.8 km • 14 mins</span>
+                  </div>
+                </div>
+
+                <div class="famous-place-card chip-btn" data-place="Phoenix MarketCity Mall" style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: var(--radius-md); text-align: left; height: auto;">
+                  <span style="font-size: 24px;">🛍️</span>
+                  <div>
+                    <strong style="font-size: 12px; display: block; color: var(--text-main);">Phoenix MarketCity</strong>
+                    <span style="font-size: 11px; color: var(--text-muted);">11.2 km • 25 mins</span>
+                  </div>
+                </div>
+
+                <div class="famous-place-card chip-btn" data-place="Airport Terminal 2" style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: var(--radius-md); text-align: left; height: auto;">
+                  <span style="font-size: 24px;">✈️</span>
+                  <div>
+                    <strong style="font-size: 12px; display: block; color: var(--text-main);">Chennai Airport</strong>
+                    <span style="font-size: 11px; color: var(--text-muted);">16.5 km • 35 mins</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Right Column: Interactive Fleet Radar & GPS Map -->
+        <div class="map-panel">
+          <div class="map-wrapper">
+            <div class="map-header">
+              <div>
+                <h3 style="font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                  <span>🛰️</span> Live Fleet Radar & GPS Route
+                </h3>
+                <p style="font-size: 11px; color: var(--text-muted);">Real-time vehicle telemetry within 2.5km radius</p>
+              </div>
+              <span style="font-size: 11px; padding: 2px 8px; border-radius: var(--radius-pill); background: rgba(0,216,255,0.15); color: var(--brand-cyan); font-weight: 700;">
+                LIVE TELEMETRY
+              </span>
+            </div>
+
+            <div class="map-canvas-container">
+              <canvas id="map-canvas"></canvas>
+
+              <div class="map-controls">
+                <button class="map-ctrl-btn" id="map-zoom-in" title="Zoom In" aria-label="Zoom In">+</button>
+                <button class="map-ctrl-btn" id="map-zoom-out" title="Zoom Out" aria-label="Zoom Out">-</button>
+                <button class="map-ctrl-btn" id="map-recenter" title="Recenter Location" aria-label="Recenter Map">🎯</button>
+              </div>
+            </div>
+
+            <div class="map-fleet-legend">
+              <div class="legend-item">
+                <span class="legend-dot" style="background: var(--brand-cyan);"></span>
+                <span>SmartRide EV</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot" style="background: #FFFFFF;"></span>
+                <span>Uber</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot" style="background: #E0F838;"></span>
+                <span>Ola</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot" style="background: #FFDD00;"></span>
+                <span>Rapido</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SECTION 2: Dedicated Fullscreen Fleet Radar
+         ======================================================================== -->
+    <section class="app-section" id="section-radar" aria-labelledby="heading-radar">
+      <div class="card">
+        <h2 class="card-title" id="heading-radar"><span>🗺️</span> Global Fleet Telemetry & GPS Sensor</h2>
+        <p class="card-subtitle">Inspect local traffic density, nearby vehicle dispatch availability, and route navigation vectors.</p>
+        <div style="margin-top: 16px; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-ui);">
+          <!-- Re-uses primary radar canvas when active -->
+          <p style="padding: 20px; text-align: center; color: var(--text-muted);">
+            Fleet Radar is running live in the main view. Switch to the <strong>Rides & Compare</strong> tab to interact directly with the zoom, pan, and real-time cab markers!
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SECTION 3: Parcel & Logistics Delivery
+         ======================================================================== -->
+    <section class="app-section" id="section-parcel" aria-labelledby="heading-parcel">
+      <div class="card" style="max-width: 800px; margin: 0 auto 20px auto;">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title" id="heading-parcel"><span>📦</span> SmartRide Express Parcel Transport</h2>
+            <p class="card-subtitle">On-demand city logistics with end-to-end GPS tracking and OTP verification</p>
+          </div>
+          <div style="font-size: 18px; font-weight: 800; color: var(--brand-cyan);" id="parcel-fare-estimate">₹85</div>
+        </div>
+
+        <!-- Tier Selection -->
+        <div class="parcel-tiers">
+          <div class="tier-card active" data-tier="bike">
+            <div class="tier-icon">🏍️</div>
+            <div class="tier-name">Express Bike</div>
+            <div class="tier-weight">Up to 5 kg (Documents, food, keys)</div>
+            <div class="tier-price">Base ₹45</div>
+          </div>
+
+          <div class="tier-card" data-tier="car">
+            <div class="tier-icon">🚗</div>
+            <div class="tier-name">Standard Car</div>
+            <div class="tier-weight">Up to 20 kg (Cartons, gadgets)</div>
+            <div class="tier-price">Base ₹110</div>
+          </div>
+
+          <div class="tier-card" data-tier="van">
+            <div class="tier-icon">🚐</div>
+            <div class="tier-name">Heavy Van</div>
+            <div class="tier-weight">Up to 100 kg (Bulk boxes, gear)</div>
+            <div class="tier-price">Base ₹280</div>
+          </div>
+        </div>
+
+        <!-- Sender & Receiver Form -->
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label" for="sender-name">Sender Full Name</label>
+            <input type="text" id="sender-name" class="form-control" value="Narasimha B." />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="sender-phone">Sender Contact Number</label>
+            <input type="tel" id="sender-phone" class="form-control" value="+91 79956 65477" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="receiver-name">Receiver Full Name</label>
+            <input type="text" id="receiver-name" class="form-control" value="Vikram Joshi" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="receiver-phone">Receiver Contact Number</label>
+            <input type="tel" id="receiver-phone" class="form-control" value="+91 98450 11223" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="parcel-pickup">Pickup Address</label>
+            <input type="text" id="parcel-pickup" class="form-control" value="Express Avenue, Royapettah" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="parcel-dest">Delivery Destination</label>
+            <input type="text" id="parcel-dest" class="form-control" value="Tidel Park, OMR Tech Corridor" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="parcel-item-type">Item Category</label>
+            <select id="parcel-item-type" class="form-control">
+              <option value="Documents">📄 Confidential Documents</option>
+              <option value="Electronics">💻 Electronics & Gadgets</option>
+              <option value="Food & Medicine">🥗 Food & Pharmaceuticals</option>
+              <option value="Clothing">👕 Apparel & Merchandise</option>
+              <option value="Heavy Gear">📦 Industrial Supplies</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="parcel-notes">Delivery Instructions</label>
+            <input type="text" id="parcel-notes" class="form-control" placeholder="Leave with security, gate code, etc." />
+          </div>
+        </div>
+
+        <button class="btn-primary" id="book-parcel-btn" style="width: 100%;">
+          <span>🚀</span> Dispatch Courier Now
+        </button>
+      </div>
+
+      <!-- Recent Parcel Deliveries -->
+      <div class="card" style="max-width: 800px; margin: 0 auto;">
+        <h3 class="card-title" style="margin-bottom: 12px;"><span>📦</span> Active & Previous Deliveries</h3>
+        <div id="parcels-history-list"></div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SECTION 4: Smart Commute & Carpooling
+         ======================================================================== -->
+    <section class="app-section" id="section-commute" aria-labelledby="heading-commute">
+      <div style="max-width: 860px; margin: 0 auto;">
+        
+        <!-- Savings Metric Banner -->
+        <div class="commute-banner">
+          <div>
+            <h2 style="font-size: 20px; font-weight: 800; color: #FFFFFF; display: flex; align-items: center; gap: 8px;">
+              <span>🌱</span> AI Carpooling & Carbon Reduction
+            </h2>
+            <p style="font-size: 13px; color: rgba(255, 255, 255, 0.8); margin-top: 4px;">
+              Share your daily commute with verified professionals heading to the same hub.
+            </p>
+          </div>
+
+          <div class="savings-meter">
+            <div class="savings-metric">
+              <div class="savings-val">₹4,200</div>
+              <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Monthly Saved</div>
+            </div>
+            <div class="savings-metric">
+              <div class="savings-val" style="color: var(--success);">24 kg</div>
+              <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">CO₂ Reduced</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Commuter Matches -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title" id="heading-commute"><span>👥</span> Daily Commuters Sharing Your Route</h3>
+            <span style="font-size: 12px; color: var(--brand-cyan); font-weight: 700;">3 Matches Found</span>
+          </div>
+
+          <div class="match-cards">
+            <!-- Match 1 -->
+            <div class="match-card">
+              <div class="match-user">
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80" alt="Sarah Chen" class="match-avatar" />
+                <div class="match-info">
+                  <h4>Sarah Chen <span style="font-size: 12px; color: var(--success);">✔ Verified</span></h4>
+                  <div class="match-company">Principal Engineer @ TechCorp HQ</div>
+                  <div class="match-schedule">⏰ 08:30 AM Departure • 0.4 km deviation</div>
+                </div>
+              </div>
+              <div class="match-stats">
+                <div class="match-badge">94% Route Match</div>
+                <div style="font-weight: 800; font-size: 15px; color: var(--brand-cyan);">Save ₹240/ride</div>
+                <button class="btn-secondary match-chat-btn" data-user="Sarah Chen" style="padding: 8px 16px;">
+                  💬 Chat & Pool
+                </button>
+              </div>
+            </div>
+
+            <!-- Match 2 -->
+            <div class="match-card">
+              <div class="match-user">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80" alt="David Miller" class="match-avatar" />
+                <div class="match-info">
+                  <h4>David Miller <span style="font-size: 12px; color: var(--success);">✔ Verified</span></h4>
+                  <div class="match-company">Product Lead @ Innovation Park</div>
+                  <div class="match-schedule">⏰ 09:00 AM Departure • 0.8 km deviation</div>
+                </div>
+              </div>
+              <div class="match-stats">
+                <div class="match-badge">88% Route Match</div>
+                <div style="font-weight: 800; font-size: 15px; color: var(--brand-cyan);">Save ₹180/ride</div>
+                <button class="btn-secondary match-chat-btn" data-user="David Miller" style="padding: 8px 16px;">
+                  💬 Chat & Pool
+                </button>
+              </div>
+            </div>
+
+            <!-- Match 3 -->
+            <div class="match-card">
+              <div class="match-user">
+                <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80" alt="Anita Raj" class="match-avatar" />
+                <div class="match-info">
+                  <h4>Anita Raj <span style="font-size: 12px; color: var(--success);">✔ Verified</span></h4>
+                  <div class="match-company">Systems Architect @ OMR CyberPark</div>
+                  <div class="match-schedule">⏰ 08:45 AM Departure • 1.2 km deviation</div>
+                </div>
+              </div>
+              <div class="match-stats">
+                <div class="match-badge">82% Route Match</div>
+                <div style="font-weight: 800; font-size: 15px; color: var(--brand-cyan);">Save ₹150/ride</div>
+                <button class="btn-secondary match-chat-btn" data-user="Anita Raj" style="padding: 8px 16px;">
+                  💬 Chat & Pool
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SECTION 5: My Rides & Activity
+         ======================================================================== -->
+    <section class="app-section" id="section-activity" aria-labelledby="heading-activity">
+      <div style="max-width: 800px; margin: 0 auto;">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title" id="heading-activity"><span>📊</span> Trip History & Receipts</h2>
+              <p class="card-subtitle">Synced in real-time with the MySQL / PHP backend</p>
+            </div>
+            <button class="btn-secondary" id="refresh-activity-btn" style="padding: 6px 14px; font-size: 12px;">
+              🔄 Refresh List
+            </button>
+          </div>
+
+          <div id="my-rides-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SECTION 6: Explainable AI (XAI) Engine Inspector
+         ======================================================================== -->
+    <section class="app-section" id="section-xai" aria-labelledby="heading-xai">
+      <div style="max-width: 960px; margin: 0 auto;">
+        
+        <!-- Main XAI Header Card -->
+        <div class="card xai-main-card">
+          <div class="card-header" style="flex-wrap: wrap; gap: 12px; align-items: flex-start;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 26px;">🧠</span>
+                <h2 class="card-title" id="heading-xai" style="margin: 0;">EMMDE Multi-Agent Explainability Inspector</h2>
+              </div>
+              <p class="card-subtitle" style="margin-top: 4px;">
+                Transparent, auditable multi-agent decision intelligence grounded in SHAP feature attribution, LIME surrogate rules, and counterfactual simulation.
+              </p>
+            </div>
+            <span class="xai-badge-pill">
+              NeurIPS 2022 XAI Methodology
+            </span>
+          </div>
+
+          <!-- Vehicle Selector Tabs -->
+          <div style="margin-top: 18px;">
+            <label style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 700;">
+              Select Candidate Mobility Option to Inspect:
+            </label>
+            <div id="xai-vehicle-selector" class="xai-vehicle-selector" style="margin-top: 8px;"></div>
+          </div>
+
+          <!-- Selected Vehicle Spotlight -->
+          <div id="xai-selected-spotlight" class="xai-selected-spotlight" style="margin-top: 18px;"></div>
+        </div>
+
+        <!-- Multi-Agent Autonomous Scorecards -->
+        <div class="card" style="margin-top: 20px;">
+          <div class="card-header">
+            <h3 class="card-title" style="font-size: 16px;"><span>🤖</span> Multi-Agent Collaborative Scorecards</h3>
+            <span style="font-size: 11px; color: var(--text-dim);">5 Autonomous Specialized Agents</span>
+          </div>
+          <div id="xai-agent-grid" class="xai-agent-grid" style="margin-top: 16px;"></div>
+        </div>
+
+        <!-- SHAP Waterfall & LIME Grid -->
+        <div class="xai-dual-grid" style="margin-top: 20px;">
+          <!-- SHAP Waterfall Card -->
+          <div class="card xai-shap-card">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title" style="font-size: 15px;"><span>📊</span> SHAP Feature Attribution</h3>
+                <p class="card-subtitle" style="font-size: 11px;">Additive marginal contribution ($\phi$) to base score</p>
+              </div>
+              <span class="xai-mini-tag">TreeExplainer / EBM</span>
+            </div>
+            <div id="xai-shap-waterfall" class="xai-shap-waterfall" style="margin-top: 16px;"></div>
+          </div>
+
+          <!-- LIME Decision Boundaries Card -->
+          <div class="card xai-lime-card">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title" style="font-size: 15px;"><span>⚖️</span> LIME Surrogate Decision Rules</h3>
+                <p class="card-subtitle" style="font-size: 11px;">Local linear interpretable IF-THEN conditions</p>
+              </div>
+              <span class="xai-mini-tag" style="border-color: #A855F7; color: #C084FC;">Surrogate Model</span>
+            </div>
+            <div id="xai-lime-rules" class="xai-lime-rules" style="margin-top: 16px;"></div>
+          </div>
+        </div>
+
+        <!-- Interactive What-If Counterfactual Simulation Studio -->
+        <div class="card xai-whatif-card" style="margin-top: 20px;">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title" style="font-size: 16px;"><span>🔬</span> Interactive Counterfactual "What-If" Simulation Studio</h3>
+              <p class="card-subtitle">Perturb real-world variables to observe live sensitivity and decision boundary shifts.</p>
+            </div>
+            <button id="whatif-reset-btn" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 4px 10px;">
+              ↺ Reset to Real Telemetry
+            </button>
+          </div>
+
+          <div class="whatif-studio-grid" style="margin-top: 16px;">
+            <div class="whatif-controls-col">
+              <!-- Slider 1: Walking Distance -->
+              <div class="whatif-slider-group">
+                <div class="whatif-slider-header">
+                  <span>🚶‍♂️ Curbside Pickup Walk:</span>
+                  <strong id="whatif-walk-val" style="color: var(--brand-cyan);">90m</strong>
+                </div>
+                <input type="range" id="whatif-walk-slider" min="0" max="500" step="10" value="90" class="whatif-slider">
+                <div class="slider-ticks"><span>0m (Curbside)</span><span>250m</span><span>500m (Far Bay)</span></div>
+              </div>
+
+              <!-- Slider 2: Surge Multiplier -->
+              <div class="whatif-slider-group" style="margin-top: 14px;">
+                <div class="whatif-slider-header">
+                  <span>⚡ Surge Multiplier:</span>
+                  <strong id="whatif-surge-val" style="color: #F59E0B;">1.0x (Standard)</strong>
+                </div>
+                <input type="range" id="whatif-surge-slider" min="1.0" max="2.5" step="0.1" value="1.0" class="whatif-slider">
+                <div class="slider-ticks"><span>1.0x (Zero Surge)</span><span>1.5x</span><span>2.5x (Peak Spike)</span></div>
+              </div>
+
+              <!-- Traffic & Weather Selector -->
+              <div class="whatif-slider-group" style="margin-top: 14px;">
+                <div class="whatif-slider-header">
+                  <span>🌦️ Corridor Traffic & Weather:</span>
+                  <strong id="whatif-traffic-val" style="color: var(--brand-indigo);">Normal Flow (Clear)</strong>
+                </div>
+                <select id="whatif-traffic-select" class="form-select whatif-select" style="margin-top: 6px;">
+                  <option value="low">Free Highway Flow (Clear Skies)</option>
+                  <option value="moderate" selected>Moderate Urban Traffic (Clear Skies)</option>
+                  <option value="heavy">Severe Rush Hour Bottleneck (Clear)</option>
+                  <option value="rain">Monsoon Rain Shock + Rush Hour</option>
+                </select>
+              </div>
+
+              <!-- Strategy Priority Selector -->
+              <div class="whatif-slider-group" style="margin-top: 14px;">
+                <div class="whatif-slider-header">
+                  <span>🎯 Optimization Strategy:</span>
+                </div>
+                <select id="whatif-strategy-select" class="form-select whatif-select" style="margin-top: 6px;">
+                  <option value="balanced" selected>Balanced Equilibrium</option>
+                  <option value="cheapest">Cheapest Price Shield</option>
+                  <option value="fastest">Fastest Dispatch ETA</option>
+                  <option value="reliable">Guaranteed Zero-Cancellation</option>
+                  <option value="effort">Minimal Effort & Physical Walk</option>
+                  <option value="eco">Eco-First Green EV Fleet</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- What-If Live Output Result Card -->
+            <div id="whatif-result-card" class="whatif-result-card"></div>
+          </div>
+        </div>
+
+        <!-- AI Transparency Audit Bar -->
+        <div class="card" style="margin-top: 20px;">
+          <div class="xai-audit-bar">
+            <div>
+              <div style="font-weight: 700; font-size: 14px; color: var(--text-main);">
+                🛡️ AI Transparency & Decision Audit Trail
+              </div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                Cryptographically hashed multi-agent deliberation record ready for regulatory compliance & rider inspection.
+              </div>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button id="xai-copy-explanation-btn" class="btn btn-secondary btn-sm">
+                <span>📋</span> Copy Reasoning Text
+              </button>
+              <button id="xai-export-json-btn" class="btn btn-primary btn-sm">
+                <span>📥</span> Download Audit (JSON)
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SECTION 7: Profile, Safety SOS & Settings
+         ======================================================================== -->
+    <section class="app-section" id="section-profile" aria-labelledby="heading-profile">
+      <div style="max-width: 800px; margin: 0 auto;">
+        
+        <!-- Profile Card -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title" id="heading-profile"><span>🛡️</span> Rider Profile & Account</h2>
+            <span style="font-size: 11px; padding: 2px 8px; border-radius: var(--radius-pill); background: rgba(0,216,255,0.15); color: var(--brand-cyan); font-weight: 700;">
+              VERIFIED RIDER
+            </span>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" for="profile-name-input">Full Name</label>
+              <input type="text" id="profile-name-input" class="form-control" value="Rider" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="profile-phone-input">Phone Number</label>
+              <input type="tel" id="profile-phone-input" class="form-control" value="+91 79956 65477" />
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label class="form-label" for="profile-email-input">Email Address</label>
+              <input type="email" id="profile-email-input" class="form-control" value="rider@smartride.ai" readonly style="opacity: 0.7;" />
+            </div>
+          </div>
+
+          <button class="btn-primary" id="save-profile-btn" style="padding: 10px 20px;">
+            <span>💾</span> Save Profile Changes
+          </button>
+        </div>
+
+        <!-- Emergency SOS & Contacts Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title" style="color: var(--danger);"><span>🚨</span> Emergency Contacts & SOS Protocol</h3>
+            <button class="btn-secondary" id="test-sos-btn" style="border-color: var(--danger); color: var(--danger); padding: 6px 14px; font-size: 12px;">
+              Test SOS Dispatch
+            </button>
+          </div>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
+            In case of emergency, hitting the SOS button automatically sends your real-time GPS coordinates, vehicle registration number, and driver details to police authorities and trusted contacts.
+          </p>
+
+          <div style="background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-md); padding: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <strong>Police Emergency Control (112)</strong>
+              <span style="font-size: 12px; color: var(--success); font-weight: 700;">● Active 24/7</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong>Primary Contact: Guardian (+91 79956 65477)</strong>
+              <span style="font-size: 12px; color: var(--brand-cyan); font-weight: 700;">● SMS Alert Ready</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Saved Places Card -->
+        <div class="card">
+          <h3 class="card-title" style="margin-bottom: 14px;"><span>⭐</span> Saved Places</h3>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm);">
+              <div>
+                <strong>🏠 Home</strong>
+                <p style="font-size: 12px; color: var(--text-muted);">Nungambakkam High Road, Chennai</p>
+              </div>
+              <button class="chip-btn" style="font-size: 11px;">Select</button>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm);">
+              <div>
+                <strong>💼 Work</strong>
+                <p style="font-size: 12px; color: var(--text-muted);">Tidel Park, Tharamani, OMR Corridor</p>
+              </div>
+              <button class="chip-btn" style="font-size: 11px;">Select</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account & Session Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><span>🔐</span> Account & Authentication</h3>
+            <span style="font-size: 11px; padding: 2px 8px; border-radius: var(--radius-pill); background: rgba(99,102,241,0.2); color: var(--brand-indigo); font-weight: 700;">
+              SESSION ACTIVE
+            </span>
+          </div>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
+            Connected to the shared PHP & MySQL backend. You can switch accounts or sign out anytime.
+          </p>
+          <div style="display: flex; gap: 12px;">
+            <button class="btn-primary" id="open-auth-btn" style="flex: 1; font-size: 13px; padding: 10px 16px;">
+              <span>👤</span> Switch Account / Sign In
+            </button>
+            <button class="btn-secondary" id="logout-btn" style="border-color: var(--danger); color: var(--danger); font-size: 13px; padding: 10px 16px;">
+              <span>🚪</span> Log Out
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==========================================================================
+       MODAL 1: Live Ride Tracking & Digital Invoice
+       ========================================================================== -->
+  <div class="modal-overlay" id="tracking-modal" role="dialog" aria-modal="true" aria-labelledby="modal-track-title">
+    <div class="modal-box">
+      <button class="modal-close-btn" id="close-tracking-modal" aria-label="Close tracking modal">✕</button>
+
+      <div style="text-align: center; margin-bottom: 16px;">
+        <span style="font-size: 40px;">🚖</span>
+        <h3 id="modal-track-title" style="font-size: 20px; font-weight: 800; margin-top: 6px;">Driver En Route!</h3>
+        <p style="font-size: 13px; color: var(--text-muted);">Your ride has been confirmed and driver is arriving</p>
+      </div>
+
+      <div class="ride-otp-box">
+        <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Share OTP with Driver</div>
+        <div class="ride-otp-val" id="track-otp">4821</div>
+      </div>
+
+      <div style="background: var(--bg-card); border: 1px solid var(--border-ui); border-radius: var(--radius-md); padding: 14px; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: var(--text-muted);">Vehicle</span>
+          <strong id="track-cab-type">SmartRide AI EV Sedan</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: var(--text-muted);">Provider</span>
+          <strong id="track-provider" style="color: var(--brand-cyan);">SmartRide AI</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: var(--text-muted);">Registration Plate</span>
+          <strong style="font-family: monospace;">TN 09 EV 4281</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: var(--text-muted);">Total Fare</span>
+          <strong id="track-fare" style="color: var(--brand-cyan); font-size: 16px;">₹145</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-muted);">Route</span>
+          <span id="track-route" style="font-size: 12px; font-weight: 600; text-align: right; max-width: 60%;">City Center ➔ Airport</span>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="complete-trip-btn" style="width: 100%;">
+        <span>🏁</span> Simulate Trip Completion
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 2: Commute Carpool Chat Modal
+       ========================================================================== -->
+  <div class="modal-overlay" id="chat-modal" role="dialog" aria-modal="true" aria-labelledby="commute-chat-partner-name">
+    <div class="modal-box" style="height: 520px; display: flex; flex-direction: column;">
+      <button class="modal-close-btn" id="close-chat-modal" aria-label="Close Chat">✕</button>
+      <h3 id="commute-chat-partner-name" style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">Chat</h3>
+
+      <div class="chat-messages" id="commute-chat-messages" style="flex: 1; border: 1px solid var(--border-ui); border-radius: var(--radius-md); padding: 12px; margin-bottom: 12px; background: var(--bg-card); overflow-y: auto;">
+        <!-- Filled by loadCommuteMessages -->
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <input type="text" id="commute-chat-input" class="form-control" placeholder="Type a message to your co-rider..." style="flex: 1;" />
+        <button class="btn-primary" id="commute-chat-send-btn" style="padding: 10px 18px;">
+          Send
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 3: Emergency SOS Confirmation Modal
+       ========================================================================== -->
+  <div class="modal-overlay" id="sos-modal" role="dialog" aria-modal="true" aria-labelledby="sos-title">
+    <div class="modal-box" style="border-color: var(--danger);">
+      <button class="modal-close-btn" id="close-sos-modal" aria-label="Close SOS">✕</button>
+      <div style="text-align: center; margin-bottom: 16px;">
+        <span style="font-size: 48px;">🚨</span>
+        <h3 id="sos-title" style="color: var(--danger); font-size: 20px; font-weight: 800; margin-top: 6px;">EMERGENCY SOS ACTIVE</h3>
+        <p style="font-size: 13px; color: var(--text-muted);">Live telemetry beacon broadcasted to response units</p>
+      </div>
+
+      <div style="background: rgba(239,68,68,0.1); border: 1px solid var(--danger); border-radius: var(--radius-md); padding: 14px; margin-bottom: 16px;">
+        <p style="font-size: 13px; font-weight: 600; color: #FFFFFF;">
+          ✔ Live GPS coordinates transmitted<br />
+          ✔ Police Emergency 112 notified<br />
+          ✔ Emergency Contacts alert SMS dispatched
+        </p>
+      </div>
+
+      <button class="btn-secondary" id="dismiss-sos-btn" style="width: 100%; justify-content: center;">
+        Dismiss Emergency Alert
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 4: User Authentication & Account Modal
+       ========================================================================== -->
+  <div class="modal-overlay" id="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+    <div class="modal-box">
+      <button class="modal-close-btn" id="close-auth-modal" aria-label="Close Authentication Modal">✕</button>
+      
+      <div style="text-align: center; margin-bottom: 20px;">
+        <img src="assets/smartride-icon.svg" alt="SmartRide AI" style="width: 48px; height: 48px; border-radius: 12px; margin-bottom: 8px;" />
+        <h3 id="auth-modal-title" style="font-size: 20px; font-weight: 800;">SmartRide AI Account</h3>
+        <p style="font-size: 13px; color: var(--text-muted);">Sign in or create an account to sync rides & profile</p>
+      </div>
+
+      <!-- Auth Mode Switcher -->
+      <div style="display: flex; background: var(--bg-card); border: 1px solid var(--border-ui); border-radius: var(--radius-pill); padding: 4px; margin-bottom: 20px;">
+        <button class="chip-btn" id="auth-tab-login" style="flex: 1; border: none; background: var(--brand-indigo); color: #FFFFFF; font-weight: 700;">Sign In</button>
+        <button class="chip-btn" id="auth-tab-register" style="flex: 1; border: none; background: transparent; color: var(--text-muted); font-weight: 600;">Register</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="login-email">Email Address</label>
+          <input type="email" id="login-email" class="form-control" value="rider@smartride.ai" required />
+        </div>
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label class="form-label" for="login-password">Password</label>
+          <input type="password" id="login-password" class="form-control" value="password123" required />
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%;">
+          <span>⚡</span> Sign In with Email
+        </button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="register-form" style="display: none;">
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label class="form-label" for="reg-name">Full Name</label>
+          <input type="text" id="reg-name" class="form-control" placeholder="John Doe" required />
+        </div>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label class="form-label" for="reg-email">Email Address</label>
+          <input type="email" id="reg-email" class="form-control" placeholder="john@example.com" required />
+        </div>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label class="form-label" for="reg-phone">Phone Number</label>
+          <input type="tel" id="reg-phone" class="form-control" placeholder="+91 98765 43210" required />
+        </div>
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" for="reg-password">Password</label>
+          <input type="password" id="reg-password" class="form-control" placeholder="••••••••" required />
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%;">
+          <span>🚀</span> Create Account
+        </button>
+      </form>
+
+      <!-- Social Logins -->
+      <div style="margin-top: 18px; text-align: center;">
+        <div style="position: relative; margin-bottom: 16px;">
+          <div style="position: absolute; inset: 0; display: flex; align-items: center;"><div style="width: 100%; border-top: 1px solid var(--border-ui);"></div></div>
+          <span style="position: relative; background: var(--bg-surface); padding: 0 10px; font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Or 1-Tap Connect</span>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-secondary" id="social-google-btn" style="flex: 1; justify-content: center; font-size: 13px;">
+            <span>🌐</span> Google
+          </button>
+          <button class="btn-secondary" id="social-facebook-btn" style="flex: 1; justify-content: center; font-size: 13px;">
+            <span>📘</span> Facebook
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       Floating AI Assistant Chatbot Widget
+       ========================================================================== -->
+  <div class="floating-chatbot">
+    <div class="chat-window" id="chatbot-window" role="region" aria-label="AI Assistant Window">
+      <div class="chat-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 18px;">🤖</span>
+          <div>
+            <strong style="font-size: 13px;">SmartRide AI Copilot</strong>
+            <p style="font-size: 10px; color: var(--brand-cyan);">Online • EMMDE Assistant</p>
+          </div>
+        </div>
+        <button id="chatbot-close-btn" style="background: transparent; border: none; font-size: 16px; color: var(--text-muted); cursor: pointer;" aria-label="Close Chatbot">✕</button>
+      </div>
+
+      <div class="chat-messages" id="chatbot-messages">
+        <div class="chat-msg bot">
+          👋 Hello! I'm your SmartRide AI Copilot. Ask me about real-time cab fares, which ride is cheapest, parcel delivery rates, or carpool matches!
+        </div>
+      </div>
+
+      <div class="chat-input-bar">
+        <input type="text" id="chatbot-input" class="chat-input" placeholder="Ask AI assistant anything..." aria-label="Ask assistant" />
+        <button id="chatbot-send-btn" class="chat-send-btn" aria-label="Send message">➤</button>
+      </div>
+    </div>
+
+    <button class="chat-trigger-btn" id="chatbot-toggle-btn" aria-label="Toggle AI Chatbot Assistant" title="SmartRide AI Copilot">
+      🤖
+    </button>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <!-- JavaScript Module -->
+  <script type="module" src="js/app.js?v=2.5"></script>
+</body>
+</html>
