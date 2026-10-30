@@ -1,0 +1,14 @@
+{
+  "name": "smartride-load-tests",
+  "version": "1.0.0",
+  "description": "SmartRide AI - 1500+ Load, Concurrency & Stress Testing Suite with Excel Analysis",
+  "main": "run_load_tests.js",
+  "type": "module",
+  "scripts": {
+    "test": "node run_load_tests.js",
+    "report": "node generate_report.js"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  }
+}
