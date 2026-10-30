@@ -209,7 +209,7 @@ const CommuteDashboard = () => {
               </span>
             </div>
             <h1 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--text-main, #F1F5F9)', letterSpacing: '-0.02em', lineHeight: '1.2' }}>
-              Daily Carpool & <span style="color: var(--brand-cyan, #00D8FF)">Rideshare</span>
+              Daily Carpool & <span style={{ color: 'var(--brand-cyan, #00D8FF)' }}>Rideshare</span>
             </h1>
           </div>
         </div>
