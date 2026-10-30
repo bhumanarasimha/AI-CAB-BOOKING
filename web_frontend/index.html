@@ -85,8 +85,29 @@
     <button class="nav-tab-btn" data-tab="xai" id="tab-xai">
       <span>🧠</span> Explainable AI
     </button>
+    <button class="nav-tab-btn" data-tab="places" id="tab-places">
+      <span>📍</span> Saved Places
+    </button>
+    <button class="nav-tab-btn" data-tab="famous" id="tab-famous">
+      <span>🏛️</span> Famous Places
+    </button>
+    <button class="nav-tab-btn" data-tab="safety" id="tab-safety">
+      <span>🆘</span> Emergency & SOS
+    </button>
+    <button class="nav-tab-btn" data-tab="invite" id="tab-invite">
+      <span>🎁</span> Refer & Earn
+    </button>
+    <button class="nav-tab-btn" data-tab="reviews" id="tab-reviews">
+      <span>⭐</span> Ratings & Reviews
+    </button>
+    <button class="nav-tab-btn" data-tab="settings" id="tab-settings">
+      <span>⚙️</span> Settings
+    </button>
+    <button class="nav-tab-btn" data-tab="help" id="tab-help">
+      <span>🛟</span> Help Center
+    </button>
     <button class="nav-tab-btn" data-tab="profile" id="tab-profile">
-      <span>🛡️</span> Profile & Safety
+      <span>👤</span> Profile
     </button>
   </nav>
 
@@ -111,27 +132,53 @@
                 <p class="card-subtitle">Instant comparison across Uber, Ola, Rapido, Namma Yatri & SmartRide EV</p>
               </div>
               <div style="font-size: 11px; font-weight: 700; color: var(--brand-cyan); background: rgba(0,216,255,0.1); padding: 4px 10px; border-radius: var(--radius-pill);" id="refresh-timer-badge">
-                Auto-refresh in 10s
+                Ready
+              </div>
+            </div>
+
+            <!-- Ask Chubby AI Header Badges (Matching Android App) -->
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 14px; margin-bottom: 12px;">
+              <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(0, 216, 255, 0.12); border: 1px solid rgba(0, 216, 255, 0.3); padding: 5px 12px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 700; color: var(--brand-cyan);">
+                <span>✨</span> Ask Chubby AI
+              </div>
+              <div style="display: inline-flex; align-items: center; gap: 4px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); padding: 5px 12px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 700; color: #10B981;">
+                Save up to 42%
               </div>
             </div>
 
             <!-- Route Inputs -->
-            <div class="route-input-group">
+            <div class="route-input-group" style="position: relative;">
               <div class="route-connector"></div>
 
-              <div class="input-row">
-                <span class="input-marker" title="Pickup Location"></span>
-                <input type="text" id="pickup-input" class="route-input" value="Express Avenue, Royapettah" placeholder="Enter pickup location..." aria-label="Pickup location" />
-                <button class="quick-swap-btn" id="swap-locations-btn" title="Swap locations" aria-label="Swap pickup and destination">⇄</button>
+              <div class="route-input-block">
+                <div class="route-label-row">
+                  <span class="route-field-label">PICKUP</span>
+                  <button type="button" class="gps-badge-btn" id="locate-gps-btn" title="Detect Current GPS Location">
+                    <span>📍</span> <span id="gps-btn-label">GPS</span>
+                  </button>
+                </div>
+                <div class="input-row">
+                  <span class="input-marker" title="Pickup Location"></span>
+                  <input type="text" id="pickup-input" class="route-input" value="" placeholder="Enter pickup location or detect GPS..." aria-label="Pickup location" autocomplete="off" />
+                  <button class="quick-swap-btn" id="swap-locations-btn" title="Swap locations" aria-label="Swap pickup and destination">⇄</button>
+                </div>
               </div>
 
-              <div class="input-row">
-                <span class="input-marker dropoff" title="Dropoff Destination"></span>
-                <input type="text" id="dropoff-input" class="route-input" value="Tidel Park, OMR Tech Corridor" placeholder="Where do you want to go?" aria-label="Destination location" />
-                <button class="route-send-btn" id="search-route-btn" title="Send & Find Fares" aria-label="Send Route Search">
-                  <span class="send-arrow">➔</span>
-                </button>
+              <div class="route-input-block">
+                <div class="route-label-row">
+                  <span class="route-field-label">DESTINATION</span>
+                </div>
+                <div class="input-row">
+                  <span class="input-marker dropoff" title="Dropoff Destination"></span>
+                  <input type="text" id="dropoff-input" class="route-input" value="" placeholder="Where do you want to go?" aria-label="Destination location" autocomplete="off" />
+                  <button class="route-send-btn" id="search-route-btn" title="Send & Find Fares" aria-label="Send Route Search">
+                    <span class="send-arrow">➔</span>
+                  </button>
+                </div>
               </div>
+
+              <!-- Autocomplete suggestions dropdown -->
+              <div id="route-suggestions-dropdown" class="route-suggestions-dropdown" style="display: none;"></div>
             </div>
 
             <!-- Quick Places Chips -->
@@ -250,18 +297,6 @@
         <!-- Right Column: Interactive Fleet Radar & GPS Map -->
         <div class="map-panel">
           <div class="map-wrapper">
-            <div class="map-header">
-              <div>
-                <h3 style="font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-                  <span>🛰️</span> Live Fleet Radar & GPS Route
-                </h3>
-                <p style="font-size: 11px; color: var(--text-muted);">Real-time vehicle telemetry within 2.5km radius</p>
-              </div>
-              <span style="font-size: 11px; padding: 2px 8px; border-radius: var(--radius-pill); background: rgba(0,216,255,0.15); color: var(--brand-cyan); font-weight: 700;">
-                LIVE TELEMETRY
-              </span>
-            </div>
-
             <div class="map-canvas-container">
               <canvas id="map-canvas"></canvas>
 
@@ -362,20 +397,20 @@
 
           <div class="form-group">
             <label class="form-label" for="receiver-name">Receiver Full Name</label>
-            <input type="text" id="receiver-name" class="form-control" value="Vikram Joshi" />
+            <input type="text" id="receiver-name" class="form-control" value="" placeholder="Enter receiver's full name..." />
           </div>
           <div class="form-group">
             <label class="form-label" for="receiver-phone">Receiver Contact Number</label>
-            <input type="tel" id="receiver-phone" class="form-control" value="+91 98450 11223" />
+            <input type="tel" id="receiver-phone" class="form-control" value="" placeholder="+91 98765 43210" />
           </div>
 
           <div class="form-group">
             <label class="form-label" for="parcel-pickup">Pickup Address</label>
-            <input type="text" id="parcel-pickup" class="form-control" value="Express Avenue, Royapettah" />
+            <input type="text" id="parcel-pickup" class="form-control" value="" placeholder="Enter pickup address..." />
           </div>
           <div class="form-group">
             <label class="form-label" for="parcel-dest">Delivery Destination</label>
-            <input type="text" id="parcel-dest" class="form-control" value="Tidel Park, OMR Tech Corridor" />
+            <input type="text" id="parcel-dest" class="form-control" value="" placeholder="Enter delivery destination..." />
           </div>
 
           <div class="form-group">
@@ -502,6 +537,85 @@
           </div>
         </div>
 
+        <!-- Create / Edit Commute Profile Card -->
+        <div class="card" style="margin-top: 20px;">
+          <div class="card-header">
+            <h3 class="card-title"><span>✏️</span> Create & Customize Commute Profile</h3>
+            <span style="font-size: 11px; padding: 2px 8px; border-radius: var(--radius-pill); background: rgba(0,216,255,0.15); color: var(--brand-cyan); font-weight: 700;">AI SMART MATCH</span>
+          </div>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+            Set your daily office route, departure schedules, and ride preferences to receive instant shared carpool matches.
+          </p>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" for="commute-origin-input">Home / Pickup Location</label>
+              <input type="text" id="commute-origin-input" class="form-control" value="" placeholder="Enter home / pickup location..." />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="commute-dest-input">Office / Work Destination</label>
+              <input type="text" id="commute-dest-input" class="form-control" value="" placeholder="Enter office / work destination..." />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="commute-time-morning">Morning Departure Time</label>
+              <input type="time" id="commute-time-morning" class="form-control" value="08:30" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="commute-time-evening">Evening Return Time</label>
+              <input type="time" id="commute-time-evening" class="form-control" value="18:00" />
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label class="form-label">Commute Role & Preferences</label>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="chip-btn active" id="commute-role-rider">🙋 Rider (Looking for ride)</button>
+                <button type="button" class="chip-btn" id="commute-role-driver">🚗 Car Owner (Offering seats)</button>
+                <button type="button" class="chip-btn active" id="commute-pref-ac">❄️ AC Only</button>
+                <button type="button" class="chip-btn active" id="commute-pref-music">🎵 Music Friendly</button>
+                <button type="button" class="chip-btn" id="commute-pref-women">👩 Women Only Pool</button>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top: 16px;">
+            <button class="btn-primary" id="save-commute-profile-btn" style="padding: 10px 22px;">
+              <span>💾</span> Save Commute Profile
+            </button>
+          </div>
+        </div>
+
+        <!-- Monthly Commute Savings Calculator -->
+        <div class="card" style="margin-top: 20px;">
+          <div class="card-header">
+            <h3 class="card-title"><span>💰</span> Commute Monthly Savings Calculator</h3>
+            <span style="font-size: 11px; padding: 2px 8px; border-radius: var(--radius-pill); background: rgba(16,185,129,0.15); color: #10B981; font-weight: 700;">GREEN IMPACT</span>
+          </div>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
+            Calculate how much money and carbon emissions you save each month compared to solo cab bookings.
+          </p>
+          <div style="margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+              <span>Daily Commute Distance:</span>
+              <strong id="calc-distance-val" style="color: var(--brand-cyan);">15 km (one-way)</strong>
+            </div>
+            <input type="range" id="commute-distance-slider" min="5" max="50" value="15" style="width: 100%; accent-color: var(--brand-cyan);" />
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px;">
+            <div style="background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm); padding: 12px; text-align: center;">
+              <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Solo Cab Cost</div>
+              <div style="font-size: 20px; font-weight: 800; color: #EF4444;" id="calc-solo-cost">₹9,000 / mo</div>
+            </div>
+            <div style="background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm); padding: 12px; text-align: center;">
+              <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Smart Commute</div>
+              <div style="font-size: 20px; font-weight: 800; color: var(--brand-cyan);" id="calc-commute-cost">₹3,600 / mo</div>
+            </div>
+            <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: var(--radius-sm); padding: 12px; text-align: center;">
+              <div style="font-size: 11px; color: #10B981; text-transform: uppercase; font-weight: 700;">You Save</div>
+              <div style="font-size: 20px; font-weight: 900; color: #10B981;" id="calc-saved-cost">₹5,400 / mo</div>
+            </div>
+          </div>
+          <button class="btn-cyan" id="find-matches-from-calc-btn" style="width: 100%; padding: 12px; font-size: 14px;">
+            <span>🚀</span> Find Matching Commuters on this Route
+          </button>
+        </div>
+
       </div>
     </section>
 
@@ -509,7 +623,98 @@
          SECTION 5: My Rides & Activity
          ======================================================================== -->
     <section class="app-section" id="section-activity" aria-labelledby="heading-activity">
-      <div style="max-width: 800px; margin: 0 auto;">
+      <div style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+
+        <!-- Active Ride Tracker Card -->
+        <div class="card" style="border: 1px solid rgba(0, 216, 255, 0.35); box-shadow: 0 12px 32px rgba(0,216,255,0.1);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--brand-cyan); box-shadow: 0 0 10px var(--brand-cyan); animation: pulse-slow 2s infinite;"></div>
+              <span style="font-size: 11px; font-weight: 800; color: var(--brand-cyan); letter-spacing: 0.1em; text-transform: uppercase;">TRIP IN PROGRESS</span>
+            </div>
+            <span style="font-size: 15px; font-weight: 900; color: var(--text-main);">₹406</span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(0, 216, 255, 0.12); border: 1px solid rgba(0, 216, 255, 0.25); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0;">
+              🚗
+            </div>
+            <div style="flex: 1;">
+              <h4 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 2px;">
+                Rajesh Sharma (4.9 ★) · Toyota Hyryder EV
+              </h4>
+              <p style="font-size: 13px; color: var(--text-muted);">
+                ETA 8 min · Heading to Tidel Park, OMR Tech Corridor
+              </p>
+            </div>
+          </div>
+
+          <!-- AI Number Plate Photo Match Verification -->
+          <div style="background: var(--bg-surface); border: 1px dashed var(--border-ui); border-radius: var(--radius-md); padding: 14px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <span style="font-size: 12px; color: var(--text-muted); font-weight: 700;">Vehicle Registration & Verification</span>
+              <span style="font-size: 11px; background: rgba(16,185,129,0.15); color: #10B981; border: 1px solid rgba(16,185,129,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 800;">AI VERIFIED</span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+              <!-- Interactive IND Number Plate -->
+              <div style="background: #FFD700; color: #000000; border: 3px solid #000000; border-radius: 6px; padding: 6px 14px; font-weight: 900; font-size: 18px; font-family: monospace; letter-spacing: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 9px; font-weight: 900; background: #000; color: #FFD700; padding: 1px 4px; border-radius: 2px;">IND</span>
+                <span>TS 09 EX 1234</span>
+              </div>
+              <div style="font-size: 12px; color: #10B981; font-weight: 700;">
+                ✅ Plate Photo Match Verified: 100% Match
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn-cyan" id="activity-share-track-btn" style="flex: 1; padding: 10px; font-size: 13px;">
+              <span>🔗</span> Share Live Tracking Link
+            </button>
+            <button class="btn-secondary" id="activity-view-xai-btn" style="flex: 1; padding: 10px; font-size: 13px;">
+              <span>✦</span> Explainable AI Insights
+            </button>
+          </div>
+        </div>
+
+        <!-- Notifications & System Alerts Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><span>🔔</span> Notifications & Real-Time Alerts</h3>
+            <button class="btn-secondary" id="activity-mark-read-btn" style="padding: 4px 10px; font-size: 11px;">
+              Mark all read
+            </button>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px;" id="activity-notif-list">
+            <div style="padding: 12px 14px; background: var(--bg-surface); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: var(--radius-sm); display: flex; gap: 12px; align-items: flex-start;">
+              <span style="font-size: 20px;">🎁</span>
+              <div>
+                <strong style="color: #F59E0B; font-size: 13px;">50% Off Your Next Ride! Use code SMART50</strong>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Get up to ₹100 off on any SmartRide AI EV booking today.</p>
+                <span style="font-size: 10px; color: var(--text-dim);">2 hours ago</span>
+              </div>
+            </div>
+            <div style="padding: 12px 14px; background: var(--bg-surface); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-sm); display: flex; gap: 12px; align-items: flex-start;">
+              <span style="font-size: 20px;">⚠️</span>
+              <div>
+                <strong style="color: #EF4444; font-size: 13px;">Weather Advisory: High Demand</strong>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Moderate rain expected across OMR Corridor. Booking early recommended.</p>
+                <span style="font-size: 10px; color: var(--text-dim);">4 hours ago</span>
+              </div>
+            </div>
+            <div style="padding: 12px 14px; background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm); display: flex; gap: 12px; align-items: flex-start;">
+              <span style="font-size: 20px;">✅</span>
+              <div>
+                <strong style="font-size: 13px;">Ride Completed · ₹145</strong>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Your trip to Express Avenue with Amit K. was completed safely.</p>
+                <span style="font-size: 10px; color: var(--text-dim);">Yesterday</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trip History & Receipts Card -->
         <div class="card">
           <div class="card-header">
             <div>
@@ -692,20 +897,41 @@
     </section>
 
     <!-- ========================================================================
-         SECTION 7: Profile, Safety SOS & Settings
+         SECTION 7: Profile & Account Settings
          ======================================================================== -->
     <section class="app-section" id="section-profile" aria-labelledby="heading-profile">
-      <div style="max-width: 800px; margin: 0 auto;">
+      <div style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
         
         <!-- Profile Card -->
         <div class="card">
           <div class="card-header">
-            <h2 class="card-title" id="heading-profile"><span>🛡️</span> Rider Profile & Account</h2>
+            <h2 class="card-title" id="heading-profile"><span>👤</span> Rider Profile & Account</h2>
             <span style="font-size: 11px; padding: 2px 8px; border-radius: var(--radius-pill); background: rgba(0,216,255,0.15); color: var(--brand-cyan); font-weight: 700;">
               VERIFIED RIDER
             </span>
           </div>
 
+          <!-- Avatar & Status -->
+          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
+            <div style="position: relative;">
+              <div style="width: 72px; height: 72px; border-radius: 22px; background: linear-gradient(135deg, var(--brand-indigo), var(--brand-cyan)); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: white; box-shadow: 0 8px 24px rgba(99,102,241,0.4);" id="profile-avatar-badge">
+                R
+              </div>
+              <button type="button" id="profile-change-photo-btn" style="position: absolute; bottom: -4px; right: -4px; width: 28px; height: 28px; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border-ui); display: flex; align-items: center; justify-content: center; cursor: pointer;" title="Change Photo">
+                📷
+              </button>
+            </div>
+            <div>
+              <h3 style="font-size: 18px; font-weight: 800; color: var(--text-main);" id="profile-display-name">Rider</h3>
+              <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;" id="profile-display-email">rider@smartride.ai</p>
+              <div style="display: flex; align-items: center; gap: 6px; margin-top: 6px;">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--brand-cyan); display: inline-block;"></span>
+                <span style="font-size: 11px; font-weight: 700; color: var(--brand-cyan); text-transform: uppercase;">SmartRide AI Verified</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form Fields -->
           <div class="form-grid">
             <div class="form-group">
               <label class="form-label" for="profile-name-input">Full Name</label>
@@ -717,57 +943,44 @@
             </div>
             <div class="form-group" style="grid-column: span 2;">
               <label class="form-label" for="profile-email-input">Email Address</label>
-              <input type="email" id="profile-email-input" class="form-control" value="rider@smartride.ai" readonly style="opacity: 0.7;" />
+              <input type="email" id="profile-email-input" class="form-control" value="rider@smartride.ai" />
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label class="form-label">Gender</label>
+              <div style="display: flex; gap: 10px;" id="profile-gender-group">
+                <button type="button" class="btn-secondary gender-btn active" data-gender="Male" style="flex: 1; padding: 10px; border-radius: var(--radius-sm); font-size: 13px;">Male</button>
+                <button type="button" class="btn-secondary gender-btn" data-gender="Female" style="flex: 1; padding: 10px; border-radius: var(--radius-sm); font-size: 13px;">Female</button>
+                <button type="button" class="btn-secondary gender-btn" data-gender="Other" style="flex: 1; padding: 10px; border-radius: var(--radius-sm); font-size: 13px;">Other</button>
+              </div>
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label class="form-label" for="profile-dob-input">Date of Birth</label>
+              <input type="date" id="profile-dob-input" class="form-control" value="1998-05-24" />
             </div>
           </div>
 
-          <button class="btn-primary" id="save-profile-btn" style="padding: 10px 20px;">
-            <span>💾</span> Save Profile Changes
-          </button>
-        </div>
-
-        <!-- Emergency SOS & Contacts Card -->
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title" style="color: var(--danger);"><span>🚨</span> Emergency Contacts & SOS Protocol</h3>
-            <button class="btn-secondary" id="test-sos-btn" style="border-color: var(--danger); color: var(--danger); padding: 6px 14px; font-size: 12px;">
-              Test SOS Dispatch
+          <!-- Account Security Card -->
+          <div style="background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-md); padding: 14px; margin-top: 16px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 22px;">🔒</span>
+              <div>
+                <strong style="font-size: 14px; color: var(--text-main);">Account Security & Password</strong>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Change or reset your password</p>
+              </div>
+            </div>
+            <button type="button" class="btn-secondary" id="open-change-password-btn" style="padding: 8px 16px; font-size: 12px;">
+              Change Password
             </button>
           </div>
-          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
-            In case of emergency, hitting the SOS button automatically sends your real-time GPS coordinates, vehicle registration number, and driver details to police authorities and trusted contacts.
-          </p>
 
-          <div style="background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-md); padding: 14px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <strong>Police Emergency Control (112)</strong>
-              <span style="font-size: 12px; color: var(--success); font-weight: 700;">● Active 24/7</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <strong>Primary Contact: Guardian (+91 79956 65477)</strong>
-              <span style="font-size: 12px; color: var(--brand-cyan); font-weight: 700;">● SMS Alert Ready</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Saved Places Card -->
-        <div class="card">
-          <h3 class="card-title" style="margin-bottom: 14px;"><span>⭐</span> Saved Places</h3>
-          <div style="display: flex; flex-direction: column; gap: 10px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm);">
-              <div>
-                <strong>🏠 Home</strong>
-                <p style="font-size: 12px; color: var(--text-muted);">Nungambakkam High Road, Chennai</p>
-              </div>
-              <button class="chip-btn" style="font-size: 11px;">Select</button>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm);">
-              <div>
-                <strong>💼 Work</strong>
-                <p style="font-size: 12px; color: var(--text-muted);">Tidel Park, Tharamani, OMR Corridor</p>
-              </div>
-              <button class="chip-btn" style="font-size: 11px;">Select</button>
-            </div>
+          <!-- Action Buttons Bar: Cancel & Save Changes -->
+          <div style="display: flex; gap: 12px; margin-top: 20px;">
+            <button type="button" class="btn-secondary" id="cancel-profile-btn" style="flex: 1; padding: 12px; font-size: 14px;">
+              <span>✕</span> Cancel
+            </button>
+            <button type="button" class="btn-primary" id="save-profile-btn" style="flex: 1.6; padding: 12px; font-size: 14px;">
+              <span>💾</span> Save Profile Changes
+            </button>
           </div>
         </div>
 
@@ -792,6 +1005,621 @@
           </div>
         </div>
 
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SECTION 8: Saved Places
+         ======================================================================== -->
+    <section class="app-section" id="section-places" aria-labelledby="heading-places">
+      <div style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title" id="heading-places"><span>📍</span> Saved Places & Favorites</h2>
+              <p class="card-subtitle">Quick 1-click booking destinations saved to your account</p>
+            </div>
+            <button class="btn-primary" id="open-add-place-btn" style="padding: 8px 16px; font-size: 12px;">
+              <span>➕</span> Add New Place
+            </button>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 12px;" id="saved-places-container">
+            <!-- Home -->
+            <div class="card" style="padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface);">
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <span style="font-size: 28px;">🏠</span>
+                <div>
+                  <h4 style="font-size: 15px; font-weight: 700; color: var(--text-main);">Home</h4>
+                  <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Nungambakkam High Road, Chennai, 600034</p>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-secondary use-place-pickup-btn" data-address="Nungambakkam High Road, Chennai" style="padding: 6px 12px; font-size: 11px;">Set Pickup</button>
+                <button class="btn-cyan use-place-dropoff-btn" data-address="Nungambakkam High Road, Chennai" style="padding: 6px 12px; font-size: 11px;">Set Destination</button>
+              </div>
+            </div>
+
+            <!-- Work -->
+            <div class="card" style="padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface);">
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <span style="font-size: 28px;">💼</span>
+                <div>
+                  <h4 style="font-size: 15px; font-weight: 700; color: var(--text-main);">Work (Office)</h4>
+                  <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Tidel Park, Module 4, OMR Tech Corridor, Tharamani</p>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-secondary use-place-pickup-btn" data-address="Tidel Park, Tharamani, OMR Corridor" style="padding: 6px 12px; font-size: 11px;">Set Pickup</button>
+                <button class="btn-cyan use-place-dropoff-btn" data-address="Tidel Park, Tharamani, OMR Corridor" style="padding: 6px 12px; font-size: 11px;">Set Destination</button>
+              </div>
+            </div>
+
+            <!-- Gym -->
+            <div class="card" style="padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface);">
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <span style="font-size: 28px;">🏋️</span>
+                <div>
+                  <h4 style="font-size: 15px; font-weight: 700; color: var(--text-main);">Fitness Arena</h4>
+                  <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Cult.fit Gym & Wellness Center, Anna Nagar</p>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-secondary use-place-pickup-btn" data-address="Cult.fit Gym, Anna Nagar, Chennai" style="padding: 6px 12px; font-size: 11px;">Set Pickup</button>
+                <button class="btn-cyan use-place-dropoff-btn" data-address="Cult.fit Gym, Anna Nagar, Chennai" style="padding: 6px 12px; font-size: 11px;">Set Destination</button>
+              </div>
+            </div>
+
+            <!-- Airport -->
+            <div class="card" style="padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface);">
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <span style="font-size: 28px;">✈️</span>
+                <div>
+                  <h4 style="font-size: 15px; font-weight: 700; color: var(--text-main);">Airport (Terminal 2)</h4>
+                  <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Chennai International Airport Departure Gates T2</p>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-secondary use-place-pickup-btn" data-address="Chennai International Airport, Terminal 2" style="padding: 6px 12px; font-size: 11px;">Set Pickup</button>
+                <button class="btn-cyan use-place-dropoff-btn" data-address="Chennai International Airport, Terminal 2" style="padding: 6px 12px; font-size: 11px;">Set Destination</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SECTION 9: Famous Places Explorer
+         ======================================================================== -->
+    <section class="app-section" id="section-famous" aria-labelledby="heading-famous">
+      <div style="max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title" id="heading-famous"><span>🏛️</span> Famous Places & Attractions</h2>
+              <p class="card-subtitle">Discover Chennai's landmark destinations with guaranteed 1-click fare quotes</p>
+            </div>
+            <span style="font-size: 11px; padding: 4px 10px; border-radius: var(--radius-pill); background: rgba(0,216,255,0.1); color: var(--brand-cyan); font-weight: 700;">
+              INSTANT CAB ROUTING
+            </span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;" id="famous-places-grid">
+            <!-- Place 1 -->
+            <div class="card" style="padding: 18px; display: flex; flex-direction: column; justify-content: space-between; background: var(--bg-surface); border: 1px solid var(--border-ui);">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                  <span style="font-size: 32px;">🏖️</span>
+                  <span style="font-size: 11px; color: var(--brand-cyan); font-weight: 700; background: rgba(0,216,255,0.1); padding: 2px 8px; border-radius: 99px;">4.8 km · 12m</span>
+                </div>
+                <h4 style="font-size: 16px; font-weight: 800; color: var(--text-main);">Marina Beach</h4>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
+                  World's second longest natural urban beach along the Bay of Bengal coast.
+                </p>
+              </div>
+              <button class="btn-cyan book-famous-btn" data-place="Marina Beach Promenade, Chennai" style="margin-top: 14px; width: 100%; padding: 8px; font-size: 12px;">
+                <span>🚖</span> Book Ride Here
+              </button>
+            </div>
+
+            <!-- Place 2 -->
+            <div class="card" style="padding: 18px; display: flex; flex-direction: column; justify-content: space-between; background: var(--bg-surface); border: 1px solid var(--border-ui);">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                  <span style="font-size: 32px;">🛍️</span>
+                  <span style="font-size: 11px; color: var(--brand-cyan); font-weight: 700; background: rgba(0,216,255,0.1); padding: 2px 8px; border-radius: 99px;">11.2 km · 24m</span>
+                </div>
+                <h4 style="font-size: 16px; font-weight: 800; color: var(--text-main);">Phoenix MarketCity</h4>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
+                  Premium lifestyle destination, luxury shopping, multi-screen IMAX cinema & fine dining.
+                </p>
+              </div>
+              <button class="btn-cyan book-famous-btn" data-place="Phoenix MarketCity, Velachery, Chennai" style="margin-top: 14px; width: 100%; padding: 8px; font-size: 12px;">
+                <span>🚖</span> Book Ride Here
+              </button>
+            </div>
+
+            <!-- Place 3 -->
+            <div class="card" style="padding: 18px; display: flex; flex-direction: column; justify-content: space-between; background: var(--bg-surface); border: 1px solid var(--border-ui);">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                  <span style="font-size: 32px;">🛕</span>
+                  <span style="font-size: 11px; color: var(--brand-cyan); font-weight: 700; background: rgba(0,216,255,0.1); padding: 2px 8px; border-radius: 99px;">6.1 km · 16m</span>
+                </div>
+                <h4 style="font-size: 16px; font-weight: 800; color: var(--text-main);">Kapaleeshwarar Temple</h4>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
+                  7th-century Hindu temple dedicated to Shiva with magnificent Dravidian architectural gopurams.
+                </p>
+              </div>
+              <button class="btn-cyan book-famous-btn" data-place="Kapaleeshwarar Temple, Mylapore, Chennai" style="margin-top: 14px; width: 100%; padding: 8px; font-size: 12px;">
+                <span>🚖</span> Book Ride Here
+              </button>
+            </div>
+
+            <!-- Place 4 -->
+            <div class="card" style="padding: 18px; display: flex; flex-direction: column; justify-content: space-between; background: var(--bg-surface); border: 1px solid var(--border-ui);">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                  <span style="font-size: 32px;">💻</span>
+                  <span style="font-size: 11px; color: var(--brand-cyan); font-weight: 700; background: rgba(0,216,255,0.1); padding: 2px 8px; border-radius: 99px;">9.4 km · 19m</span>
+                </div>
+                <h4 style="font-size: 16px; font-weight: 800; color: var(--text-main);">Tidel Park Tech Corridor</h4>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
+                  Flagship IT powerhouse at Tharamani, central hub for tech giants and startups.
+                </p>
+              </div>
+              <button class="btn-cyan book-famous-btn" data-place="Tidel Park, Tharamani, OMR Tech Corridor" style="margin-top: 14px; width: 100%; padding: 8px; font-size: 12px;">
+                <span>🚖</span> Book Ride Here
+              </button>
+            </div>
+
+            <!-- Place 5 -->
+            <div class="card" style="padding: 18px; display: flex; flex-direction: column; justify-content: space-between; background: var(--bg-surface); border: 1px solid var(--border-ui);">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                  <span style="font-size: 32px;">🛫</span>
+                  <span style="font-size: 11px; color: var(--brand-cyan); font-weight: 700; background: rgba(0,216,255,0.1); padding: 2px 8px; border-radius: 99px;">14.5 km · 30m</span>
+                </div>
+                <h4 style="font-size: 16px; font-weight: 800; color: var(--text-main);">Airport Terminal 2</h4>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
+                  Domestic and international departures with designated SmartRide EV pickup zones.
+                </p>
+              </div>
+              <button class="btn-cyan book-famous-btn" data-place="Chennai International Airport, Terminal 2" style="margin-top: 14px; width: 100%; padding: 8px; font-size: 12px;">
+                <span>🚖</span> Book Ride Here
+              </button>
+            </div>
+
+            <!-- Place 6 -->
+            <div class="card" style="padding: 18px; display: flex; flex-direction: column; justify-content: space-between; background: var(--bg-surface); border: 1px solid var(--border-ui);">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                  <span style="font-size: 32px;">🗿</span>
+                  <span style="font-size: 11px; color: var(--brand-cyan); font-weight: 700; background: rgba(0,216,255,0.1); padding: 2px 8px; border-radius: 99px;">48.0 km · 65m</span>
+                </div>
+                <h4 style="font-size: 16px; font-weight: 800; color: var(--text-main);">Mahabalipuram Monuments</h4>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
+                  UNESCO World Heritage coastal monolithic rock sculptures and 8th-century shore temples.
+                </p>
+              </div>
+              <button class="btn-cyan book-famous-btn" data-place="Shore Temple, Mahabalipuram, Tamil Nadu" style="margin-top: 14px; width: 100%; padding: 8px; font-size: 12px;">
+                <span>🚖</span> Book Ride Here
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SECTION 10: Emergency & SOS Safety Hub
+         ======================================================================== -->
+    <section class="app-section" id="section-safety" aria-labelledby="heading-safety">
+      <div style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+        
+        <!-- Emergency SOS Dispatch -->
+        <div class="card" style="border: 2px solid rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.05);">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title" id="heading-safety" style="color: var(--danger);"><span>🚨</span> Emergency SOS Protocol</h2>
+              <p class="card-subtitle">One-tap instant emergency telemetry & police dispatch</p>
+            </div>
+            <button class="btn-primary" id="trigger-sos-protocol-btn" style="background: var(--danger); border: none; padding: 10px 20px; font-size: 13px; font-weight: 800;">
+              🚨 ACTIVATE SOS NOW
+            </button>
+          </div>
+          <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;">
+            Activating SOS immediately relays your live GPS satellite coordinates, car registration number, driver details, and destination to Police Emergency Control (112) and all trusted contacts via high-priority SMS.
+          </p>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+            <div style="padding: 12px; background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong>Police Control</strong>
+                <div style="font-size: 12px; color: var(--text-muted);">Toll-Free 112</div>
+              </div>
+              <a href="tel:112" class="btn-secondary" style="padding: 6px 12px; font-size: 12px; text-decoration: none;">📞 Dial</a>
+            </div>
+            <div style="padding: 12px; background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong>Women Helpline</strong>
+                <div style="font-size: 12px; color: var(--text-muted);">Toll-Free 1091</div>
+              </div>
+              <a href="tel:1091" class="btn-secondary" style="padding: 6px 12px; font-size: 12px; text-decoration: none;">📞 Dial</a>
+            </div>
+            <div style="padding: 12px; background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong>Ambulance Emergency</strong>
+                <div style="font-size: 12px; color: var(--text-muted);">Toll-Free 108</div>
+              </div>
+              <a href="tel:108" class="btn-secondary" style="padding: 6px 12px; font-size: 12px; text-decoration: none;">📞 Dial</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trusted Contacts Card -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title"><span>🛡️</span> Trusted Emergency Contacts</h3>
+              <p class="card-subtitle">These contacts will be alerted instantly during ride incidents</p>
+            </div>
+            <button class="btn-primary" id="open-add-contact-btn" style="padding: 8px 16px; font-size: 12px;">
+              <span>➕</span> Add Contact
+            </button>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px;" id="emergency-contacts-list">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm);">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(99,102,241,0.15); display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--brand-indigo);">S</div>
+                <div>
+                  <strong style="color: var(--text-main);">Suresh Kumar</strong>
+                  <div style="font-size: 12px; color: var(--text-muted);">Parent · +91 98401 23456</div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <a href="tel:+919840123456" class="btn-secondary" style="padding: 6px 12px; font-size: 11px; text-decoration: none;">📞 Call</a>
+                <button class="btn-secondary remove-contact-btn" style="padding: 6px 10px; font-size: 11px; border-color: rgba(239,68,68,0.3); color: #EF4444;">🗑️</button>
+              </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm);">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(0,216,255,0.15); display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--brand-cyan);">P</div>
+                <div>
+                  <strong style="color: var(--text-main);">Priya Sharma</strong>
+                  <div style="font-size: 12px; color: var(--text-muted);">Sibling · +91 98402 34567</div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <a href="tel:+919840234567" class="btn-secondary" style="padding: 6px 12px; font-size: 11px; text-decoration: none;">📞 Call</a>
+                <button class="btn-secondary remove-contact-btn" style="padding: 6px 10px; font-size: 11px; border-color: rgba(239,68,68,0.3); color: #EF4444;">🗑️</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SECTION 11: Refer & Earn Rewards
+         ======================================================================== -->
+    <section class="app-section" id="section-invite" aria-labelledby="heading-invite">
+      <div style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+        <div class="card" style="text-align: center; padding: 36px 20px; background: linear-gradient(180deg, rgba(99,102,241,0.12) 0%, transparent 100%);">
+          <span style="font-size: 52px;">🎁</span>
+          <h2 class="card-title" id="heading-invite" style="font-size: 24px; font-weight: 900; margin-top: 10px;">
+            Invite Friends, Earn ₹150 Each!
+          </h2>
+          <p style="font-size: 14px; color: var(--text-muted); max-width: 480px; margin: 8px auto 24px; line-height: 1.5;">
+            Share your unique referral link with coworkers and friends. When they take their first SmartRide AI or Commute trip, both of you earn ₹150 in wallet credits.
+          </p>
+
+          <!-- Referral Code Box -->
+          <div style="max-width: 380px; margin: 0 auto 24px; display: flex; gap: 8px; background: var(--bg-surface); padding: 6px 10px; border-radius: var(--radius-md); border: 1px dashed var(--brand-cyan);">
+            <input type="text" id="referral-code-input" value="SMART2026" readonly style="flex: 1; background: transparent; border: none; font-size: 18px; font-weight: 800; color: var(--brand-cyan); text-align: center; letter-spacing: 2px;" />
+            <button class="btn-cyan" id="copy-referral-btn" style="padding: 8px 16px; font-size: 12px;">
+              <span>📋</span> Copy Code
+            </button>
+          </div>
+
+          <!-- Social Share Buttons -->
+          <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+            <button class="btn-secondary share-social-btn" data-channel="whatsapp" style="padding: 10px 18px; font-size: 13px; border-color: #25D366; color: #25D366;">
+              <span>🟢</span> WhatsApp
+            </button>
+            <button class="btn-secondary share-social-btn" data-channel="telegram" style="padding: 10px 18px; font-size: 13px; border-color: #0088cc; color: #0088cc;">
+              <span>🔵</span> Telegram
+            </button>
+            <button class="btn-secondary share-social-btn" data-channel="sms" style="padding: 10px 18px; font-size: 13px;">
+              <span>💬</span> SMS
+            </button>
+          </div>
+        </div>
+
+        <!-- Rewards Ledger -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><span>💳</span> Referral Earnings Ledger</h3>
+            <span style="font-size: 14px; font-weight: 800; color: #10B981;">₹450 Available</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-surface); border-radius: var(--radius-sm); border: 1px solid var(--border-ui);">
+              <div>
+                <strong>Vikram Anand</strong>
+                <div style="font-size: 12px; color: var(--text-muted);">Joined May 2 • First ride completed</div>
+              </div>
+              <span style="font-weight: 800; color: #10B981;">+ ₹150</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-surface); border-radius: var(--radius-sm); border: 1px solid var(--border-ui);">
+              <div>
+                <strong>Sneha Pillai</strong>
+                <div style="font-size: 12px; color: var(--text-muted);">Joined Apr 28 • First ride completed</div>
+              </div>
+              <span style="font-weight: 800; color: #10B981;">+ ₹150</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-surface); border-radius: var(--radius-sm); border: 1px solid var(--border-ui);">
+              <div>
+                <strong>Karan Joshi</strong>
+                <div style="font-size: 12px; color: var(--text-muted);">Joined Apr 15 • First ride completed</div>
+              </div>
+              <span style="font-weight: 800; color: #10B981;">+ ₹150</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SECTION 12: Ratings & Reviews
+         ======================================================================== -->
+    <section class="app-section" id="section-reviews" aria-labelledby="heading-reviews">
+      <div style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title" id="heading-reviews"><span>⭐</span> Ratings & Driver Feedback</h2>
+              <p class="card-subtitle">Real feedback from verified riders on SmartRide AI</p>
+            </div>
+            <button class="btn-primary" id="open-write-review-btn" style="padding: 8px 16px; font-size: 12px;">
+              <span>✍️</span> Write a Review
+            </button>
+          </div>
+
+          <!-- Overall Rating Score -->
+          <div style="display: flex; align-items: center; gap: 24px; padding: 18px; background: var(--bg-surface); border-radius: var(--radius-md); border: 1px solid var(--border-ui); margin-bottom: 20px;">
+            <div style="text-align: center;">
+              <div style="font-size: 42px; font-weight: 900; color: var(--text-main); line-height: 1;">4.92</div>
+              <div style="color: #F59E0B; font-size: 16px; margin: 4px 0;">★★★★★</div>
+              <div style="font-size: 11px; color: var(--text-muted);">1,428 Verified Ratings</div>
+            </div>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+                <span>5★</span>
+                <div style="flex: 1; height: 6px; background: var(--bg-elevated); border-radius: 99px; overflow: hidden;"><div style="width: 88%; height: 100%; background: #F59E0B;"></div></div>
+                <span style="color: var(--text-muted);">88%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+                <span>4★</span>
+                <div style="flex: 1; height: 6px; background: var(--bg-elevated); border-radius: 99px; overflow: hidden;"><div style="width: 9%; height: 100%; background: #F59E0B;"></div></div>
+                <span style="color: var(--text-muted);">9%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+                <span>3★</span>
+                <div style="flex: 1; height: 6px; background: var(--bg-elevated); border-radius: 99px; overflow: hidden;"><div style="width: 2%; height: 100%; background: #F59E0B;"></div></div>
+                <span style="color: var(--text-muted);">2%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+                <span>2★</span>
+                <div style="flex: 1; height: 6px; background: var(--bg-elevated); border-radius: 99px; overflow: hidden;"><div style="width: 1%; height: 100%; background: #F59E0B;"></div></div>
+                <span style="color: var(--text-muted);">1%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reviews Feed -->
+          <div style="display: flex; flex-direction: column; gap: 12px;" id="reviews-feed-container">
+            <div style="padding: 14px; background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <strong>Amit K. (SmartRide EV Driver)</strong>
+                  <span style="color: #F59E0B; font-size: 12px;">★★★★★</span>
+                </div>
+                <span style="font-size: 11px; color: var(--text-dim);">Yesterday</span>
+              </div>
+              <p style="font-size: 13px; color: var(--text-muted); line-height: 1.4;">
+                "Excellent EV ride experience. Cabin was clean, air conditioning perfect, and driver arrived in under 3 minutes."
+              </p>
+            </div>
+            <div style="padding: 14px; background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <strong>Rajesh S. (Commute Carpool)</strong>
+                  <span style="color: #F59E0B; font-size: 12px;">★★★★★</span>
+                </div>
+                <span style="font-size: 11px; color: var(--text-dim);">3 days ago</span>
+              </div>
+              <p style="font-size: 13px; color: var(--text-muted); line-height: 1.4;">
+                "Smart Commute matching is incredible. Shared ride with a fellow engineer to Tidel Park, saved ₹180 and arrived relaxed."
+              </p>
+            </div>
+            <div style="padding: 14px; background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <strong>Priya M. (Parcel Express)</strong>
+                  <span style="color: #F59E0B; font-size: 12px;">★★★★★</span>
+                </div>
+                <span style="font-size: 11px; color: var(--text-dim);">1 week ago</span>
+              </div>
+              <p style="font-size: 13px; color: var(--text-muted); line-height: 1.4;">
+                "Sent urgent documents across Chennai. Delivery partner picked up in 10 mins and live tracking gave full peace of mind."
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SECTION 13: App Settings & Preferences
+         ======================================================================== -->
+    <section class="app-section" id="section-settings" aria-labelledby="heading-settings">
+      <div style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title" id="heading-settings"><span>⚙️</span> Application Settings & Preferences</h2>
+              <p class="card-subtitle">Manage language, notification alerts, sounds, and AI behavior</p>
+            </div>
+            <button class="btn-cyan" id="save-app-settings-btn" style="padding: 8px 16px; font-size: 12px;">
+              <span>💾</span> Save Settings
+            </button>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            <!-- Language Selector -->
+            <div class="form-group">
+              <label class="form-label" for="app-language-select">Preferred Display Language</label>
+              <select id="app-language-select" class="form-control" style="background: var(--bg-surface);">
+                <option value="en" selected>English (Default)</option>
+                <option value="hi">हिन्दी (Hindi)</option>
+                <option value="ta">தமிழ் (Tamil)</option>
+                <option value="te">తెలుగు (Telugu)</option>
+                <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                <option value="ml">മലയാളം (Malayalam)</option>
+                <option value="bn">বাংলা (Bengali)</option>
+              </select>
+            </div>
+
+            <!-- Notifications Toggles -->
+            <div style="background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-md); padding: 14px;">
+              <h4 style="font-size: 14px; font-weight: 700; color: var(--text-main); margin-bottom: 12px;">Notification Alerts</h4>
+              <div style="display: flex; flex-direction: column; gap: 12px;">
+                <label style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                  <div>
+                    <strong style="font-size: 13px;">Push Notifications</strong>
+                    <div style="font-size: 11px; color: var(--text-muted);">Real-time driver arrival and booking status alerts</div>
+                  </div>
+                  <input type="checkbox" id="setting-push-notif" checked style="width: 18px; height: 18px; accent-color: var(--brand-cyan);" />
+                </label>
+                <label style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                  <div>
+                    <strong style="font-size: 13px;">Email Trip Invoices</strong>
+                    <div style="font-size: 11px; color: var(--text-muted);">Receive PDF invoice and ride summary after each trip</div>
+                  </div>
+                  <input type="checkbox" id="setting-email-notif" checked style="width: 18px; height: 18px; accent-color: var(--brand-cyan);" />
+                </label>
+                <label style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                  <div>
+                    <strong style="font-size: 13px;">SMS Critical Alerts</strong>
+                    <div style="font-size: 11px; color: var(--text-muted);">High-priority security alerts and emergency updates</div>
+                  </div>
+                  <input type="checkbox" id="setting-sms-notif" checked style="width: 18px; height: 18px; accent-color: var(--brand-cyan);" />
+                </label>
+              </div>
+            </div>
+
+            <!-- Sounds & Accessibility -->
+            <div style="background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-md); padding: 14px;">
+              <h4 style="font-size: 14px; font-weight: 700; color: var(--text-main); margin-bottom: 12px;">Sounds & AI Automation</h4>
+              <div style="display: flex; flex-direction: column; gap: 12px;">
+                <label style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                  <div>
+                    <strong style="font-size: 13px;">Audio Chimes & Sound Effects</strong>
+                    <div style="font-size: 11px; color: var(--text-muted);">Play audio tone when driver arrives or bid accepted</div>
+                  </div>
+                  <input type="checkbox" id="setting-sound-effects" checked style="width: 18px; height: 18px; accent-color: var(--brand-cyan);" />
+                </label>
+                <label style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                  <div>
+                    <strong style="font-size: 13px;">AI Dynamic Fare Recommendations</strong>
+                    <div style="font-size: 11px; color: var(--text-muted);">Auto-highlight optimal provider using multi-agent intelligence</div>
+                  </div>
+                  <input type="checkbox" id="setting-ai-recommendations" checked style="width: 18px; height: 18px; accent-color: var(--brand-cyan);" />
+                </label>
+              </div>
+            </div>
+
+            <!-- Cache & Privacy -->
+            <div style="display: flex; gap: 12px;">
+              <button type="button" class="btn-secondary" id="clear-cache-btn" style="flex: 1; padding: 10px; font-size: 12px;">
+                <span>🧹</span> Clear Cached Routes
+              </button>
+              <button type="button" class="btn-secondary" id="reset-defaults-btn" style="flex: 1; padding: 10px; font-size: 12px;">
+                <span>🔄</span> Reset to Defaults
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SECTION 14: Help Center & 24/7 Support
+         ======================================================================== -->
+    <section class="app-section" id="section-help" aria-labelledby="heading-help">
+      <div style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title" id="heading-help"><span>🛟</span> Help Center & Support</h2>
+              <p class="card-subtitle">Got questions? We're available 24 hours a day, 7 days a week</p>
+            </div>
+            <span style="font-size: 11px; padding: 4px 10px; border-radius: var(--radius-pill); background: rgba(16,185,129,0.15); color: #10B981; font-weight: 700;">
+              24/7 SUPPORT ONLINE
+            </span>
+          </div>
+
+          <!-- Quick Support Channels -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px;">
+            <a href="tel:18004257627" style="text-decoration: none; padding: 16px; background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm); text-align: center;">
+              <span style="font-size: 28px;">📞</span>
+              <strong style="display: block; color: var(--text-main); font-size: 14px; margin-top: 6px;">Call Helpline</strong>
+              <div style="font-size: 11px; color: var(--brand-cyan); margin-top: 2px;">1800-425-7627 (Toll-Free)</div>
+            </a>
+            <a href="https://wa.me/917995665477" target="_blank" rel="noopener" style="text-decoration: none; padding: 16px; background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm); text-align: center;">
+              <span style="font-size: 28px;">💬</span>
+              <strong style="display: block; color: var(--text-main); font-size: 14px; margin-top: 6px;">WhatsApp Support</strong>
+              <div style="font-size: 11px; color: #25D366; margin-top: 2px;">Chat with Support Bot</div>
+            </a>
+            <a href="mailto:support@smartride.ai" style="text-decoration: none; padding: 16px; background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm); text-align: center;">
+              <span style="font-size: 28px;">✉️</span>
+              <strong style="display: block; color: var(--text-main); font-size: 14px; margin-top: 6px;">Email Helpdesk</strong>
+              <div style="font-size: 11px; color: var(--brand-indigo); margin-top: 2px;">support@smartride.ai</div>
+            </a>
+          </div>
+
+          <!-- Interactive FAQs -->
+          <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 12px;">Frequently Asked Questions</h3>
+          <div style="display: flex; flex-direction: column; gap: 8px;" id="faq-accordion-list">
+            <details style="background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm); padding: 12px 14px; cursor: pointer;">
+              <summary style="font-weight: 700; color: var(--text-main); font-size: 13px;">How does SmartRide AI compare fares across Uber, Ola, Rapido and Namma Yatri?</summary>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.5;">
+                Our intelligent EMMDE Multi-Agent Engine monitors real-time telemetry, surge multipliers, traffic congestion, and distance matrices across all top mobility providers in your area, giving you an apples-to-apples price and ETA comparison.
+              </p>
+            </details>
+            <details style="background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm); padding: 12px 14px; cursor: pointer;">
+              <summary style="font-weight: 700; color: var(--text-main); font-size: 13px;">What should I do if a driver cancels my trip?</summary>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.5;">
+                SmartRide features automated Zero-Cancellation fallback: if an assigned driver cancels, our system automatically shifts your request to the next highest-scoring provider with zero cancellation penalty fees.
+              </p>
+            </details>
+            <details style="background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm); padding: 12px 14px; cursor: pointer;">
+              <summary style="font-weight: 700; color: var(--text-main); font-size: 13px;">How does Smart Commute carpooling safety work?</summary>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.5;">
+                Every commuter in the Smart Commute network is verified through corporate email verification, government ID checks, and real-time route deviation monitoring. You can also select the 'Women Only Pool' filter for dedicated safe carpooling.
+              </p>
+            </details>
+            <details style="background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm); padding: 12px 14px; cursor: pointer;">
+              <summary style="font-weight: 700; color: var(--text-main); font-size: 13px;">What package items can be sent using Parcel Express?</summary>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.5;">
+                You can send business documents, electronics, keys, boxed retail packages, books, and food. Heavy items up to 50 kg can be delivered using our mini-truck fleet. Hazardous or prohibited goods are not permitted.
+              </p>
+            </details>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -963,6 +1791,161 @@
             <span>📘</span> Facebook
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 5: Password Reset & Change Modal
+       ========================================================================== -->
+  <div class="modal-overlay" id="password-modal" role="dialog" aria-modal="true" aria-labelledby="pwd-modal-title">
+    <div class="modal-box">
+      <button class="modal-close-btn" id="close-password-modal" aria-label="Close Password Modal">✕</button>
+      <div style="text-align: center; margin-bottom: 16px;">
+        <span style="font-size: 40px;">🔒</span>
+        <h3 id="pwd-modal-title" style="font-size: 20px; font-weight: 800; margin-top: 6px;">Change Password</h3>
+        <p style="font-size: 13px; color: var(--text-muted);">A secure password reset link can also be emailed to you</p>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label class="form-label" for="current-pwd-input">Current Password</label>
+        <input type="password" id="current-pwd-input" class="form-control" placeholder="••••••••" />
+      </div>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label class="form-label" for="new-pwd-input">New Password</label>
+        <input type="password" id="new-pwd-input" class="form-control" placeholder="Minimum 8 characters" />
+      </div>
+      <div class="form-group" style="margin-bottom: 18px;">
+        <label class="form-label" for="confirm-pwd-input">Confirm New Password</label>
+        <input type="password" id="confirm-pwd-input" class="form-control" placeholder="Repeat new password" />
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button class="btn-secondary" id="send-pwd-link-btn" style="flex: 1; font-size: 13px;">
+          📧 Send Email Link
+        </button>
+        <button class="btn-primary" id="save-new-pwd-btn" style="flex: 1; font-size: 13px;">
+          💾 Update Password
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 6: Add Saved Place Modal
+       ========================================================================== -->
+  <div class="modal-overlay" id="add-place-modal" role="dialog" aria-modal="true" aria-labelledby="add-place-title">
+    <div class="modal-box">
+      <button class="modal-close-btn" id="close-add-place-modal" aria-label="Close Add Place Modal">✕</button>
+      <div style="text-align: center; margin-bottom: 16px;">
+        <span style="font-size: 38px;">📍</span>
+        <h3 id="add-place-title" style="font-size: 20px; font-weight: 800; margin-top: 4px;">Add New Saved Place</h3>
+        <p style="font-size: 13px; color: var(--text-muted);">Quick-access destination saved to your account</p>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label class="form-label" for="new-place-label">Label / Name</label>
+        <input type="text" id="new-place-label" class="form-control" placeholder="e.g. Grandma's House, University" />
+      </div>
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label class="form-label" for="new-place-address">Full Address / Landmark</label>
+        <input type="text" id="new-place-address" class="form-control" placeholder="e.g. 14 Gandhi Irwin Rd, Egmore, Chennai" />
+      </div>
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label class="form-label">Category Icon</label>
+        <div style="display: flex; gap: 8px;" id="place-category-chips">
+          <button type="button" class="chip-btn active" data-icon="🏠">🏠 Home</button>
+          <button type="button" class="chip-btn" data-icon="💼">💼 Work</button>
+          <button type="button" class="chip-btn" data-icon="🏋️">🏋️ Gym</button>
+          <button type="button" class="chip-btn" data-icon="✈️">✈️ Airport</button>
+          <button type="button" class="chip-btn" data-icon="❤️">❤️ Favorite</button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button class="btn-secondary" id="cancel-add-place-btn" style="flex: 1; font-size: 13px;">Cancel</button>
+        <button class="btn-primary" id="save-new-place-btn" style="flex: 1.5; font-size: 13px;">Save Place</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 7: Add Emergency Contact Modal
+       ========================================================================== -->
+  <div class="modal-overlay" id="add-contact-modal" role="dialog" aria-modal="true" aria-labelledby="add-contact-title">
+    <div class="modal-box">
+      <button class="modal-close-btn" id="close-add-contact-modal" aria-label="Close Contact Modal">✕</button>
+      <div style="text-align: center; margin-bottom: 16px;">
+        <span style="font-size: 38px;">🛡️</span>
+        <h3 id="add-contact-title" style="font-size: 20px; font-weight: 800; margin-top: 4px;">Add Trusted Contact</h3>
+        <p style="font-size: 13px; color: var(--text-muted);">Will receive live SOS alerts during trip emergencies</p>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label class="form-label" for="new-contact-name">Full Name</label>
+        <input type="text" id="new-contact-name" class="form-control" placeholder="e.g. Ramesh Sharma" />
+      </div>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label class="form-label" for="new-contact-phone">Phone Number</label>
+        <input type="tel" id="new-contact-phone" class="form-control" placeholder="+91 98400 12345" />
+      </div>
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label class="form-label" for="new-contact-relation">Relationship</label>
+        <select id="new-contact-relation" class="form-control">
+          <option value="Parent">Parent</option>
+          <option value="Sibling">Sibling</option>
+          <option value="Spouse">Spouse / Partner</option>
+          <option value="Friend">Close Friend</option>
+          <option value="Colleague">Work Colleague</option>
+        </select>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button class="btn-secondary" id="cancel-add-contact-btn" style="flex: 1; font-size: 13px;">Cancel</button>
+        <button class="btn-primary" id="save-new-contact-btn" style="flex: 1.5; font-size: 13px;">Save Contact</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 8: Write Review Modal
+       ========================================================================== -->
+  <div class="modal-overlay" id="write-review-modal" role="dialog" aria-modal="true" aria-labelledby="write-review-title">
+    <div class="modal-box">
+      <button class="modal-close-btn" id="close-write-review-modal" aria-label="Close Review Modal">✕</button>
+      <div style="text-align: center; margin-bottom: 16px;">
+        <span style="font-size: 38px;">✍️</span>
+        <h3 id="write-review-title" style="font-size: 20px; font-weight: 800; margin-top: 4px;">Write a Driver Review</h3>
+        <p style="font-size: 13px; color: var(--text-muted);">Your rating helps drivers maintain high service quality</p>
+      </div>
+
+      <!-- Star Rating Selector -->
+      <div style="display: flex; justify-content: center; gap: 8px; font-size: 30px; margin-bottom: 16px; cursor: pointer;" id="star-rating-selector">
+        <span class="star-btn" data-star="1" style="color: #F59E0B;">★</span>
+        <span class="star-btn" data-star="2" style="color: #F59E0B;">★</span>
+        <span class="star-btn" data-star="3" style="color: #F59E0B;">★</span>
+        <span class="star-btn" data-star="4" style="color: #F59E0B;">★</span>
+        <span class="star-btn" data-star="5" style="color: #F59E0B;">★</span>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label class="form-label" for="review-driver-select">Driver / Ride</label>
+        <select id="review-driver-select" class="form-control">
+          <option value="Amit K. (SmartRide EV)">Amit K. (SmartRide EV)</option>
+          <option value="Rajesh Sharma (Toyota Hyryder)">Rajesh Sharma (Toyota Hyryder EV)</option>
+          <option value="Sarah Chen (Smart Commute)">Sarah Chen (Smart Commute)</option>
+          <option value="David Miller (Carpool)">David Miller (Carpool)</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label class="form-label" for="review-comments">Comments & Feedback</label>
+        <textarea id="review-comments" class="form-control" rows="3" placeholder="Share your experience (driving safety, cleanliness, route efficiency)..."></textarea>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button class="btn-secondary" id="cancel-write-review-btn" style="flex: 1; font-size: 13px;">Cancel</button>
+        <button class="btn-primary" id="submit-review-btn" style="flex: 1.5; font-size: 13px;">Submit Review</button>
       </div>
     </div>
   </div>

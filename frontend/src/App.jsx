@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import MobileContainer from './components/layout/MobileContainer';
+
 
 // Auth Pages
 import Splash from './pages/auth/Splash';
@@ -167,11 +168,14 @@ function App() {
 
   return (
     <LanguageProvider>
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route element={<MobileContainer />}>
           {/* Auth Flow */}
           <Route path="/" element={
+            loading ? <Splash /> : (user ? <Navigate to="/user/welcome" replace /> : <Navigate to="/splash" replace />)
+          } />
+          <Route path="/index.html" element={
             loading ? <Splash /> : (user ? <Navigate to="/user/welcome" replace /> : <Navigate to="/splash" replace />)
           } />
           <Route path="/splash" element={
@@ -222,11 +226,14 @@ function App() {
           <Route path="/user/commute/safety" element={<CommuteSafety />} />
           <Route path="/user/commute/savings" element={<CommuteSavings />} />
 
+          {/* Catch-all Fallback: guarantees no route can ever produce a blank screen */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
     </LanguageProvider>
   );
 }
 
 export default App;
+

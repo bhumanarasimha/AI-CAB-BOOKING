@@ -1,0 +1,14 @@
+{
+  "name": "smartride-appium-tests",
+  "version": "1.0.0",
+  "description": "Appium Mobile E2E Test Suite for SmartRide AI Android Application",
+  "main": "run_appium_tests.js",
+  "type": "module",
+  "scripts": {
+    "test": "node run_appium_tests.js",
+    "report": "node generate_report.js"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  }
+}

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Brain, Cpu, Fingerprint, Zap, Activity, Wind, Footprints, Clock, ShieldCheck, BarChart3, CloudRain } from 'lucide-react';
-import BottomNavigation from '../../components/layout/BottomNavigation';
 
 const GlassCard = ({ children, className, style, delay = 0 }) => (
   <motion.div
@@ -308,8 +307,6 @@ const ExplainableAI = () => {
         </div>
 
       </div>
-
-      <BottomNavigation />
     </div>
   );
 };

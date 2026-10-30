@@ -7,9 +7,10 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../lib/AuthContext';
 
-const createChatSession = (userId, peerId) => Promise.resolve('chat_' + Date.now());
-const subscribeToChat = (chatId, callback) => () => {};
-const sendChatMessage = (chatId, senderId, text) => Promise.resolve();
+const createChatSession = (_userId, _peerId) => Promise.resolve('chat_' + Date.now());
+const subscribeToChat = (_chatId, _callback) => () => {};
+const sendChatMessage = (_chatId, _senderId, _text) => Promise.resolve();
+
 
 const CommuteChat = () => {
   const navigate = useNavigate();

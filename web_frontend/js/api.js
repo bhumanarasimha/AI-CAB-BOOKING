@@ -54,7 +54,13 @@ const fetchWithTimeout = async (url, options = {}, timeoutMs = API_CONFIG.TIMEOU
 const handleResponse = async (response) => {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    const message = errorData.msg || errorData.message || (response.status === 401 ? 'Session expired' : 'Network request failed');
+    const message = errorData.msg || errorData.message || (
+      response.status === 409 ? 'Email is already registered' : (
+        response.status === 401 ? 'Invalid or expired session. Please sign in again.' : (
+          response.status === 400 ? 'Please enter a valid email address' : 'Network request failed'
+        )
+      )
+    );
     const err = new Error(message);
     err.status = response.status;
     err.data = errorData;
@@ -128,6 +134,9 @@ export const api = {
         return data;
       } catch (err) {
         notifyBackendStatus(false);
+        if (err.status) {
+          throw err;
+        }
         console.warn('Backend unavailable, running local login fallback:', err.message);
         const fallbackToken = 'user_' + Math.abs(cleanEmail.split('').reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0));
         const fallbackUser = {
@@ -169,6 +178,9 @@ export const api = {
         return data;
       } catch (err) {
         notifyBackendStatus(false);
+        if (err.status) {
+          throw err;
+        }
         console.warn('Backend unavailable, running local register fallback:', err.message);
         const fallbackToken = 'user_' + Date.now();
         const fallbackUser = {
@@ -232,7 +244,13 @@ export const api = {
           body: JSON.stringify({ email: (email || '').trim(), purpose }),
         });
         notifyBackendStatus(true);
-        return await handleResponse(res);
+        const data = await handleResponse(res);
+        if (data && data.user) {
+          localStorage.setItem('smartride_user', JSON.stringify(data.user));
+          if (data.user.name) localStorage.setItem('smartride_user_name', data.user.name);
+          if (data.user.email) localStorage.setItem('smartride_user_email', data.user.email);
+        }
+        return data;
       } catch (err) {
         notifyBackendStatus(false);
         return { success: true, msg: `Verification code sent to ${(email || '').trim()}` };
@@ -247,7 +265,13 @@ export const api = {
           body: JSON.stringify({ email: (email || '').trim(), otp: String(otp).trim() }),
         });
         notifyBackendStatus(true);
-        return await handleResponse(res);
+        const data = await handleResponse(res);
+        if (data && data.user) {
+          localStorage.setItem('smartride_user', JSON.stringify(data.user));
+          if (data.user.name) localStorage.setItem('smartride_user_name', data.user.name);
+          if (data.user.email) localStorage.setItem('smartride_user_email', data.user.email);
+        }
+        return data;
       } catch (err) {
         notifyBackendStatus(false);
         return { success: true, msg: 'Email verified successfully.' };
@@ -395,7 +419,13 @@ export const api = {
           body: JSON.stringify({ status }),
         });
         notifyBackendStatus(true);
-        return await handleResponse(res);
+        const data = await handleResponse(res);
+        if (data && data.user) {
+          localStorage.setItem('smartride_user', JSON.stringify(data.user));
+          if (data.user.name) localStorage.setItem('smartride_user_name', data.user.name);
+          if (data.user.email) localStorage.setItem('smartride_user_email', data.user.email);
+        }
+        return data;
       } catch (err) {
         notifyBackendStatus(false);
         const local = getLocalData('rides');
@@ -492,7 +522,13 @@ export const api = {
           body: JSON.stringify({ targetUserId }),
         });
         notifyBackendStatus(true);
-        return await handleResponse(res);
+        const data = await handleResponse(res);
+        if (data && data.user) {
+          localStorage.setItem('smartride_user', JSON.stringify(data.user));
+          if (data.user.name) localStorage.setItem('smartride_user_name', data.user.name);
+          if (data.user.email) localStorage.setItem('smartride_user_email', data.user.email);
+        }
+        return data;
       } catch (err) {
         notifyBackendStatus(false);
         return { id: 'chat_' + targetUserId, targetUserId, createdAt: new Date().toISOString() };
@@ -506,7 +542,13 @@ export const api = {
           headers: getHeaders(),
         });
         notifyBackendStatus(true);
-        return await handleResponse(res);
+        const data = await handleResponse(res);
+        if (data && data.user) {
+          localStorage.setItem('smartride_user', JSON.stringify(data.user));
+          if (data.user.name) localStorage.setItem('smartride_user_name', data.user.name);
+          if (data.user.email) localStorage.setItem('smartride_user_email', data.user.email);
+        }
+        return data;
       } catch (err) {
         notifyBackendStatus(false);
         const msgs = getLocalData(`chat_${id}`, [
@@ -526,7 +568,13 @@ export const api = {
           body: JSON.stringify({ text }),
         });
         notifyBackendStatus(true);
-        return await handleResponse(res);
+        const data = await handleResponse(res);
+        if (data && data.user) {
+          localStorage.setItem('smartride_user', JSON.stringify(data.user));
+          if (data.user.name) localStorage.setItem('smartride_user_name', data.user.name);
+          if (data.user.email) localStorage.setItem('smartride_user_email', data.user.email);
+        }
+        return data;
       } catch (err) {
         notifyBackendStatus(false);
         const msgs = getLocalData(`chat_${id}`, []);
@@ -554,7 +602,13 @@ export const api = {
           body: JSON.stringify(profileData),
         });
         notifyBackendStatus(true);
-        return await handleResponse(res);
+        const data = await handleResponse(res);
+        if (data && data.user) {
+          localStorage.setItem('smartride_user', JSON.stringify(data.user));
+          if (data.user.name) localStorage.setItem('smartride_user_name', data.user.name);
+          if (data.user.email) localStorage.setItem('smartride_user_email', data.user.email);
+        }
+        return data;
       } catch (err) {
         notifyBackendStatus(false);
         const cached = localStorage.getItem('smartride_user') ? JSON.parse(localStorage.getItem('smartride_user')) : {};
@@ -572,7 +626,13 @@ export const api = {
           body: JSON.stringify({ savedPlaces }),
         });
         notifyBackendStatus(true);
-        return await handleResponse(res);
+        const data = await handleResponse(res);
+        if (data && data.user) {
+          localStorage.setItem('smartride_user', JSON.stringify(data.user));
+          if (data.user.name) localStorage.setItem('smartride_user_name', data.user.name);
+          if (data.user.email) localStorage.setItem('smartride_user_email', data.user.email);
+        }
+        return data;
       } catch (err) {
         notifyBackendStatus(false);
         setLocalData('saved_places', savedPlaces);
@@ -588,7 +648,13 @@ export const api = {
           body: JSON.stringify({ emergencyContacts }),
         });
         notifyBackendStatus(true);
-        return await handleResponse(res);
+        const data = await handleResponse(res);
+        if (data && data.user) {
+          localStorage.setItem('smartride_user', JSON.stringify(data.user));
+          if (data.user.name) localStorage.setItem('smartride_user_name', data.user.name);
+          if (data.user.email) localStorage.setItem('smartride_user_email', data.user.email);
+        }
+        return data;
       } catch (err) {
         notifyBackendStatus(false);
         setLocalData('emergency_contacts', emergencyContacts);
@@ -604,7 +670,13 @@ export const api = {
           body: JSON.stringify({ commuteProfile }),
         });
         notifyBackendStatus(true);
-        return await handleResponse(res);
+        const data = await handleResponse(res);
+        if (data && data.user) {
+          localStorage.setItem('smartride_user', JSON.stringify(data.user));
+          if (data.user.name) localStorage.setItem('smartride_user_name', data.user.name);
+          if (data.user.email) localStorage.setItem('smartride_user_email', data.user.email);
+        }
+        return data;
       } catch (err) {
         notifyBackendStatus(false);
         setLocalData('commute_profile', commuteProfile);
@@ -622,7 +694,13 @@ export const api = {
           body: JSON.stringify(data),
         });
         notifyBackendStatus(true);
-        return await handleResponse(res);
+        const data = await handleResponse(res);
+        if (data && data.user) {
+          localStorage.setItem('smartride_user', JSON.stringify(data.user));
+          if (data.user.name) localStorage.setItem('smartride_user_name', data.user.name);
+          if (data.user.email) localStorage.setItem('smartride_user_email', data.user.email);
+        }
+        return data;
       } catch (err) {
         notifyBackendStatus(false);
         return {
@@ -641,7 +719,13 @@ export const api = {
           body: JSON.stringify(data),
         });
         notifyBackendStatus(true);
-        return await handleResponse(res);
+        const data = await handleResponse(res);
+        if (data && data.user) {
+          localStorage.setItem('smartride_user', JSON.stringify(data.user));
+          if (data.user.name) localStorage.setItem('smartride_user_name', data.user.name);
+          if (data.user.email) localStorage.setItem('smartride_user_email', data.user.email);
+        }
+        return data;
       } catch (err) {
         notifyBackendStatus(false);
         return {

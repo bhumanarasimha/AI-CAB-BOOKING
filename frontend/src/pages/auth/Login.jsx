@@ -1,19 +1,41 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
-import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, ArrowRight, ArrowLeft, ShieldCheck } from 'lucide-react-native';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Eye, EyeOff, ArrowRight, ArrowLeft, ShieldCheck, CheckCircle2 } from 'lucide-react-native';
 import { useAuth } from '../../lib/AuthContext';
+import { isValidEmail, sanitizeText } from '../../lib/validation';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading, loginWithEmail, sendPasswordReset } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
+  const [touched, setTouched] = useState({ email: false, password: false });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  const emailValid = isValidEmail(email);
+
+  // Auto-fill saved email and password on mount or route transition
+  useEffect(() => {
+    const savedEmail = location.state?.registeredEmail || localStorage.getItem('smartride_user_email') || '';
+    const savedPassword = location.state?.registeredPassword || localStorage.getItem('smartride_user_password') || '';
+
+    if (savedEmail) {
+      setEmail(savedEmail);
+    }
+    if (savedPassword) {
+      setPassword(savedPassword);
+    }
+
+    if (location.state?.registered) {
+      setSuccessMsg(location.state.message || 'Registration successful! Your credentials have been prefilled.');
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (!loading && user) {
@@ -22,29 +44,49 @@ const Login = () => {
   }, [user, loading, navigate]);
 
   const handleLogin = async () => {
-    const targetEmail = (email || '').trim();
+    setTouched({ email: true, password: true });
+
+    const targetEmail = sanitizeText(email).toLowerCase();
     const targetPassword = password;
 
+    // 1. Empty Fields Validation
     if (!targetEmail || !targetPassword) {
-      setError('Please enter both email and password.');
+      setError('Please enter both your email address and password.');
       return;
     }
+
+    // 2. Email Regex Format Check
+    if (!isValidEmail(targetEmail)) {
+      setError('Please enter a valid email address (e.g. user@domain.com).');
+      return;
+    }
+
     setError('');
     setSuccessMsg('');
     setIsLoading(true);
 
     try {
       await loginWithEmail(targetEmail, targetPassword);
+      // Persist credentials locally
+      localStorage.setItem('smartride_user_email', targetEmail);
+      localStorage.setItem('smartride_user_password', targetPassword);
       navigate('/user/welcome');
     } catch (err) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      const msg = err.message || '';
+      if (msg.toLowerCase().includes('password')) {
+        setError('Incorrect Password. Please check your password and try again.');
+      } else if (msg.toLowerCase().includes('not registered') || msg.toLowerCase().includes('not found')) {
+        setError('Email address not registered. Please click Register Now to create an account.');
+      } else {
+        setError(msg || 'Sign in failed. Please check your email and password.');
+      }
       setIsLoading(false);
     }
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
-      setError('Please enter your email address in the Email field to reset your password.');
+    if (!email || !isValidEmail(email)) {
+      setError('Please enter a valid email address in the Email field to reset your password.');
       setSuccessMsg('');
       return;
     }
@@ -114,10 +156,10 @@ const Login = () => {
         </View>
       )}
 
-      {/* Success Alert */}
+      {/* Success Popup Banner Notification */}
       {!!successMsg && (
         <View style={styles.successBanner}>
-          <View style={styles.successDot} />
+          <CheckCircle2 size={16} color="#10B981" style={{ marginRight: 8 }} />
           <Text style={styles.successText}>{successMsg}</Text>
         </View>
       )}
@@ -128,25 +170,37 @@ const Login = () => {
           <TextInput
             value={email}
             onChangeText={(text) => { setEmail(text); setError(''); }}
-            placeholder="Email address"
+            onBlur={() => setTouched(p => ({ ...p, email: true }))}
+            placeholder="Email address *"
             placeholderTextColor="#4B5563"
             keyboardType="email-address"
             autoCapitalize="none"
             returnKeyType="next"
-            style={styles.input}
+            style={[
+              styles.input,
+              touched.email && (!email.trim() || !emailValid) && styles.inputError
+            ]}
           />
+          {touched.email && email.length > 0 && !emailValid && (
+            <Text style={styles.fieldErrorText}>Invalid email format (must include @ and domain)</Text>
+          )}
         </View>
 
         <View style={styles.inputContainer}>
           <TextInput
             value={password}
             onChangeText={(text) => { setPassword(text); setError(''); }}
-            placeholder="Password"
+            onBlur={() => setTouched(p => ({ ...p, password: true }))}
+            placeholder="Password *"
             placeholderTextColor="#4B5563"
             secureTextEntry={!showPw}
             returnKeyType="go"
             onSubmitEditing={handleLogin}
-            style={[styles.input, { paddingRight: 46 }]}
+            style={[
+              styles.input,
+              { paddingRight: 46 },
+              touched.password && !password && styles.inputError
+            ]}
           />
           <Pressable onPress={() => setShowPw(!showPw)} style={styles.eyeBtn}>
             {showPw ? <EyeOff size={18} color="#4B5563" /> : <Eye size={18} color="#4B5563" />}
@@ -329,22 +383,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.2)',
+    borderColor: 'rgba(16, 185, 129, 0.3)',
     borderRadius: 12,
     marginBottom: 16,
-  },
-  successDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#10B981',
-    marginRight: 8,
   },
   successText: {
     fontSize: 13,
     color: '#10B981',
+    fontWeight: '600',
     flex: 1,
   },
   form: {
@@ -362,6 +410,16 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 15,
     color: '#F1F5F9',
+  },
+  inputError: {
+    borderColor: '#EF4444',
+    backgroundColor: 'rgba(239, 68, 68, 0.05)',
+  },
+  fieldErrorText: {
+    fontSize: 11,
+    color: '#EF4444',
+    marginTop: 4,
+    paddingLeft: 4,
   },
   eyeBtn: {
     position: 'absolute',

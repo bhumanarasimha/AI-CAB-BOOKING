@@ -16,12 +16,142 @@ import {
 } from './ai-engine.js';
 import { FleetRadarMap } from './map.js';
 
+const CITY_LANDMARKS = [
+  'Tidel Park, OMR Tech Corridor',
+  'Airport Terminal 2, Meenambakkam',
+  'Marina Beach Promenade',
+  'Central Railway Station, Kannappar Thidal',
+  'Phoenix MarketCity Mall, Velachery',
+  'Express Avenue Mall, Royapettah',
+  'DLF Cybercity, Porur',
+  'Anna Nagar West Roundtana',
+  'Koyambedu CMBT Bus Station',
+  'Besant Nagar Beach',
+  'Guindy IT Park & National Park',
+  'Kapaleeshwarar Temple, Mylapore',
+  'Vadapalani Forum Vijaya Mall',
+  'Hitech City, Cyber Towers',
+  'Indiranagar 100ft Road',
+  'MG Road Metro Station',
+];
+
+async function fetchFastIPLocation() {
+  try {
+    const res = await fetch('https://ipinfo.io/json');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.city) {
+        const [lat, lng] = (data.loc || '').split(',').map(parseFloat);
+        return {
+          address: data.city + (data.region ? `, ${data.region}` : ''),
+          lat,
+          lng
+        };
+      }
+    }
+  } catch {}
+
+  try {
+    const res = await fetch('https://ipapi.co/json/');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.city) {
+        return {
+          address: data.city + (data.region ? `, ${data.region}` : ''),
+          lat: data.latitude,
+          lng: data.longitude
+        };
+      }
+    }
+  } catch {}
+
+  return null;
+}
+
+export async function detectCurrentLocation(silent = false) {
+  const btn = document.getElementById('locate-gps-btn');
+  const btnLabel = document.getElementById('gps-btn-label');
+  const pInput = document.getElementById('pickup-input');
+
+  if (btn) btn.classList.add('is-locating');
+  if (btnLabel) btnLabel.textContent = 'Locating...';
+
+  // 1. Instant IP detection for rapid response
+  try {
+    const ipLoc = await fetchFastIPLocation();
+    if (ipLoc && ipLoc.address && (!state.pickup || state.pickup === 'Current Location')) {
+      state.pickup = ipLoc.address;
+      if (pInput && !pInput.value.trim()) pInput.value = ipLoc.address;
+      if (mapInstance && ipLoc.lat && ipLoc.lng) {
+        mapInstance.setUserLocation(ipLoc.lat, ipLoc.lng);
+      }
+    }
+  } catch (err) {
+    console.warn("Fast IP location fallback:", err);
+  }
+
+  // 2. High-Accuracy GPS
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        let address = '';
+
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+            headers: { 'Accept-Language': 'en', 'User-Agent': 'SmartRide-AI-Cab' }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.address) {
+              const road = data.address.road || data.address.suburb || data.address.neighbourhood || '';
+              const city = data.address.city || data.address.town || data.address.village || '';
+              address = road ? (city ? `${road}, ${city}` : road) : (data.display_name?.split(',')[0] || '');
+            }
+          }
+        } catch (e) {
+          console.warn("Reverse geocode failed", e);
+        }
+
+        if (!address) {
+          address = state.pickup || 'Current Location';
+        }
+
+        state.pickup = address;
+        if (pInput) pInput.value = address;
+        if (!silent) showToast(`📍 GPS Location: ${address}`, 'success');
+        if (btn) btn.classList.remove('is-locating');
+        if (btnLabel) btnLabel.textContent = 'GPS';
+
+        if (mapInstance) mapInstance.setUserLocation(lat, lng);
+
+        if (state.dropoff) {
+          refreshQuotes();
+        }
+      },
+      (err) => {
+        console.warn("GPS error:", err);
+        if (btn) btn.classList.remove('is-locating');
+        if (btnLabel) btnLabel.textContent = 'GPS';
+        if (!silent && !state.pickup) {
+          showToast('Could not detect GPS. Please enter pickup manually.', 'warning');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+    );
+  } else {
+    if (btn) btn.classList.remove('is-locating');
+    if (btnLabel) btnLabel.textContent = 'GPS';
+  }
+}
+
 // --- State Management ---
 const state = {
   user: null,
   activeTab: 'rides',
-  pickup: 'Express Avenue, Royapettah',
-  dropoff: 'Tidel Park, OMR Tech Corridor',
+  pickup: '',
+  dropoff: '',
   category: 'cab4',
   strategy: 'balanced',
   quotes: [],
@@ -64,6 +194,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   startAutoRefreshTimer();
   loadMyRides();
   loadParcels();
+  detectCurrentLocation(true);
 
   // Monitor backend connection status
   onBackendStatusChange((isOnline) => {
@@ -113,9 +244,21 @@ function updateUserUI() {
   const pName = document.getElementById('profile-name-input');
   const pPhone = document.getElementById('profile-phone-input');
   const pEmail = document.getElementById('profile-email-input');
+  const pDob = document.getElementById('profile-dob-input');
   if (pName && state.user) pName.value = state.user.name || '';
   if (pPhone && state.user) pPhone.value = state.user.phone || '';
   if (pEmail && state.user) pEmail.value = state.user.email || '';
+  if (pDob && state.user) pDob.value = state.user.dob || '1998-05-24';
+  if (state.user?.gender) {
+    document.querySelectorAll('.gender-btn').forEach((btn) => {
+      const g = btn.getAttribute('data-gender') || btn.textContent.trim();
+      if (g.toLowerCase() === state.user.gender.toLowerCase()) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  }
 }
 
 // Map initialization
@@ -163,8 +306,14 @@ export function handleRouteSend() {
   const dInput = document.getElementById('dropoff-input');
   const sendBtn = document.getElementById('search-route-btn');
 
-  const pVal = pInput ? pInput.value.trim() : '';
-  const dVal = dInput ? dInput.value.trim() : '';
+  let pVal = pInput ? pInput.value.trim() : '';
+  let dVal = dInput ? dInput.value.trim() : '';
+
+  // If user only entered destination, default pickup to Current Location
+  if (!pVal && dVal) {
+    pVal = state.pickup || 'Current Location';
+    if (pInput) pInput.value = pVal;
+  }
 
   if (!pVal || !dVal) {
     showToast('Please enter both pickup and destination locations', 'warning');
@@ -199,14 +348,56 @@ export function handleRouteSend() {
   }, 200);
 }
 
+// --- Empty State Prompt when no route is typed yet ---
+function renderEmptyRoutePrompt() {
+  const container = document.getElementById('quotes-container');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="empty-route-prompt" style="text-align: center; padding: 42px 20px; background: rgba(19, 27, 46, 0.45); border: 1px dashed rgba(0, 216, 255, 0.22); border-radius: var(--radius-lg); margin-top: 10px;">
+      <div style="font-size: 36px; margin-bottom: 12px; filter: drop-shadow(0 0 10px rgba(0,216,255,0.4));">📍</div>
+      <h3 style="font-size: 15px; font-weight: 700; color: #FFFFFF; margin-bottom: 6px;">Where would you like to go?</h3>
+      <p style="font-size: 13px; color: var(--text-muted); max-width: 360px; margin: 0 auto 16px; line-height: 1.5;">
+        Enter your pickup and destination above, or tap any suggestion below (✈️ Airport, 🏖️ Marina Beach) to compare live multi-provider fares.
+      </p>
+      <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+        <button type="button" class="chip-btn" id="btn-use-current-location" style="background: rgba(0, 216, 255, 0.12); border-color: rgba(0, 216, 255, 0.35); color: var(--brand-cyan); font-weight: 600; font-size: 12px; padding: 7px 14px; border-radius: var(--radius-pill); cursor: pointer;">
+          <span>📍</span> Use My Current Location
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('btn-use-current-location')?.addEventListener('click', () => {
+    detectCurrentLocation(false);
+    const dInput = document.getElementById('dropoff-input');
+    if (dInput) dInput.focus();
+  });
+}
+
 // --- Real-time Fare Quotation & EMMDE Engine ---
 export function refreshQuotes() {
   const pInput = document.getElementById('pickup-input');
   const dInput = document.getElementById('dropoff-input');
-  if (pInput) state.pickup = pInput.value.trim() || state.pickup;
-  if (dInput) state.dropoff = dInput.value.trim() || state.dropoff;
+  if (pInput) state.pickup = pInput.value.trim();
+  if (dInput) state.dropoff = dInput.value.trim();
 
-  const result = generateQuotes(state.pickup, state.dropoff, state.category, state.strategy);
+  // If both inputs are empty before the user types
+  if (!state.pickup && !state.dropoff) {
+    state.quotes = [];
+    state.topPick = null;
+    state.selectedQuote = null;
+    renderEmptyRoutePrompt();
+    updateBookingBar();
+    const timerBadge = document.getElementById('refresh-timer-badge');
+    if (timerBadge) timerBadge.textContent = 'Ready';
+    return;
+  }
+
+  const effectivePickup = state.pickup || 'Current Location';
+  const effectiveDropoff = state.dropoff || 'City Center';
+
+  const result = generateQuotes(effectivePickup, effectiveDropoff, state.category, state.strategy);
   state.quotes = result.options || [];
   state.topPick = result.topPick || state.quotes[0];
   state.selectedQuote = state.selectedQuote && state.quotes.some(q => q.id === state.selectedQuote.id)
@@ -214,9 +405,10 @@ export function refreshQuotes() {
     : state.topPick;
 
   renderQuotes();
+  updateBookingBar();
 
-  if (mapInstance) {
-    mapInstance.setRoute(state.pickup, state.dropoff);
+  if (mapInstance && (state.pickup || state.dropoff)) {
+    mapInstance.setRoute(effectivePickup, effectiveDropoff);
   }
 
   // Reset countdown
@@ -258,6 +450,10 @@ export function manualRefreshFares() {
 function startAutoRefreshTimer() {
   if (state.refreshTimer) clearInterval(state.refreshTimer);
   state.refreshTimer = setInterval(() => {
+    if (!state.pickup || !state.dropoff) {
+      updateTimerDisplay();
+      return;
+    }
     state.refreshSeconds--;
     if (state.refreshSeconds <= 0) {
       refreshQuotes();
@@ -270,7 +466,11 @@ function startAutoRefreshTimer() {
 function updateTimerDisplay() {
   const timerBadge = document.getElementById('refresh-timer-badge');
   if (timerBadge) {
-    timerBadge.textContent = `Auto-refresh in ${state.refreshSeconds}s`;
+    if (!state.pickup || !state.dropoff) {
+      timerBadge.textContent = 'Ready';
+    } else {
+      timerBadge.textContent = `Auto-refresh in ${state.refreshSeconds}s`;
+    }
   }
 }
 
@@ -436,13 +636,27 @@ function renderQuotes() {
   });
 
   // Update booking bar summary
+  updateBookingBar();
+}
+
+function updateBookingBar() {
   const bookBtn = document.getElementById('book-ride-btn');
   const deepLinkBtn = document.getElementById('deeplink-btn');
-  if (bookBtn && state.selectedQuote) {
-    bookBtn.innerHTML = `<span>⚡</span> Confirm & Book ${state.selectedQuote.type} • ₹${state.selectedQuote.fare}`;
+  if (bookBtn) {
+    if (state.selectedQuote) {
+      bookBtn.innerHTML = `<span>⚡</span> Confirm & Book ${state.selectedQuote.type} • ₹${state.selectedQuote.fare}`;
+      bookBtn.disabled = false;
+      bookBtn.style.opacity = '1';
+      bookBtn.style.cursor = 'pointer';
+    } else {
+      bookBtn.innerHTML = `<span>📍</span> Enter Route to Compare & Book`;
+      bookBtn.disabled = true;
+      bookBtn.style.opacity = '0.6';
+      bookBtn.style.cursor = 'not-allowed';
+    }
   }
-  if (deepLinkBtn && state.selectedQuote) {
-    if (state.selectedQuote.deepLinkSupported) {
+  if (deepLinkBtn) {
+    if (state.selectedQuote && state.selectedQuote.deepLinkSupported) {
       deepLinkBtn.style.display = 'inline-flex';
       deepLinkBtn.innerHTML = `<span>🚀</span> Launch ${state.selectedQuote.provider} App`;
     } else {
@@ -713,10 +927,20 @@ export function closeSosModal() {
 export async function saveProfile() {
   const name = document.getElementById('profile-name-input')?.value || '';
   const phone = document.getElementById('profile-phone-input')?.value || '';
+  const email = document.getElementById('profile-email-input')?.value || '';
+  const dob = document.getElementById('profile-dob-input')?.value || '';
+  const activeGenderBtn = document.querySelector('.gender-btn.active');
+  const gender = activeGenderBtn?.getAttribute('data-gender') || activeGenderBtn?.textContent?.trim() || 'Male';
+
   try {
-    await api.users.updateProfile({ name, phone });
+    const res = await api.users.updateProfile({ name, phone, email, dob, gender });
+    const updatedUser = res.user || res;
+    state.user = { ...state.user, ...updatedUser, name, phone, email, dob, gender };
+    localStorage.setItem('smartride_user', JSON.stringify(state.user));
+    localStorage.setItem('smartride_user_name', name);
+    localStorage.setItem('smartride_user_email', email);
     showToast('Profile updated successfully!', 'success');
-    initUser();
+    updateUserUI();
   } catch (err) {
     showToast(`Update error: ${err.message}`, 'danger');
   }
@@ -1192,6 +1416,78 @@ function setupEventListeners() {
     });
   });
 
+  // Locate GPS button click
+  document.getElementById('locate-gps-btn')?.addEventListener('click', () => {
+    detectCurrentLocation(false);
+  });
+
+  // Autocomplete suggestions dropdown handler
+  const dropInput = document.getElementById('dropoff-input');
+  const suggestionsBox = document.getElementById('route-suggestions-dropdown');
+
+  function renderSuggestions(query, targetInputId) {
+    if (!suggestionsBox) return;
+    if (!query || query.trim().length < 1) {
+      suggestionsBox.style.display = 'none';
+      return;
+    }
+
+    const q = query.trim().toLowerCase();
+    const matches = CITY_LANDMARKS.filter(item => item.toLowerCase().includes(q));
+
+    if (matches.length === 0) {
+      suggestionsBox.style.display = 'none';
+      return;
+    }
+
+    suggestionsBox.innerHTML = matches.map(place => `
+      <div class="suggestion-item" data-place="${place}" data-target="${targetInputId}">
+        <span>📍</span>
+        <span style="font-weight: 600;">${place}</span>
+      </div>
+    `).join('');
+
+    suggestionsBox.style.display = 'block';
+
+    suggestionsBox.querySelectorAll('.suggestion-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const selectedPlace = item.dataset.place;
+        const targetId = item.dataset.target;
+        const inp = document.getElementById(targetId);
+        if (inp) inp.value = selectedPlace;
+        if (targetId === 'pickup-input') state.pickup = selectedPlace;
+        if (targetId === 'dropoff-input') state.dropoff = selectedPlace;
+        suggestionsBox.style.display = 'none';
+        handleRouteSend();
+      });
+    });
+  }
+
+  if (dropInput) {
+    dropInput.addEventListener('input', (e) => {
+      renderSuggestions(e.target.value, 'dropoff-input');
+    });
+    dropInput.addEventListener('focus', (e) => {
+      if (e.target.value.trim().length > 0) {
+        renderSuggestions(e.target.value, 'dropoff-input');
+      }
+    });
+  }
+
+  const pickInput = document.getElementById('pickup-input');
+  if (pickInput) {
+    pickInput.addEventListener('input', (e) => {
+      renderSuggestions(e.target.value, 'pickup-input');
+    });
+  }
+
+  document.addEventListener('click', (e) => {
+    if (suggestionsBox && !e.target.closest('.route-input-group')) {
+      suggestionsBox.style.display = 'none';
+    }
+  });
+
   // Route Send Button
   const searchRouteBtn = document.getElementById('search-route-btn');
   if (searchRouteBtn) {
@@ -1199,13 +1495,26 @@ function setupEventListeners() {
   }
 
   // Enter key press triggers route search
+  // Enter key press & input clear detection
   ['pickup-input', 'dropoff-input'].forEach((id) => {
     const input = document.getElementById(id);
     if (input) {
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
+          if (suggestionsBox) suggestionsBox.style.display = 'none';
           handleRouteSend();
+        }
+      });
+      input.addEventListener('input', () => {
+        const pInp = document.getElementById('pickup-input');
+        const dInp = document.getElementById('dropoff-input');
+        const pVal = pInp ? pInp.value.trim() : '';
+        const dVal = dInp ? dInp.value.trim() : '';
+        if (!pVal && !dVal) {
+          state.pickup = '';
+          state.dropoff = '';
+          refreshQuotes();
         }
       });
     }
@@ -1215,20 +1524,33 @@ function setupEventListeners() {
   const swapBtn = document.getElementById('swap-locations-btn');
   if (swapBtn) {
     swapBtn.addEventListener('click', () => {
-      const p = state.pickup;
-      state.pickup = state.dropoff;
+      const pInp = document.getElementById('pickup-input');
+      const dInp = document.getElementById('dropoff-input');
+      const p = pInp ? pInp.value.trim() : '';
+      const d = dInp ? dInp.value.trim() : '';
+      if (!p && !d) return;
+      if (pInp) pInp.value = d;
+      if (dInp) dInp.value = p;
+      state.pickup = d;
       state.dropoff = p;
-      document.getElementById('pickup-input').value = state.pickup;
-      document.getElementById('dropoff-input').value = state.dropoff;
-      handleRouteSend();
+      if (state.pickup && state.dropoff) {
+        handleRouteSend();
+      } else {
+        refreshQuotes();
+      }
     });
   }
 
-  // Quick place chips
+  // Quick place chips (suggestions: Airport, Marina Beach, Central Station, Phoenix Mall)
   document.querySelectorAll('.quick-place-chip').forEach((chip) => {
     chip.addEventListener('click', () => {
-      state.dropoff = chip.dataset.place;
+      const pInput = document.getElementById('pickup-input');
       const dInput = document.getElementById('dropoff-input');
+      if (pInput && !pInput.value.trim()) {
+        pInput.value = 'Current Location (GPS)';
+        state.pickup = 'Current Location (GPS)';
+      }
+      state.dropoff = chip.dataset.place;
       if (dInput) dInput.value = state.dropoff;
       handleRouteSend();
     });
@@ -1237,8 +1559,13 @@ function setupEventListeners() {
   // Famous places cards
   document.querySelectorAll('.famous-place-card').forEach((card) => {
     card.addEventListener('click', () => {
-      state.dropoff = card.dataset.place;
+      const pInput = document.getElementById('pickup-input');
       const dInput = document.getElementById('dropoff-input');
+      if (pInput && !pInput.value.trim()) {
+        pInput.value = 'Current Location (GPS)';
+        state.pickup = 'Current Location (GPS)';
+      }
+      state.dropoff = card.dataset.place;
       if (dInput) dInput.value = state.dropoff;
       handleRouteSend();
     });
@@ -1392,5 +1719,295 @@ function setupEventListeners() {
     updateUserUI();
     document.getElementById('auth-modal')?.classList.remove('active');
     showToast(`Signed in as ${res.user.name}!`, 'success');
+  });
+
+  // ========================================================================
+  // NEW SECTIONS & ELEMENTS EVENT LISTENERS
+  // ========================================================================
+
+  // Famous Places 1-Click Booking
+  document.querySelectorAll('.book-famous-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const place = btn.dataset.place;
+      state.dropoff = place;
+      const dropInput = document.getElementById('dropoff-input');
+      if (dropInput) dropInput.value = place;
+      switchTab('rides');
+      refreshQuotes();
+      showToast(`🎯 Destination set to ${place}`, 'success');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+
+  // Saved Places Quick Select
+  document.querySelectorAll('.use-place-pickup-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const addr = btn.dataset.address;
+      state.pickup = addr;
+      const pickInput = document.getElementById('pickup-input');
+      if (pickInput) pickInput.value = addr;
+      switchTab('rides');
+      showToast(`📍 Pickup location set to ${addr}`, 'info');
+    });
+  });
+
+  document.querySelectorAll('.use-place-dropoff-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const addr = btn.dataset.address;
+      state.dropoff = addr;
+      const dropInput = document.getElementById('dropoff-input');
+      if (dropInput) dropInput.value = addr;
+      switchTab('rides');
+      refreshQuotes();
+      showToast(`📍 Destination set to ${addr}`, 'success');
+    });
+  });
+
+  // Add Saved Place Modal
+  document.getElementById('open-add-place-btn')?.addEventListener('click', () => {
+    document.getElementById('add-place-modal')?.classList.add('active');
+  });
+  document.getElementById('close-add-place-modal')?.addEventListener('click', () => {
+    document.getElementById('add-place-modal')?.classList.remove('active');
+  });
+  document.getElementById('cancel-add-place-btn')?.addEventListener('click', () => {
+    document.getElementById('add-place-modal')?.classList.remove('active');
+  });
+  document.getElementById('save-new-place-btn')?.addEventListener('click', () => {
+    const label = document.getElementById('new-place-label')?.value.trim();
+    const address = document.getElementById('new-place-address')?.value.trim();
+    if (!label || !address) {
+      showToast('Please enter both label and address for the place', 'danger');
+      return;
+    }
+    const container = document.getElementById('saved-places-container');
+    if (container) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.cssText = 'padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface);';
+      card.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <span style="font-size: 28px;">⭐</span>
+          <div>
+            <h4 style="font-size: 15px; font-weight: 700; color: var(--text-main);">${label}</h4>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">${address}</p>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-secondary use-place-pickup-btn" data-address="${address}" style="padding: 6px 12px; font-size: 11px;">Set Pickup</button>
+          <button class="btn-cyan use-place-dropoff-btn" data-address="${address}" style="padding: 6px 12px; font-size: 11px;">Set Destination</button>
+        </div>
+      `;
+      container.prepend(card);
+    }
+    document.getElementById('add-place-modal')?.classList.remove('active');
+    showToast(`Saved place "${label}" added successfully!`, 'success');
+  });
+
+  // Gender Selection in Profile
+  document.querySelectorAll('.gender-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.gender-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Password Modal
+  document.getElementById('open-change-password-btn')?.addEventListener('click', () => {
+    document.getElementById('password-modal')?.classList.add('active');
+  });
+  document.getElementById('close-password-modal')?.addEventListener('click', () => {
+    document.getElementById('password-modal')?.classList.remove('active');
+  });
+  document.getElementById('save-new-pwd-btn')?.addEventListener('click', () => {
+    const newPwd = document.getElementById('new-pwd-input')?.value;
+    const confirmPwd = document.getElementById('confirm-pwd-input')?.value;
+    if (!newPwd || newPwd.length < 6) {
+      showToast('Password must be at least 6 characters', 'danger');
+      return;
+    }
+    if (newPwd !== confirmPwd) {
+      showToast('Passwords do not match', 'danger');
+      return;
+    }
+    document.getElementById('password-modal')?.classList.remove('active');
+    showToast('Password updated securely!', 'success');
+  });
+  document.getElementById('send-pwd-link-btn')?.addEventListener('click', () => {
+    document.getElementById('password-modal')?.classList.remove('active');
+    showToast('Secure password reset link sent to your email!', 'success');
+  });
+
+  // Profile Cancel & Save buttons
+  document.getElementById('cancel-profile-btn')?.addEventListener('click', () => {
+    updateUserUI();
+    showToast('Profile edits discarded', 'info');
+  });
+
+  // Emergency & SOS Hub
+  document.getElementById('trigger-sos-protocol-btn')?.addEventListener('click', () => {
+    document.getElementById('sos-modal')?.classList.add('active');
+    showToast('🚨 SOS Emergency Telemetry dispatched!', 'danger');
+  });
+  document.getElementById('open-add-contact-btn')?.addEventListener('click', () => {
+    document.getElementById('add-contact-modal')?.classList.add('active');
+  });
+  document.getElementById('close-add-contact-modal')?.addEventListener('click', () => {
+    document.getElementById('add-contact-modal')?.classList.remove('active');
+  });
+  document.getElementById('cancel-add-contact-btn')?.addEventListener('click', () => {
+    document.getElementById('add-contact-modal')?.classList.remove('active');
+  });
+  document.getElementById('save-new-contact-btn')?.addEventListener('click', () => {
+    const cName = document.getElementById('new-contact-name')?.value.trim();
+    const cPhone = document.getElementById('new-contact-phone')?.value.trim();
+    const cRel = document.getElementById('new-contact-relation')?.value;
+    if (!cName || !cPhone) {
+      showToast('Please enter both contact name and phone number', 'danger');
+      return;
+    }
+    const cList = document.getElementById('emergency-contacts-list');
+    if (cList) {
+      const row = document.createElement('div');
+      row.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm);';
+      row.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(16,185,129,0.15); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #10B981;">${cName[0].toUpperCase()}</div>
+          <div>
+            <strong style="color: var(--text-main);">${cName}</strong>
+            <div style="font-size: 12px; color: var(--text-muted);">${cRel} · ${cPhone}</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <a href="tel:${cPhone}" class="btn-secondary" style="padding: 6px 12px; font-size: 11px; text-decoration: none;">📞 Call</a>
+          <button class="btn-secondary remove-contact-btn" style="padding: 6px 10px; font-size: 11px; border-color: rgba(239,68,68,0.3); color: #EF4444;">🗑️</button>
+        </div>
+      `;
+      cList.prepend(row);
+      row.querySelector('.remove-contact-btn')?.addEventListener('click', () => row.remove());
+    }
+    document.getElementById('add-contact-modal')?.classList.remove('active');
+    showToast(`Added ${cName} to trusted emergency contacts!`, 'success');
+  });
+
+  document.querySelectorAll('.remove-contact-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      const row = e.target.closest('div[style*="display: flex; justify-content: space-between"]');
+      if (row) row.remove();
+      showToast('Contact removed from emergency alert list', 'info');
+    });
+  });
+
+  // Referral Invite Copy & Share
+  document.getElementById('copy-referral-btn')?.addEventListener('click', () => {
+    navigator.clipboard?.writeText('SMART2026');
+    showToast('Referral code SMART2026 copied to clipboard!', 'success');
+  });
+
+  document.querySelectorAll('.share-social-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const channel = btn.dataset.channel;
+      showToast(`Opening ${channel.toUpperCase()} sharing link for SMART2026!`, 'info');
+    });
+  });
+
+  // Ratings & Reviews Modal
+  document.getElementById('open-write-review-btn')?.addEventListener('click', () => {
+    document.getElementById('write-review-modal')?.classList.add('active');
+  });
+  document.getElementById('close-write-review-modal')?.addEventListener('click', () => {
+    document.getElementById('write-review-modal')?.classList.remove('active');
+  });
+  document.getElementById('cancel-write-review-btn')?.addEventListener('click', () => {
+    document.getElementById('write-review-modal')?.classList.remove('active');
+  });
+  document.getElementById('submit-review-btn')?.addEventListener('click', () => {
+    const driver = document.getElementById('review-driver-select')?.value;
+    const comments = document.getElementById('review-comments')?.value.trim();
+    const feed = document.getElementById('reviews-feed-container');
+    if (feed) {
+      const card = document.createElement('div');
+      card.style.cssText = 'padding: 14px; background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: var(--radius-sm);';
+      card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <strong>${driver}</strong>
+            <span style="color: #F59E0B; font-size: 12px;">★★★★★</span>
+          </div>
+          <span style="font-size: 11px; color: var(--text-dim);">Just now</span>
+        </div>
+        <p style="font-size: 13px; color: var(--text-muted); line-height: 1.4;">
+          "${comments || 'Driver was polite, punctual, and drove smoothly.'}"
+        </p>
+      `;
+      feed.prepend(card);
+    }
+    document.getElementById('write-review-modal')?.classList.remove('active');
+    showToast('Your 5-star review has been published!', 'success');
+  });
+
+  // Commute Savings Slider
+  const slider = document.getElementById('commute-distance-slider');
+  if (slider) {
+    slider.addEventListener('input', () => {
+      const dist = parseInt(slider.value, 10);
+      const distVal = document.getElementById('calc-distance-val');
+      const soloVal = document.getElementById('calc-solo-cost');
+      const commuteVal = document.getElementById('calc-commute-cost');
+      const savedVal = document.getElementById('calc-saved-cost');
+
+      const solo = dist * 2 * 22 * 15; // 2 trips * 22 working days * ₹15/km
+      const commute = Math.round(solo * 0.4);
+      const saved = solo - commute;
+
+      if (distVal) distVal.textContent = `${dist} km (one-way)`;
+      if (soloVal) soloVal.textContent = `₹${solo.toLocaleString()} / mo`;
+      if (commuteVal) commuteVal.textContent = `₹${commute.toLocaleString()} / mo`;
+      if (savedVal) savedVal.textContent = `₹${saved.toLocaleString()} / mo`;
+    });
+  }
+
+  document.getElementById('find-matches-from-calc-btn')?.addEventListener('click', () => {
+    const heading = document.getElementById('heading-commute');
+    if (heading) heading.scrollIntoView({ behavior: 'smooth' });
+    showToast('Showing top matching commuters for your route!', 'info');
+  });
+
+  document.getElementById('save-commute-profile-btn')?.addEventListener('click', () => {
+    showToast('Commute route and office schedule profile saved!', 'success');
+  });
+
+  // Activity Actions
+  document.getElementById('activity-share-track-btn')?.addEventListener('click', () => {
+    navigator.clipboard?.writeText('https://smartride-ai.app/track/live-TN09EV4281');
+    showToast('Live tracking link copied to clipboard! Share with friends.', 'success');
+  });
+
+  document.getElementById('activity-view-xai-btn')?.addEventListener('click', () => {
+    switchTab('xai');
+  });
+
+  document.getElementById('activity-mark-read-btn')?.addEventListener('click', () => {
+    const list = document.getElementById('activity-notif-list');
+    if (list) {
+      list.querySelectorAll('div[style*="padding: 12px 14px"]').forEach((el) => {
+        el.style.opacity = '0.6';
+      });
+    }
+    showToast('All notifications marked as read', 'info');
+  });
+
+  // App Settings Actions
+  document.getElementById('save-app-settings-btn')?.addEventListener('click', () => {
+    const lang = document.getElementById('app-language-select')?.value;
+    showToast(`Preferences and language (${lang.toUpperCase()}) saved successfully!`, 'success');
+  });
+
+  document.getElementById('clear-cache-btn')?.addEventListener('click', () => {
+    showToast('Application route and telemetry cache cleared!', 'info');
+  });
+
+  document.getElementById('reset-defaults-btn')?.addEventListener('click', () => {
+    showToast('Application reset to factory defaults', 'info');
   });
 }

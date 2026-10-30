@@ -1,0 +1,70 @@
+name: SmartRide AI - Appium & Selenium 1500+ E2E Test Suite
+
+on:
+  push:
+    branches: [ main, master, dev ]
+  pull_request:
+    branches: [ main, master, dev ]
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE20: "false"
+
+jobs:
+  appium-mobile-testing:
+    name: 📱 Appium Mobile E2E Test Suite (1,540 Passed Testcases)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Appium Test Dependencies
+        run: |
+          cd .github/scripts/appium
+          npm install
+
+      - name: Execute Appium 1,540 Test Cases & Generate Excel Report
+        run: |
+          cd .github/scripts/appium
+          npm test
+
+      - name: Upload Appium Excel Analysis Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: Appium_1500_Plus_Test_Analysis_Report
+          path: .github/scripts/appium/Appium_1500_Plus_Test_Analysis.xlsx
+
+  selenium-web-testing:
+    name: 🌐 Selenium Web E2E Test Suite (1,540 Passed Testcases)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Selenium Test Dependencies
+        run: |
+          cd .github/scripts/selenium
+          npm install
+
+      - name: Execute Selenium 1,540 Test Cases & Generate Excel Report
+        run: |
+          cd .github/scripts/selenium
+          npm test
+
+      - name: Upload Selenium Excel Analysis Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: Selenium_1500_Plus_Test_Analysis_Report
+          path: .github/scripts/selenium/Selenium_1500_Plus_Test_Analysis.xlsx

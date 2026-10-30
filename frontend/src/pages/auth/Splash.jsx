@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { View, Text, Image, StyleSheet, ActivityIndicator, Pressable } from 'react-native';
 import { useNavigate } from 'react-router-dom';
-import appIcon from '../../assets/app-icon.png';
+const appIcon = './app-icon.png';
 
 const Splash = () => {
   const navigate = useNavigate();
@@ -41,7 +41,7 @@ const Splash = () => {
           style={styles.continueBtn}
           accessibilityLabel="Continue to Onboarding"
         >
-          <Text style={styles.continueText}>Continue →</Text>
+          <Text style={styles.continueText}>Continue â†’</Text>
         </Pressable>
       </View>
     </View>

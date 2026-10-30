@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, CheckCircle2, XCircle, Star, Loader2 } from 'lucide-react';
-import BottomNavigation from '../../components/layout/BottomNavigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../lib/AuthContext';
 
-const getUserRides = (userId) => Promise.resolve([
+const getUserRides = (_userId) => Promise.resolve([
   { id: 'ride_1', rideType: 'SmartRide AI EV', price: '₹406', pickup: 'Current Location', dropoff: 'City Center Mall', status: 'completed', createdAt: new Date() }
 ]);
 
@@ -178,8 +177,6 @@ const MyRides = () => {
           </AnimatePresence>
         )}
       </div>
-
-      <BottomNavigation />
 
       {/* Feedback Modal */}
       <AnimatePresence>

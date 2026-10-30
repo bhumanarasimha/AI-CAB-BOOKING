@@ -26,7 +26,12 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.webkit.WebViewAssetLoader;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -83,6 +88,11 @@ public class MainActivity extends AppCompatActivity {
         // Dark background matching app theme on startup
         webView.setBackgroundColor(Color.parseColor("#080C14"));
 
+        // Enable smooth scrolling and gesture handling
+        webView.setVerticalScrollBarEnabled(false);
+        webView.setHorizontalScrollBarEnabled(false);
+        webView.setOverScrollMode(WebView.OVER_SCROLL_IF_CONTENT_SCROLLS);
+
         // Enable Chrome Inspect Debugging
         WebView.setWebContentsDebuggingEnabled(true);
 
@@ -95,6 +105,10 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         webSettings.setSupportMultipleWindows(false);
         webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
+
+        // Viewport & Scrolling responsiveness
+        webSettings.setLoadWithOverviewMode(true);
+        webSettings.setUseWideViewPort(true);
 
         // Essential for React/Vite local asset loading
         webSettings.setAllowContentAccess(true);
@@ -114,14 +128,40 @@ public class MainActivity extends AppCompatActivity {
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 Uri url = request.getUrl();
                 if (url != null && Objects.equals(url.getHost(), APP_ASSETS_HOST)) {
+                    String path = url.getPath();
+                    if (path == null || path.isEmpty() || path.equals("/") || !path.contains(".")) {
+                        path = "index.html";
+                    }
+                    if (path.startsWith("/")) {
+                        path = path.substring(1);
+                    }
+
+                    try {
+                        InputStream is = getAssets().open(path);
+                        String mimeType = getMimeType(path);
+                        String encoding = (mimeType.startsWith("text/") || mimeType.equals("application/javascript") || mimeType.equals("application/json") || mimeType.equals("image/svg+xml")) ? "utf-8" : null;
+                        WebResourceResponse customResponse = new WebResourceResponse(mimeType, encoding, is);
+                        Map<String, String> headers = new HashMap<>();
+                        headers.put("Access-Control-Allow-Origin", "*");
+                        customResponse.setResponseHeaders(headers);
+                        return customResponse;
+                    } catch (IOException e) {
+                        Log.d(TAG, "Custom asset loader missed: " + path);
+                    }
+
                     WebResourceResponse response = assetLoader.shouldInterceptRequest(url);
                     if (response != null) {
                         return response;
                     }
-                    String path = url.getPath();
-                    if (path == null || path.equals("/") || !path.contains(".")) {
-                        return assetLoader.shouldInterceptRequest(Uri.parse("https://" + APP_ASSETS_HOST + "/index.html"));
-                    }
+
+                    try {
+                        InputStream is = getAssets().open("index.html");
+                        WebResourceResponse fallbackResponse = new WebResourceResponse("text/html", "utf-8", is);
+                        Map<String, String> headers = new HashMap<>();
+                        headers.put("Access-Control-Allow-Origin", "*");
+                        fallbackResponse.setResponseHeaders(headers);
+                        return fallbackResponse;
+                    } catch (IOException ignored) {}
                 }
                 return super.shouldInterceptRequest(view, request);
             }
@@ -211,5 +251,23 @@ public class MainActivity extends AppCompatActivity {
                 pendingOrigin = null;
             }
         }
+    }
+
+    private String getMimeType(String path) {
+        if (path == null) return "text/html";
+        String lower = path.toLowerCase();
+        if (lower.endsWith(".html") || lower.endsWith(".htm")) return "text/html";
+        if (lower.endsWith(".js") || lower.endsWith(".mjs")) return "application/javascript";
+        if (lower.endsWith(".css")) return "text/css";
+        if (lower.endsWith(".json")) return "application/json";
+        if (lower.endsWith(".png")) return "image/png";
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+        if (lower.endsWith(".svg")) return "image/svg+xml";
+        if (lower.endsWith(".webp")) return "image/webp";
+        if (lower.endsWith(".ico")) return "image/x-icon";
+        if (lower.endsWith(".woff2")) return "font/woff2";
+        if (lower.endsWith(".woff")) return "font/woff";
+        if (lower.endsWith(".ttf")) return "font/ttf";
+        return "application/octet-stream";
     }
 }

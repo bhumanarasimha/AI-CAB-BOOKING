@@ -1,23 +1,47 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, User, Mail, Phone, Camera, ChevronRight, Calendar, CheckCircle2, Lock, ShieldCheck, Users, X } from 'lucide-react';
-import BottomNavigation from '../../components/layout/BottomNavigation';
+import { ArrowLeft, User, Mail, Phone, Camera, ChevronRight, Calendar, CheckCircle2, Lock, ShieldCheck, Check, X } from 'lucide-react';
+
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../lib/AuthContext';
 
 const Profile = () => {
   const navigate = useNavigate();
+  const outlet = useOutletContext();
+  const setHideBottomNav = outlet?.setHideBottomNav;
+
   const { t } = useLanguage();
   const { user, logout, updateUserProfile } = useAuth();
   
   const [isEditing, setIsEditing] = useState(false);
+
+  // Notify parent container to hide bottom navigation while editing profile
+  useEffect(() => {
+    if (setHideBottomNav) {
+      setHideBottomNav(isEditing);
+    }
+    return () => {
+      if (setHideBottomNav) setHideBottomNav(false);
+    };
+  }, [isEditing, setHideBottomNav]);
   const [editName, setEditName] = useState(user?.name || user?.displayName || '');
   const [editEmail, setEditEmail] = useState(user?.email || '');
-  const [editPhone, setEditPhone] = useState('+91 98765 43210');
-  const [originalPhone] = useState('+91 98765 43210');
-  const [editDob, setEditDob] = useState('1998-05-24');
-  const [editGender, setEditGender] = useState('Male');
+  const [editPhone, setEditPhone] = useState(user?.phone || '7995665477');
+  const [originalPhone, setOriginalPhone] = useState(user?.phone || '7995665477');
+  const [editDob, setEditDob] = useState(user?.dob || '1998-05-24');
+  const [editGender, setEditGender] = useState(user?.gender || 'Male');
+
+  useEffect(() => {
+    if (user) {
+      setEditName(user.name || user.displayName || '');
+      setEditEmail(user.email || '');
+      setEditPhone(user.phone || '7995665477');
+      setOriginalPhone(user.phone || '7995665477');
+      setEditDob(user.dob || '1998-05-24');
+      setEditGender(user.gender || 'Male');
+    }
+  }, [user]);
   
   const [showSuccess, setShowSuccess] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
@@ -90,7 +114,7 @@ const Profile = () => {
         gender: editGender,
         dob: editDob
       });
-      
+      setOriginalPhone(editPhone);
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
@@ -132,7 +156,7 @@ const Profile = () => {
                    <p style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main)' }}>Profile</p>
                  </div>
                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                   <button onClick={() => setIsEditing(true)} style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--brand-cyan)', background: 'rgba(var(--brand-cyan-rgb),0.1)', border: '1px solid rgba(var(--brand-cyan-rgb),0.25)', padding: '6px 14px', borderRadius: '10px', cursor: 'pointer' }}>Edit</button>
+                   <button onClick={() => { setIsEditing(true); setEditName(user?.name || ''); setEditEmail(user?.email || ''); setEditPhone(user?.phone || '7995665477'); setEditGender(user?.gender || 'Male'); setEditDob(user?.dob || '1998-05-24'); }} style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--brand-cyan)', background: 'rgba(var(--brand-cyan-rgb),0.1)', border: '1px solid rgba(var(--brand-cyan-rgb),0.25)', padding: '6px 14px', borderRadius: '10px', cursor: 'pointer' }}>Edit</button>
                    <button
                      onClick={async () => {
                        await logout();
@@ -151,7 +175,7 @@ const Profile = () => {
                     <img src={user.photoURL} alt="Profile" style={{ width: '72px', height: '72px', borderRadius: '22px', border: '2px solid var(--brand-indigo)', boxShadow: '0 8px 24px rgba(var(--brand-indigo-rgb), 0.4)' }} />
                   ) : (
                     <div style={{ width: '72px', height: '72px', borderRadius: '22px', background: 'linear-gradient(135deg, var(--brand-indigo), var(--brand-cyan))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', fontWeight: 800, color: 'white', boxShadow: '0 8px 24px rgba(var(--brand-indigo-rgb), 0.4)' }}>
-                      {(user?.name && user.name.length > 0) ? user.name.charAt(0).toUpperCase() : 'B'}
+                      {(user?.name && user.name.length > 0) ? user.name.charAt(0).toUpperCase() : 'N'}
                     </div>
                   )}
                   <div style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '18px', height: '18px', background: '#10B981', borderRadius: '6px', border: '2px solid var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -160,9 +184,9 @@ const Profile = () => {
                 </div>
                 <div style={{ flex: 1 }}>
                   <h1 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.01em' }}>
-                    {(user?.name && user.name !== 'google.user' && user.name !== 'Google Rider' && user.name !== 'Google User') ? user.name : 'Bhumana Narasimha'}
+                    {user?.name || (user?.email ? user.email.split('@')[0] : 'Rider')}
                   </h1>
-                  <p style={{ fontSize: '0.83rem', color: 'var(--text-muted)', marginTop: '2px' }}>{user?.email}</p>
+                  <p style={{ fontSize: '0.83rem', color: 'var(--text-muted)', marginTop: '2px' }}>{user?.email || 'rider@smartride.ai'}{user?.phone ? (' · ' + user.phone) : ''}</p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
                     <div style={{ width: '6px', height: '6px', borderRadius: '99px', background: 'var(--brand-cyan)' }} />
                     <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--brand-cyan)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Verified Rider</span>
@@ -210,7 +234,6 @@ const Profile = () => {
                 </section>
               ))}
 
-
               {/* Logout */}
               <motion.button
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
@@ -231,69 +254,93 @@ const Profile = () => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            style={{ padding: '56px 20px 120px', display: 'flex', flexDirection: 'column', gap: '32px', minHeight: '100%' }}
+            style={{ 
+              padding: '48px 20px 100px', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '20px', 
+              minHeight: '100%', 
+              position: 'relative',
+              boxSizing: 'border-box'
+            }}
           >
             {/* Edit Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <button onClick={() => setIsEditing(false)} className="btn-icon">
-                <ArrowLeft size={20} color="var(--text-main)" />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <button 
+                onClick={() => setIsEditing(false)} 
+                className="btn-icon" 
+                style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                aria-label="Cancel editing"
+              >
+                <ArrowLeft size={18} color="var(--text-main)" />
               </button>
               <h2 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-main)' }}>Edit Profile</h2>
-              <div style={{ width: '40px' }} />
+              <button
+                type="button"
+                onClick={handleSaveAttempt}
+                style={{ fontSize: '0.82rem', fontWeight: 800, color: '#080C14', background: 'var(--brand-cyan, #00D8FF)', border: 'none', padding: '7px 16px', borderRadius: '12px', cursor: 'pointer', boxShadow: '0 4px 14px rgba(0,216,255,0.35)', display: 'flex', alignItems: 'center', gap: '5px' }}
+              >
+                <Check size={14} color="#080C14" /> Save
+              </button>
             </div>
 
             {/* Edit Avatar */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
               <div style={{ position: 'relative' }}>
-                <div style={{ width: '100px', height: '100px', borderRadius: '32px', background: 'linear-gradient(135deg, var(--brand-indigo), var(--brand-cyan))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 800, color: 'white', boxShadow: '0 12px 32px rgba(var(--brand-indigo-rgb), 0.3)' }}>
-                  {editName ? editName.charAt(0) : 'U'}
+                <div style={{ width: '90px', height: '90px', borderRadius: '28px', background: 'linear-gradient(135deg, var(--brand-indigo), var(--brand-cyan))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.2rem', fontWeight: 800, color: 'white', boxShadow: '0 12px 32px rgba(var(--brand-indigo-rgb), 0.3)' }}>
+                  {editName ? editName.charAt(0).toUpperCase() : 'N'}
                 </div>
-                <button style={{ position: 'absolute', bottom: '-4px', right: '-4px', width: '32px', height: '32px', borderRadius: '10px', background: 'var(--bg-card)', border: '1px solid var(--border-ui)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.2)', cursor: 'pointer' }}>
+                <button 
+                  type="button"
+                  style={{ position: 'absolute', bottom: '-4px', right: '-4px', width: '32px', height: '32px', borderRadius: '10px', background: 'var(--bg-card)', border: '1px solid var(--border-ui)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.2)', cursor: 'pointer' }}
+                  aria-label="Change photo"
+                >
                   <Camera size={16} color="var(--brand-cyan)" />
                 </button>
               </div>
             </div>
 
             {/* Edit Form */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
               {/* Full Name */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: '4px' }}>Full Name</label>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                   <User size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '16px' }} />
-                  <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--border-ui)', borderRadius: '18px', padding: '16px 16px 16px 48px', color: 'var(--text-main)', fontSize: '0.95rem', fontWeight: 600, outline: 'none' }} />
+                  <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--border-ui)', borderRadius: '16px', padding: '14px 14px 14px 44px', color: 'var(--text-main)', fontSize: '0.95rem', fontWeight: 600, outline: 'none' }} />
                 </div>
               </div>
 
               {/* Email */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: '4px' }}>Email Address</label>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                   <Mail size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '16px' }} />
-                  <input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} style={{ width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--border-ui)', borderRadius: '18px', padding: '16px 16px 16px 48px', color: 'var(--text-main)', fontSize: '0.95rem', fontWeight: 600, outline: 'none' }} />
+                  <input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} style={{ width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--border-ui)', borderRadius: '16px', padding: '14px 14px 14px 44px', color: 'var(--text-main)', fontSize: '0.95rem', fontWeight: 600, outline: 'none' }} />
                 </div>
               </div>
 
               {/* Phone Number */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: '4px' }}>Phone Number</label>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                   <Phone size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '16px' }} />
-                  <input type="text" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} style={{ width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--border-ui)', borderRadius: '18px', padding: '16px 16px 16px 48px', color: 'var(--text-main)', fontSize: '0.95rem', fontWeight: 600, outline: 'none' }} />
+                  <input type="text" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} style={{ width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--border-ui)', borderRadius: '16px', padding: '14px 14px 14px 44px', color: 'var(--text-main)', fontSize: '0.95rem', fontWeight: 600, outline: 'none' }} />
                 </div>
               </div>
 
               {/* Gender Selection */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: '4px' }}>Gender</label>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   {['Male', 'Female', 'Other'].map(g => (
                     <button 
+                      type="button"
                       key={g} 
                       onClick={() => setEditGender(g)}
                       style={{ 
                         flex: 1, padding: '12px', borderRadius: '14px', border: '1px solid var(--border-ui)', 
-                        background: editGender === g ? 'rgba(var(--brand-cyan-rgb), 0.1)' : 'var(--bg-elevated)',
+                        background: editGender === g ? 'rgba(var(--brand-cyan-rgb), 0.12)' : 'var(--bg-elevated)',
                         borderColor: editGender === g ? 'var(--brand-cyan)' : 'var(--border-ui)',
                         color: editGender === g ? 'var(--brand-cyan)' : 'var(--text-muted)',
                         fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
@@ -306,29 +353,124 @@ const Profile = () => {
               </div>
 
               {/* Date of Birth */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: '4px' }}>Date of Birth</label>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                   <Calendar size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '16px' }} />
-                  <input type="date" value={editDob} onChange={(e) => setEditDob(e.target.value)} style={{ width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--border-ui)', borderRadius: '18px', padding: '16px 16px 16px 48px', color: 'var(--text-main)', fontSize: '0.95rem', fontWeight: 600, outline: 'none' }} />
+                  <input type="date" value={editDob} onChange={(e) => setEditDob(e.target.value)} style={{ width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--border-ui)', borderRadius: '16px', padding: '14px 14px 14px 44px', color: 'var(--text-main)', fontSize: '0.95rem', fontWeight: 600, outline: 'none' }} />
                 </div>
               </div>
 
               {/* Security Actions */}
-              <div style={{ marginTop: '12px' }}>
-                <button 
-                  onClick={handleChangePassword}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: 'rgba(var(--brand-indigo-rgb), 0.05)', border: '1px dashed rgba(var(--brand-indigo-rgb), 0.3)', borderRadius: '16px', padding: '16px', color: 'var(--brand-indigo)', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+                <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: '4px' }}>Security</label>
+                <div 
+                  className="card"
+                  style={{ 
+                    padding: '14px 16px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    background: 'var(--bg-elevated)',
+                    borderRadius: '16px',
+                    border: '1px solid var(--border-ui)'
+                  }}
                 >
-                  <Lock size={16} />
-                  Change Password
-                </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ 
+                      width: '38px', height: '38px', borderRadius: '11px', 
+                      background: 'rgba(99, 102, 241, 0.12)', border: '1px solid rgba(99, 102, 241, 0.25)', 
+                      display: 'flex', alignItems: 'center', justifyContent: 'center' 
+                    }}>
+                      <Lock size={17} color="var(--brand-indigo)" />
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-main)' }}>Account Password</p>
+                      <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>Request password reset link</p>
+                    </div>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={handleChangePassword}
+                    style={{ 
+                      padding: '8px 14px', 
+                      borderRadius: '10px', 
+                      background: 'rgba(99, 102, 241, 0.14)', 
+                      border: '1px solid rgba(99, 102, 241, 0.35)', 
+                      color: 'var(--brand-indigo)', 
+                      fontWeight: 700, 
+                      fontSize: '0.8rem', 
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    Change
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Save Button */}
-            <div style={{ marginTop: '20px' }}>
-              <motion.button whileTap={{ scale: 0.98 }} onClick={handleSaveAttempt} style={{ width: '100%', background: 'linear-gradient(135deg, var(--brand-indigo), var(--brand-cyan))', border: 'none', borderRadius: '18px', padding: '18px', color: 'white', fontSize: '1rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 32px rgba(var(--brand-indigo-rgb), 0.3)' }}>
+            {/* Bottom Action Buttons: Cancel and Save Changes neatly arranged side-by-side */}
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '12px', 
+              marginTop: '16px', 
+              marginBottom: '36px',
+              paddingBottom: '24px',
+              width: '100%',
+              boxSizing: 'border-box'
+            }}>
+              {/* Cancel Button */}
+              <button
+                type="button"
+                onClick={() => setIsEditing(false)}
+                style={{
+                  flex: 1,
+                  height: '52px',
+                  borderRadius: '16px',
+                  background: 'var(--bg-elevated)',
+                  border: '1px solid var(--border-ui)',
+                  color: 'var(--text-muted)',
+                  fontSize: '0.92rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <X size={16} />
+                Cancel
+              </button>
+
+              {/* Save Changes Button */}
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.98 }}
+                onClick={handleSaveAttempt}
+                style={{
+                  flex: 1.6,
+                  height: '52px',
+                  borderRadius: '16px',
+                  background: 'linear-gradient(135deg, var(--brand-cyan, #00D8FF) 0%, var(--brand-indigo, #6366F1) 100%)',
+                  border: 'none',
+                  color: '#080C14',
+                  fontSize: '0.95rem',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  boxShadow: '0 8px 28px rgba(0,216,255,0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <Check size={18} color="#080C14" />
                 Save Changes
               </motion.button>
             </div>
@@ -404,10 +546,6 @@ const Profile = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
-
-
-      {!isEditing && <BottomNavigation />}
     </div>
   );
 };

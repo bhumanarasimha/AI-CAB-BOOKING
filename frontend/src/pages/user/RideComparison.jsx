@@ -6,7 +6,7 @@ import RouteMap from '../../components/ui/RouteMap';
 import VehicleLoader from '../../components/ui/VehicleLoader';
 import { useAuth } from '../../lib/AuthContext';
 
-const createRideRequest = (userId, rideData) => Promise.resolve('ride_' + Date.now());
+const createRideRequest = (_userId, _rideData) => Promise.resolve('ride_' + Date.now());
 import AIChatBot from '../../components/ui/AIChatBot';
 import { useRideRefreshEngine } from '../../services/refresh/useRideRefreshEngine';
 
@@ -134,7 +134,7 @@ const RideComparison = () => {
           a.click();
           document.body.removeChild(a);
         } catch {
-          window.location.href = targetUrl;
+          window.open(targetUrl, '_blank');
         }
       }
       return;
@@ -154,17 +154,18 @@ const RideComparison = () => {
         isSmart: true,
       };
 
+      const fallbackId = 'ride_' + Math.floor(Math.random() * 1000000);
       let rideId;
       try {
         rideId = await createRideRequest(user?.uid || 'demo-user-123', rideData);
       } catch (err) {
         console.warn('Backend ride creation fallback to local ride ID:', err);
-        rideId = 'ride_' + Date.now();
+        rideId = fallbackId;
       }
 
       navigate('/user/activity', { 
         state: { 
-          rideId: rideId || 'ride_' + Date.now(), 
+          rideId: rideId || fallbackId, 
           confirmed: true,
           rideDetails: {
             ...opt,

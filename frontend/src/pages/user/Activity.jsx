@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Bell, Gift, AlertTriangle, CheckCircle, Info, Share2 } from 'lucide-react';
-import BottomNavigation from '../../components/layout/BottomNavigation';
 
-const subscribeToRide = (rideId, callback) => {
+const subscribeToRide = (_rideId, _callback) => {
   return () => {};
 };
-const updateRideStatus = (rideId, status) => {
+const updateRideStatus = (_rideId, _status) => {
   return Promise.resolve();
 };
+
 
 const NOTIFICATIONS = [
   {
@@ -116,7 +116,7 @@ const Activity = () => {
     }
 
     return () => clearTimeout(timer);
-  }, [rideId, activeRide?.status]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [rideId, activeRide?.status]);  
 
   const markAllRead = () => {
     setNotifications(notifications.map(n => ({ ...n, read: true })));
@@ -363,7 +363,6 @@ const Activity = () => {
         )}
       </AnimatePresence>
 
-      <BottomNavigation />
     </div>
   );
 };

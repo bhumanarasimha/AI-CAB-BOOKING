@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
@@ -68,9 +69,9 @@ const Onboarding = () => {
   const s = slides[idx];
 
   return (
-    <div className="h-full flex flex-col" style={{ background: 'var(--bg-base)' }}>
+    <View style={styles.container}>
       {/* Glow blob */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      <View style={styles.glowContainer} pointerEvents="none">
         <AnimatePresence mode="wait">
           <motion.div
             key={idx}
@@ -86,32 +87,27 @@ const Onboarding = () => {
             }}
           />
         </AnimatePresence>
-      </div>
+      </View>
 
       {/* Top Nav: Back & Skip */}
-      <div className="flex justify-between items-center p-6 pt-10 z-10">
-        <button
-          onClick={() => {
+      <View style={styles.topNav}>
+        <TouchableOpacity
+          onPress={() => {
             if (idx > 0) setIdx(idx - 1);
             else navigate('/splash');
           }}
-          className="btn-icon"
-          style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          aria-label="Previous Slide or Back"
+          style={styles.backBtn}
+          accessibilityLabel="Previous Slide or Back"
         >
-          <ArrowLeft size={18} color="var(--text-muted)" />
-        </button>
-        <button
-          onClick={() => navigate('/login')}
-          style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: 600 }}
-          className="hover:opacity-80 transition-opacity"
-        >
-          Skip
-        </button>
-      </div>
+          <ArrowLeft size={18} color="var(--text-muted, #9CA3AF)" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigate('/login')}>
+          <Text style={styles.skipText}>Skip</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-8 z-10">
+      <View style={styles.contentArea}>
         <AnimatePresence mode="wait">
           <motion.div
             key={idx}
@@ -119,62 +115,185 @@ const Onboarding = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col items-center text-center"
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}
           >
             {/* Icon Container */}
-            <div style={{
-              width: '112px', height: '112px', borderRadius: '32px',
-              background: `var(--bg-surface)`,
-              border: `1px solid var(--border-ui)`,
-              boxShadow: `0 20px 60px rgba(0,0,0,0.1), 0 0 0 1px ${s.accentColor}20`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginBottom: '36px',
-            }}>
+            <View style={[styles.iconBox, { borderColor: 'var(--border-ui)', shadowColor: s.accentColor }]}>
               {s.icon}
-            </div>
+            </View>
 
             {/* Label */}
-            <div className="ai-chip px-3 py-1.5 mb-5" style={{ borderColor: `${s.accentColor}40`, color: s.accentColor }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: '99px', background: s.accentColor, flexShrink: 0 }} />
-              {s.label}
-            </div>
+            <View style={[styles.labelChip, { borderColor: `${s.accentColor}40` }]}>
+              <View style={[styles.dot, { backgroundColor: s.accentColor }]} />
+              <Text style={[styles.labelText, { color: s.accentColor }]}>{s.label}</Text>
+            </View>
 
-            <h2 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-main)', lineHeight: 1.15, marginBottom: '16px', whiteSpace: 'pre-line' }}>
+            <Text style={styles.titleText}>
               {s.title}
-            </h2>
-            <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', lineHeight: 1.7, maxWidth: '280px' }}>
+            </Text>
+            <Text style={styles.descText}>
               {s.description}
-            </p>
+            </Text>
           </motion.div>
         </AnimatePresence>
-      </div>
+      </View>
 
       {/* Bottom */}
-      <div className="p-8 pb-12 z-10">
+      <View style={styles.bottomArea}>
         {/* Dots */}
-        <div className="flex justify-center gap-2 mb-8">
+        <View style={styles.dotsRow}>
           {slides.map((_, i) => (
-            <button key={i} onClick={() => setIdx(i)}
-              style={{
-                height: '4px',
-                width: i === idx ? '28px' : '8px',
-                borderRadius: '99px',
-                background: i === idx ? s.accentColor : 'var(--border-ui)',
-                transition: 'all 0.3s ease',
-                border: 'none', cursor: 'pointer',
-              }}
+            <Pressable
+              key={i}
+              onPress={() => setIdx(i)}
+              style={[
+                styles.dotItem,
+                {
+                  width: i === idx ? 28 : 8,
+                  backgroundColor: i === idx ? s.accentColor : 'var(--border-ui, rgba(255, 255, 255, 0.1))',
+                }
+              ]}
             />
           ))}
-        </div>
+        </View>
 
         {/* Button */}
-        <button onClick={next} className="btn-primary w-full h-14" style={{ gap: '8px', fontSize: '1rem', letterSpacing: '-0.01em' }}>
-          {idx === slides.length - 1 ? 'Get Started' : 'Continue'}
-          <ArrowRight size={18} />
-        </button>
-      </div>
-    </div>
+        <TouchableOpacity onPress={next} style={styles.actionBtn} activeOpacity={0.8}>
+          <Text style={styles.actionBtnText}>
+            {idx === slides.length - 1 ? 'Get Started' : 'Continue'}
+          </Text>
+          <ArrowRight size={18} color="#080C14" />
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'var(--bg-base, #080C14)',
+    flexDirection: 'column',
+    position: 'relative',
+  },
+  glowContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    overflow: 'hidden',
+  },
+  topNav: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 40,
+    paddingBottom: 16,
+    zIndex: 10,
+  },
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: 'var(--bg-surface, #0F1623)',
+    borderWidth: 1,
+    borderColor: 'var(--border-ui, rgba(255, 255, 255, 0.07))',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  skipText: {
+    color: 'var(--text-muted, #9CA3AF)',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  contentArea: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    zIndex: 10,
+  },
+  iconBox: {
+    width: 112,
+    height: 112,
+    borderRadius: 32,
+    backgroundColor: 'var(--bg-surface, #0F1623)',
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 36,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  labelChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginBottom: 20,
+    gap: 8,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  labelText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  titleText: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: 'var(--text-main, #F1F5F9)',
+    letterSpacing: -0.5,
+    lineHeight: 38,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  descText: {
+    fontSize: 15,
+    color: 'var(--text-muted, #9CA3AF)',
+    lineHeight: 24,
+    textAlign: 'center',
+    maxWidth: 280,
+  },
+  bottomArea: {
+    paddingHorizontal: 32,
+    paddingBottom: 48,
+    zIndex: 10,
+  },
+  dotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 32,
+  },
+  dotItem: {
+    height: 4,
+    borderRadius: 2,
+  },
+  actionBtn: {
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: 'var(--brand-cyan, #00D8FF)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  actionBtnText: {
+    color: '#080C14',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+});
 
 export default Onboarding;

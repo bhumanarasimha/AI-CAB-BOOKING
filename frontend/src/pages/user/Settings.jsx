@@ -23,6 +23,7 @@ const Settings = () => {
     setTimeout(() => setToast(''), 2500);
   };
 
+
   const applyTheme = (themeName) => {
     const themeVars = {
       'dark-ai': {
@@ -73,11 +74,17 @@ const Settings = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
     applyTheme(newMode ? 'dark-ai' : 'light');
+    showToast(newMode ? 'Dark theme enabled' : 'Light theme enabled');
   };
 
   const settingsOptions = [
-    { id: 'notif', icon: <Bell size={20} />, title: t('notifications'), desc: t('push_alerts'), type: 'toggle', state: notifications, toggle: () => setNotifications(!notifications) },
+    { id: 'notif', icon: <Bell size={20} />, title: t('notifications'), desc: t('push_alerts'), type: 'toggle', state: notifications, toggle: () => {
+      const next = !notifications;
+      setNotifications(next);
+      showToast(next ? 'Notifications enabled' : 'Notifications disabled');
+    } },
     { id: 'lang', icon: <Globe size={20} />, title: t('language'), desc: lang, type: 'modal', action: () => setShowLangModal(true) },
+
     { id: 'disp', icon: darkMode ? <Moon size={20} /> : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>, title: t('display'), desc: darkMode ? t('dark_mode_on') : t('dark_mode_off'), type: 'toggle', state: darkMode, toggle: toggleDarkMode },
     { id: 'priv', icon: <Shield size={20} />, title: t('privacy'), desc: t('manage_data'), type: 'link', action: () => navigate('/user/safety') },
     { id: 'sec', icon: <Lock size={20} />, title: t('security'), desc: t('password_2fa'), type: 'link', action: () => navigate('/user/safety') },

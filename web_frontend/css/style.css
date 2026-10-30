@@ -469,21 +469,21 @@ button, input, select, textarea {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-ui);
-  border-radius: var(--radius-md);
+  gap: 14px;
+  background: rgba(0, 216, 255, 0.04);
+  border: 1px solid rgba(0, 216, 255, 0.18);
+  border-radius: var(--radius-lg);
   padding: 16px;
   margin-bottom: 16px;
 }
 
 .route-connector {
   position: absolute;
-  left: 28px;
-  top: 36px;
-  bottom: 36px;
+  left: 22px;
+  top: 42px;
+  bottom: 34px;
   width: 2px;
-  background: linear-gradient(to bottom, var(--brand-cyan), var(--danger));
+  background: linear-gradient(to bottom, var(--brand-cyan), #6366F1);
   z-index: 1;
 }
 
@@ -501,12 +501,12 @@ button, input, select, textarea {
   border-radius: 50%;
   flex-shrink: 0;
   background: var(--brand-cyan);
-  box-shadow: 0 0 8px var(--brand-cyan);
+  box-shadow: 0 0 8px rgba(0, 216, 255, 0.5);
 }
 
 .input-marker.dropoff {
-  background: var(--danger);
-  box-shadow: 0 0 8px var(--danger);
+  background: #6366F1;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
 }
 
 .route-input {
@@ -540,6 +540,120 @@ button, input, select, textarea {
 .quick-swap-btn:hover {
   transform: rotate(180deg);
   border-color: var(--brand-cyan);
+}
+
+.route-input-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.route-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 26px;
+  padding-right: 4px;
+}
+
+.route-field-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-muted, #94A3B8);
+  text-transform: uppercase;
+}
+
+.gps-badge-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 216, 255, 0.12);
+  border: 1px solid rgba(0, 216, 255, 0.3);
+  color: var(--brand-cyan, #00D8FF);
+  border-radius: var(--radius-pill, 9999px);
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gps-badge-btn:hover {
+  background: rgba(0, 216, 255, 0.22);
+  border-color: var(--brand-cyan, #00D8FF);
+  transform: scale(1.05);
+}
+
+.gps-badge-btn.is-locating {
+  animation: pulse-glow 1s infinite alternate;
+  border-color: var(--brand-cyan, #00D8FF);
+  box-shadow: 0 0 10px var(--brand-cyan);
+}
+
+.locate-gps-btn {
+  background: rgba(0, 216, 255, 0.1);
+  border: 1px solid rgba(0, 216, 255, 0.3);
+  color: var(--brand-cyan);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.locate-gps-btn:hover {
+  background: rgba(0, 216, 255, 0.25);
+  border-color: var(--brand-cyan);
+  transform: scale(1.08);
+}
+
+.locate-gps-btn.is-locating {
+  animation: pulse-glow 1s infinite alternate;
+  border-color: var(--brand-cyan);
+  box-shadow: 0 0 12px var(--brand-cyan);
+}
+
+.route-suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 6px;
+  background: var(--bg-surface, #0E1526);
+  border: 1px solid var(--border-ui, rgba(255, 255, 255, 0.15));
+  border-radius: var(--radius-md, 14px);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(20px);
+}
+
+.suggestion-item {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-main);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.15s ease;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover, .suggestion-item.active {
+  background: rgba(0, 216, 255, 0.15);
+  color: var(--brand-cyan);
 }
 
 /* Route Send Button - Circular Arrow Icon */

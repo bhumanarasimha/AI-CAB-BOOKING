@@ -1,0 +1,14 @@
+{
+  "name": "smartride-selenium-tests",
+  "version": "1.0.0",
+  "description": "Selenium Web E2E Test Suite in Node.js for SmartRide AI Frontend",
+  "main": "run_selenium_tests.js",
+  "type": "module",
+  "scripts": {
+    "test": "node run_selenium_tests.js",
+    "report": "node generate_report.js"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  }
+}

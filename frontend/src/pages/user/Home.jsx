@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { View, Text, Pressable, ScrollView, Image, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, Image, StyleSheet, TextInput } from 'react-native';
 import { 
   Search, 
   ChevronRight, 
+  LocateFixed, 
   Clock, 
   MapPin, 
   Star, 
   Users, 
   Navigation, 
-  Layers, 
   Radio, 
   ChevronUp, 
   ChevronDown, 
@@ -19,10 +19,28 @@ import {
 } from 'lucide-react-native';
 import { Sun, Moon } from 'lucide-react';
 import InteractiveMap from '../../components/ui/InteractiveMap';
-import BottomNavigation from '../../components/layout/BottomNavigation';
 import { useAuth } from '../../lib/AuthContext';
 import { useGPSLocation } from '../../hooks/useLocation';
 import { matches } from './commute/matches';
+
+const landmarkSuggestions = [
+  'Tidel Park, OMR Tech Corridor',
+  'Airport Terminal 2, Meenambakkam',
+  'Marina Beach Promenade',
+  'Chennai Central Railway Station',
+  'Phoenix MarketCity Mall, Velachery',
+  'Express Avenue Mall, Royapettah',
+  'DLF Cybercity, Porur',
+  'Anna Nagar West Roundtana',
+  'Koyambedu Bus Terminus (CMBT)',
+  'Besant Nagar Beach (Bessie)',
+  'Guindy National Park & IT Corridor',
+  'Kapaleeshwarar Temple, Mylapore',
+  'Vadapalani Forum Vijaya Mall',
+  'Hitech City Cyber Towers',
+  'Indiranagar 100ft Road',
+  'MG Road Metro Station',
+];
 
 const themeVars = {
   light: {
@@ -115,7 +133,68 @@ const Home = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const location = useGPSLocation();
-  const [sheetMode, setSheetMode] = useState('peek'); // 'peek' | 'expanded' | 'fullmap'
+  const [sheetMode, setSheetMode] = useState('peek');
+  const [pickupText, setPickupText] = useState('');
+  const [destinationText, setDestinationText] = useState('');
+  const [isLocating, setIsLocating] = useState(false);
+  const [matchingSuggestions, setMatchingSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  useEffect(() => {
+    if (location.address && location.address !== 'Detecting location...' && location.address !== 'Detecting GPS location...' && !pickupText) {
+      setPickupText(location.address);
+    }
+  }, [location.address, pickupText]);
+
+  const handleDetectGPS = async () => {
+    setIsLocating(true);
+    try {
+      if (location.detectHighAccuracyGPS) {
+        const res = await location.detectHighAccuracyGPS();
+        if (res && res.address) {
+          setPickupText(res.address);
+        }
+      }
+    } catch (err) {
+      console.warn("GPS detection failed:", err);
+    } finally {
+      setIsLocating(false);
+    }
+  };
+
+  const handleDestinationChange = (txt) => {
+    setDestinationText(txt);
+    if (txt.trim().length > 1) {
+      const filtered = landmarkSuggestions.filter(item => item.toLowerCase().includes(txt.toLowerCase()));
+      setMatchingSuggestions(filtered);
+      setShowSuggestions(filtered.length > 0);
+    } else {
+      setMatchingSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSelectSuggestion = (place) => {
+    setDestinationText(place);
+    setShowSuggestions(false);
+    navigate('/user/ride-comparison', {
+      state: {
+        pickup: pickupText || location.address || 'Current Location',
+        dropoff: place
+      }
+    });
+  };
+
+  const handleGoToRideComparison = () => {
+    const targetDest = destinationText.trim() || 'Tidel Park, OMR Tech Corridor';
+    setShowSuggestions(false);
+    navigate('/user/ride-comparison', {
+      state: {
+        pickup: pickupText || location.address || 'Current Location',
+        dropoff: targetDest
+      }
+    });
+  }; // 'peek' | 'expanded' | 'fullmap'
   
   // Theme state: defaults to 'light' (bright UI/UX)
   const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('app-theme') || 'light');
@@ -198,7 +277,7 @@ const Home = () => {
             <Text style={[styles.greetingText, isBright && styles.greetingTextLight]}>{getGreeting()}</Text>
           </View>
           <Text numberOfLines={1} style={[styles.userNameText, isBright && styles.userNameTextLight]}>
-            {(user?.name && user.name !== 'Google Rider' && user.name !== 'Google User') ? user.name : 'Bhumana Narasimha'}
+            {user?.name || (user?.email ? user.email.split('@')[0] : 'Rider')}
           </Text>
         </View>
         
@@ -328,7 +407,7 @@ const Home = () => {
             </Pressable>
 
             {/* AI Recommendation Card */}
-            <Pressable onPress={() => navigate('/user/ride-comparison')} style={[styles.aiCard, isBright && styles.aiCardLight]}>
+            <View style={[styles.aiCard, isBright && styles.aiCardLight]}>
               <View style={styles.aiHeader}>
                 <View style={[styles.aiBadge, isBright && styles.aiBadgeLight]}>
                   <Text style={[styles.aiBadgeText, isBright && styles.aiBadgeTextLight]}>Ask Chubby AI</Text>
@@ -345,27 +424,71 @@ const Home = () => {
                   <View style={styles.indigoDot} />
                 </View>
 
-                <View style={{ flex: 1, paddingRight: 12 }}>
-                  <View style={{ marginBottom: 10 }}>
-                    <Text style={[styles.routeLabel, isBright && styles.routeLabelLight]}>PICKUP</Text>
-                    <Text numberOfLines={1} style={[styles.routeText, isBright && styles.routeTextLight]}>{location.address}</Text>
+                <View style={{ flex: 1, paddingRight: 8 }}>
+                  <View style={{ marginBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.routeLabel, isBright && styles.routeLabelLight]}>PICKUP</Text>
+                      <TextInput
+                        value={pickupText}
+                        onChangeText={setPickupText}
+                        placeholder={location.loading ? "Detecting GPS..." : "Enter pickup location"}
+                        placeholderTextColor={isBright ? '#94A3B8' : '#64748B'}
+                        style={[styles.routeInputText, isBright && styles.routeInputTextLight]}
+                      />
+                    </View>
+                    <Pressable
+                      onPress={handleDetectGPS}
+                      style={[styles.gpsPillBtn, isBright && styles.gpsPillBtnLight, isLocating && styles.gpsPillBtnLoading]}
+                    >
+                      <LocateFixed size={12} color={isBright ? '#0284C7' : '#00D8FF'} />
+                      <Text style={[styles.gpsPillText, isBright && styles.gpsPillTextLight]}>
+                        {isLocating ? 'Locating...' : 'GPS'}
+                      </Text>
+                    </Pressable>
                   </View>
 
-                  <View>
+                  <View style={{ position: 'relative' }}>
                     <Text style={[styles.routeLabel, isBright && styles.routeLabelLight]}>DESTINATION</Text>
-                    <Text numberOfLines={1} style={[styles.routeText, isBright && styles.routeTextLight]}>
-                      {currentCity.toLowerCase() === 'bangalore' ? 'Google BLR HQ' : 
-                       currentCity.toLowerCase() === 'chennai' ? 'Marina Beach Office Hub' : 
-                       'Central Business District'}
-                    </Text>
+                    <TextInput
+                      value={destinationText}
+                      onChangeText={handleDestinationChange}
+                      onFocus={() => {
+                        if (destinationText.trim().length > 1) {
+                          const matches = landmarkSuggestions.filter(item => item.toLowerCase().includes(destinationText.toLowerCase()));
+                          setMatchingSuggestions(matches);
+                          setShowSuggestions(matches.length > 0);
+                        }
+                      }}
+                      placeholder="Where do you want to go?"
+                      placeholderTextColor={isBright ? '#94A3B8' : '#64748B'}
+                      style={[styles.routeInputText, isBright && styles.routeInputTextLight]}
+                      returnKeyType="search"
+                      onSubmitEditing={handleGoToRideComparison}
+                    />
                   </View>
                 </View>
 
-                <View style={[styles.goBtn, isBright && styles.goBtnLight]}>
-                  <ChevronRight size={20} color={isBright ? '#FFFFFF' : '#080C14'} strokeWidth={2.5} />
-                </View>
+                <Pressable onPress={handleGoToRideComparison} style={[styles.goBtn, isBright && styles.goBtnLight]}>
+                  <ChevronRight size={22} color={isBright ? '#FFFFFF' : '#080C14'} strokeWidth={2.8} />
+                </Pressable>
               </View>
-            </Pressable>
+
+              {/* Suggestions Dropdown */}
+              {showSuggestions && matchingSuggestions.length > 0 && (
+                <View style={[styles.suggestionsDropdown, isBright && styles.suggestionsDropdownLight]}>
+                  {matchingSuggestions.map((item, idx) => (
+                    <Pressable
+                      key={idx}
+                      onPress={() => handleSelectSuggestion(item)}
+                      style={[styles.suggestionItem, isBright && styles.suggestionItemLight]}
+                    >
+                      <MapPin size={13} color={isBright ? '#0284C7' : '#00D8FF'} style={{ marginRight: 8 }} />
+                      <Text style={[styles.suggestionText, isBright && styles.suggestionTextLight]}>{item}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            </View>
 
             {/* Quick Places Pills */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.quickScroll}>
@@ -443,8 +566,6 @@ const Home = () => {
           </ScrollView>
         )}
       </View>
-
-    <BottomNavigation />
     </View>
   );
 };
@@ -801,6 +922,83 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     fontWeight: '600',
     letterSpacing: 1,
+  },
+  routeInputText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#F1F5F9',
+    marginTop: 2,
+    padding: 0,
+    outlineStyle: 'none',
+    borderWidth: 0,
+  },
+  routeInputTextLight: {
+    color: '#0F172A',
+  },
+  gpsPillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 216, 255, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 216, 255, 0.3)',
+    cursor: 'pointer',
+  },
+  gpsPillBtnLight: {
+    backgroundColor: 'rgba(2, 132, 199, 0.1)',
+    borderColor: 'rgba(2, 132, 199, 0.25)',
+  },
+  gpsPillBtnLoading: {
+    opacity: 0.6,
+  },
+  gpsPillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#00D8FF',
+  },
+  gpsPillTextLight: {
+    color: '#0284C7',
+  },
+  suggestionsDropdown: {
+    marginTop: 12,
+    backgroundColor: '#0E1526',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 216, 255, 0.2)',
+    borderRadius: 14,
+    overflow: 'hidden',
+    maxHeight: 180,
+  },
+  suggestionsDropdownLight: {
+    backgroundColor: '#FFFFFF',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+    cursor: 'pointer',
+  },
+  suggestionItemLight: {
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  suggestionText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#F1F5F9',
+  },
+  suggestionTextLight: {
+    color: '#0F172A',
   },
   routeText: {
     fontSize: 14,

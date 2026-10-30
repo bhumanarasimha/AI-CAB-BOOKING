@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Navigation, Crosshair, Plus, Minus, Layers, Radio } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Crosshair, Plus, Minus, Layers } from 'lucide-react';
+
 
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyDZBmGSgFQXoeoNlGpJvu3A4S5p1Zkt3vU';
 
@@ -88,9 +89,20 @@ const InteractiveMap = ({
 
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapTheme, setMapTheme] = useState(theme); // 'dark' | 'standard' | 'satellite'
+  const [prevTheme, setPrevTheme] = useState(theme);
+  if (theme && theme !== prevTheme) {
+    setPrevTheme(theme);
+    setMapTheme(theme);
+  }
   const [selectedCab, setSelectedCab] = useState(null);
   const [activeCoords, setActiveCoords] = useState(center || userLocation || { lat: 13.0118, lng: 80.0526 });
+  const [prevCenter, setPrevCenter] = useState(center);
+  if (center && (center.lat !== prevCenter?.lat || center.lng !== prevCenter?.lng)) {
+    setPrevCenter(center);
+    setActiveCoords(center);
+  }
   const [zoomLevel, setZoomLevel] = useState(15);
+
   const [locationAccuracy, setLocationAccuracy] = useState(null);
 
   // 1. Live GPS tracking: detect present user location
@@ -136,13 +148,11 @@ const InteractiveMap = ({
 
   // Sync external center updates
   useEffect(() => {
-    if (center && (center.lat !== activeCoords.lat || center.lng !== activeCoords.lng)) {
-      setActiveCoords(center);
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.panTo(center);
-      }
+    if (center && mapInstanceRef.current) {
+      mapInstanceRef.current.panTo(center);
     }
   }, [center]);
+
 
   // 2. Initialize real Google Map
   useEffect(() => {
@@ -187,12 +197,6 @@ const InteractiveMap = ({
     };
   }, []);
 
-  // 3. Sync theme prop from parent
-  useEffect(() => {
-    if (theme) {
-      setMapTheme(theme);
-    }
-  }, [theme]);
 
   // Update map style / theme when user toggles or theme changes
   useEffect(() => {

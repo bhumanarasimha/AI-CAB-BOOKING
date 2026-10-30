@@ -112,14 +112,14 @@ export const useRideRefreshEngine = ({
           contextInputs: { weather, urgency },
         };
         localStorage.setItem('emmde_last_snapshot', JSON.stringify(snapshot));
-      } catch (_) { /* storage quota - ignore */ }
+      } catch { /* storage quota - ignore */ }
     } catch (error) {
       console.error('Error fetching ride data:', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [originLat, originLng, destination, isLiveMode, activeCategory, userPreferences, weather, urgency]);
 
   useEffect(() => {

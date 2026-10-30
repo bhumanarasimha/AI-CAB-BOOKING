@@ -6,9 +6,9 @@ const navItems = [
     path: '/user/home',
     label: 'Home',
     icon: (active) => (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill={active ? 'var(--brand-cyan, #0284C7)' : 'none'} stroke={active ? 'var(--brand-cyan, #0284C7)' : 'var(--text-muted, #64748B)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? 'var(--brand-cyan, #00D8FF)' : 'none'} stroke={active ? 'var(--brand-cyan, #00D8FF)' : 'var(--text-muted, #9CA3AF)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
-        <path d="M9 21V12h6v9" fill={active ? 'var(--brand-cyan, #0284C7)' : 'none'} stroke={active ? 'var(--brand-cyan, #0284C7)' : 'var(--text-muted, #64748B)'}/>
+        <path d="M9 21V12h6v9" fill={active ? 'var(--brand-cyan, #00D8FF)' : 'none'} stroke={active ? 'var(--brand-cyan, #00D8FF)' : 'var(--text-muted, #9CA3AF)'}/>
       </svg>
     ),
   },
@@ -16,7 +16,7 @@ const navItems = [
     path: '/user/commute',
     label: 'Commute',
     icon: (active) => (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill={active ? 'var(--brand-cyan, #0284C7)' : 'none'} stroke={active ? 'var(--brand-cyan, #0284C7)' : 'var(--text-muted, #64748B)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? 'var(--brand-cyan, #00D8FF)' : 'none'} stroke={active ? 'var(--brand-cyan, #00D8FF)' : 'var(--text-muted, #9CA3AF)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
         <circle cx="9" cy="7" r="4"/>
         <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
@@ -28,7 +28,7 @@ const navItems = [
     path: '/user/parcel',
     label: 'Parcel',
     icon: (active) => (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--brand-cyan, #0284C7)' : 'var(--text-muted, #64748B)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--brand-cyan, #00D8FF)' : 'var(--text-muted, #9CA3AF)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="2" y="7" width="20" height="14" rx="2"/>
         <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
         <line x1="12" y1="12" x2="12" y2="17"/>
@@ -40,7 +40,7 @@ const navItems = [
     path: '/user/activity',
     label: 'Activity',
     icon: (active) => (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--brand-cyan, #0284C7)' : 'var(--text-muted, #64748B)'} strokeWidth="2" strokeLinecap="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--brand-cyan, #00D8FF)' : 'var(--text-muted, #9CA3AF)'} strokeWidth="2" strokeLinecap="round">
         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
         <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
       </svg>
@@ -50,7 +50,7 @@ const navItems = [
     path: '/user/profile',
     label: 'Profile',
     icon: (active) => (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--brand-cyan, #0284C7)' : 'var(--text-muted, #64748B)'} strokeWidth="2" strokeLinecap="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--brand-cyan, #00D8FF)' : 'var(--text-muted, #9CA3AF)'} strokeWidth="2" strokeLinecap="round">
         <circle cx="12" cy="8" r="4"/>
         <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
       </svg>
@@ -93,57 +93,55 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 1000,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    paddingTop: 12,
+    width: '100%',
   },
   bar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    backgroundColor: 'var(--bg-glass, rgba(15, 22, 35, 0.92))',
-    borderColor: 'var(--border-ui, rgba(255,255,255,0.08))',
-    borderWidth: 1,
-    borderRadius: 24,
-    paddingVertical: 8,
-    paddingHorizontal: 6,
-    backdropFilter: 'blur(20px)',
-    WebkitBackdropFilter: 'blur(20px)',
+    backgroundColor: 'var(--bg-surface, #0F1623)',
+    borderTopColor: 'var(--border-ui, rgba(255, 255, 255, 0.12))',
+    borderTopWidth: 1,
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+    borderRadius: 0,
+    paddingVertical: 10,
+    paddingHorizontal: 0,
+    paddingBottom: 14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 12,
   },
   item: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 16,
+    paddingVertical: 4,
+    paddingHorizontal: 2,
     backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: 'transparent',
+    borderRadius: 12,
   },
   activeItem: {
-    backgroundColor: 'rgba(0, 180, 216, 0.1)',
-    borderColor: 'rgba(0, 180, 216, 0.2)',
+    backgroundColor: 'rgba(0, 216, 255, 0.08)',
   },
   label: {
     fontSize: 10,
     fontWeight: '600',
     color: 'var(--text-muted, #9CA3AF)',
-    marginTop: 3,
+    marginTop: 4,
   },
   activeLabel: {
     color: 'var(--brand-cyan, #00D8FF)',
-    fontWeight: '700',
+    fontWeight: '800',
   },
   indicator: {
     position: 'absolute',
-    bottom: -1,
-    width: 16,
-    height: 2,
+    top: -10,
+    width: 24,
+    height: 3,
     borderRadius: 99,
     backgroundColor: 'var(--brand-cyan, #00D8FF)',
   },

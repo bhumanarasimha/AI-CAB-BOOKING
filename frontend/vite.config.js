@@ -16,4 +16,8 @@ export default defineConfig({
       { find: /^react-native$/, replacement: path.resolve(__dirname, 'src/lib/reactNativeWebMock.js') },
     ]
   },
+  build: {
+    outDir: path.resolve(__dirname, '../app/src/main/assets'),
+    emptyOutDir: true
+  }
 })

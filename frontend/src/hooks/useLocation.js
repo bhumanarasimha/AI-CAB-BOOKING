@@ -240,5 +240,38 @@ export const useGPSLocation = () => {
     if (!currentLocation) fetchLocation();
   }, [currentLocation, fetchLocation]);
 
-  return { ...location, refresh };
+    const detectHighAccuracyGPS = useCallback(() => {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        setLocation(prev => ({ ...prev, loading: false, error: 'Geolocation not supported' }));
+        resolve(null);
+        return;
+      }
+
+      setLocation(prev => ({ ...prev, loading: true, address: 'Detecting GPS location...' }));
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          const address = await reverseGeocode(latitude, longitude);
+          const finalLoc = {
+            coords: { lat: latitude, lng: longitude },
+            address: address || 'Current Location',
+            loading: false,
+            error: null
+          };
+          setLocation(finalLoc);
+          resolve(finalLoc);
+        },
+        (error) => {
+          console.warn("High accuracy GPS error:", error);
+          setLocation(prev => ({ ...prev, loading: false }));
+          resolve(null);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
+  }, [reverseGeocode]);
+
+  return { ...location, refresh, detectHighAccuracyGPS, setLocation };
 };

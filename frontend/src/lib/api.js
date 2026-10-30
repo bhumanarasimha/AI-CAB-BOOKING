@@ -1,4 +1,24 @@
-const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || 'http://localhost:5000/api';
+const getApiBaseUrl = () => {
+  const envUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || 'http://localhost:5000/api';
+  if (typeof window !== 'undefined') {
+    // Check if running inside native Android WebView (APK / Android Studio Emulator WebView)
+    const isNativeAndroid = Boolean(window.AndroidApp) || 
+      window.location?.hostname === 'appassets.androidplatform.net' ||
+      window.location?.hostname === '10.0.2.2';
+
+    if (isNativeAndroid) {
+      return envUrl.replace('localhost', '10.0.2.2').replace('127.0.0.1', '10.0.2.2');
+    }
+
+    // When running in desktop or mobile web browsers over Wi-Fi / Local Network
+    if (window.location?.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      return `http://${window.location.hostname}:5000/api`;
+    }
+  }
+  return envUrl;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const getHeaders = () => {
   const token = localStorage.getItem('smartride_jwt');
@@ -14,7 +34,13 @@ const getHeaders = () => {
 const handleResponse = async (response) => {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    const message = errorData.msg || errorData.message || (response.status === 401 ? 'Invalid or expired session. Please sign in again.' : 'Network request failed');
+    const message = errorData.msg || errorData.message || (
+      response.status === 409 ? "Email is already registered" : (
+        response.status === 401 ? "Invalid or expired session. Please sign in again." : (
+          response.status === 400 ? "Please enter a valid email address" : "Network request failed"
+        )
+      )
+    );
     const err = new Error(message);
     err.status = response.status;
     err.data = errorData;
@@ -43,12 +69,14 @@ export const api = {
           console.warn("Backend unavailable, using local login fallback:", err);
           const fallbackToken = 'smartride_token_' + Date.now();
           localStorage.setItem('smartride_jwt', fallbackToken);
+          const userDb = (() => { try { return JSON.parse(localStorage.getItem('smartride_user_db')) || {}; } catch { return {}; } })();
+          const savedName = userDb[cleanEmail]?.name || localStorage.getItem(`smartride_user_name_${cleanEmail}`) || cleanEmail.split('@')[0];
           return {
             token: fallbackToken,
             user: {
               id: 'user_' + Date.now(),
               email: cleanEmail,
-              name: cleanEmail.split('@')[0],
+              name: savedName,
               role: 'rider'
             }
           };
@@ -172,7 +200,7 @@ export const api = {
           headers: getHeaders(),
         });
         return await handleResponse(res);
-      } catch (err) {
+      } catch {
         const cachedEmail = localStorage.getItem('smartride_user_email') || 'rider@smartride.ai';
         return {
           id: 'user_me',
@@ -189,11 +217,13 @@ export const api = {
           method: 'POST',
           headers: getHeaders(),
         });
-      } catch (e) {
+      } catch {
         // Ignore network errors on logout
       } finally {
         localStorage.removeItem('smartride_jwt');
         localStorage.removeItem('smartride_user_email');
+        localStorage.removeItem('smartride_user_name');
+        localStorage.removeItem('smartride_user_password');
       }
     },
     getActiveUsers: async () => {
@@ -348,4 +378,3 @@ export const api = {
     }
   }
 };
-

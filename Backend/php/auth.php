@@ -1,4 +1,5 @@
 <?php
+// SmartRide AI - PHP & MySQL Safe Authentication Handler
 require_once __DIR__ . '/db.php';
 
 function handleAuthRoute($action) {
@@ -7,128 +8,264 @@ function handleAuthRoute($action) {
 
     switch ($action) {
         case 'login':
-            $email = isset($input['email']) ? strtolower(trim($input['email'])) : '';
-            $password = isset($input['password']) ? $input['password'] : '';
+            // 1. Inputs clean & normalize
+            $rawEmail = isset($input['email']) ? trim($input['email']) : '';
+            $rawPassword = isset($input['password']) ? trim($input['password']) : '';
 
-            if (empty($email) || empty($password)) {
-                jsonResponse(["msg" => "Email and password are required"], 400);
+            if (empty($rawEmail) || !filter_var($rawEmail, FILTER_VALIDATE_EMAIL)) {
+                jsonResponse([
+                    "status" => "error", 
+                    "success" => false, 
+                    "msg" => "Please enter a valid email address",
+                    "message" => "Please enter a valid email address"
+                ], 400);
+            }
+
+            $email = strtolower($rawEmail);
+
+            if (empty($rawPassword)) {
+                jsonResponse([
+                    "status" => "error", 
+                    "success" => false, 
+                    "msg" => "Valid email address and password are required.",
+                    "message" => "Valid email address and password are required."
+                ], 400);
             }
 
             if ($pdo) {
                 try {
-                    $stmt = $pdo->prepare("SELECT * FROM Users WHERE email = ? LIMIT 1");
-                    $stmt->execute([$email]);
-                    $user = $stmt->fetch();
+                    // 2. Fetch user using case-insensitive email match
+                    $stmt = $pdo->prepare("SELECT id, name, email, password, phone, gender, dob, role, photoURL FROM Users WHERE LOWER(email) = LOWER(:email) LIMIT 1");
+                    $stmt->execute(['email' => $email]);
+                    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                    if ($user && password_verify($password, $user['password'])) {
+                    // 3. User verification with password_verify()
+                    if ($user && !empty($user['password']) && password_verify($rawPassword, $user['password'])) {
                         unset($user['password']);
                         jsonResponse([
+                            "status" => "success",
+                            "success" => true,
+                            "message" => "Login successful",
                             "token" => $user['id'],
+                            "id" => $user['id'],
+                            "name" => $user['name'],
+                            "email" => $user['email'],
+                            "phone" => $user['phone'] ?: '',
+                            "gender" => isset($user['gender']) ? $user['gender'] : 'Male',
+                            "dob" => isset($user['dob']) ? $user['dob'] : '1998-05-24',
+                            "role" => $user['role'] ?: 'rider',
                             "user" => $user
                         ]);
+                    } else if ($user) {
+                        jsonResponse([
+                            "status" => "error", 
+                            "success" => false, 
+                            "msg" => "Incorrect password. Please check your credentials.",
+                            "message" => "Incorrect password. Please check your credentials."
+                        ], 401);
+                    } else {
+                        jsonResponse([
+                            "status" => "error", 
+                            "success" => false, 
+                            "msg" => "Email address not registered. Please sign up.",
+                            "message" => "Email address not registered. Please sign up."
+                        ], 404);
                     }
-                } catch (Exception $e) {
+                } catch (PDOException $e) {
+                    jsonResponse([
+                        "status" => "error", 
+                        "success" => false, 
+                        "msg" => "Login service error. Please try again later.",
+                        "message" => "Login service error. Please try again later."
+                    ], 500);
                 }
+            } else {
+                jsonResponse([
+                    "status" => "error", 
+                    "success" => false, 
+                    "msg" => "Database connection unavailable.",
+                    "message" => "Database connection unavailable."
+                ], 500);
             }
-
-            // Fallback response for testing if user not found in DB
-            $token = "user_" . abs(crc32($email));
-            jsonResponse([
-                "token" => $token,
-                "user" => [
-                    "id" => $token,
-                    "email" => $email,
-                    "name" => explode('@', $email)[0],
-                    "phone" => "7995665477",
-                    "role" => "rider"
-                ]
-            ]);
             break;
 
         case 'register':
-            $email = isset($input['email']) ? strtolower(trim($input['email'])) : '';
-            $password = isset($input['password']) ? $input['password'] : '';
-            $name = isset($input['name']) ? trim($input['name']) : '';
-            $phone = isset($input['phone']) ? trim($input['phone']) : '';
+            // 1. Inputs clean & normalize
+            $rawEmail = isset($input['email']) ? trim($input['email']) : '';
+            $rawPassword = isset($input['password']) ? trim($input['password']) : '';
+            $name = isset($input['name']) ? htmlspecialchars(trim($input['name']), ENT_QUOTES, 'UTF-8') : '';
+            $phone = isset($input['phone']) ? htmlspecialchars(trim($input['phone']), ENT_QUOTES, 'UTF-8') : '';
 
-            if (empty($email) || empty($password) || empty($name)) {
-                jsonResponse(["msg" => "Name, Email and Password are required"], 400);
+            // 2. Validate email address format
+            if (empty($rawEmail) || !filter_var($rawEmail, FILTER_VALIDATE_EMAIL)) {
+                jsonResponse([
+                    "status" => "error",
+                    "success" => false,
+                    "msg" => "Please enter a valid email address",
+                    "message" => "Please enter a valid email address"
+                ], 400);
             }
 
-            $userId = "user_" . time() . "_" . rand(100, 999);
-            $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+            $email = strtolower($rawEmail);
+
+            // 3. Validate required fields
+            if (empty($name) || empty($rawPassword)) {
+                jsonResponse([
+                    "status" => "error",
+                    "success" => false,
+                    "msg" => "Valid Name, Email, and Password are required.",
+                    "message" => "Valid Name, Email, and Password are required."
+                ], 400);
+            }
+
+            if (strlen($rawPassword) < 6) {
+                jsonResponse([
+                    "status" => "error",
+                    "success" => false,
+                    "msg" => "Password must be at least 6 characters long.",
+                    "message" => "Password must be at least 6 characters long."
+                ], 400);
+            }
 
             if ($pdo) {
                 try {
-                    $stmt = $pdo->prepare("SELECT id FROM Users WHERE email = ? LIMIT 1");
-                    $stmt->execute([$email]);
+                    // 4. Duplicate Check using Prepared Statement
+                    $stmt = $pdo->prepare("SELECT id FROM Users WHERE LOWER(email) = LOWER(:email) LIMIT 1");
+                    $stmt->execute(['email' => $email]);
                     if ($stmt->fetch()) {
-                        jsonResponse(["msg" => "An account with this email already exists"], 400);
+                        jsonResponse([
+                            "status" => "error", 
+                            "success" => false, 
+                            "msg" => "Email is already registered",
+                            "message" => "Email is already registered"
+                        ], 409);
                     }
 
-                    $insertStmt = $pdo->prepare("INSERT INTO Users (id, name, email, password, phone, role, provider, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, 'rider', 'email', NOW(), NOW())");
-                    $insertStmt->execute([$userId, $name, $email, $hashedPassword, $phone]);
-                } catch (Exception $e) {
-                }
-            }
+                    // 5. Password Hashing with password_hash(..., PASSWORD_BCRYPT)
+                    $hashed_password = password_hash($rawPassword, PASSWORD_BCRYPT);
+                    $userId = "user_" . time() . "_" . rand(100, 999);
 
-            jsonResponse([
-                "token" => $userId,
-                "user" => [
-                    "id" => $userId,
-                    "email" => $email,
-                    "name" => $name,
-                    "phone" => $phone,
-                    "role" => "rider"
-                ]
-            ]);
+                    // 6. Secure Insert via PDO Prepared Statement
+                    $insertStmt = $pdo->prepare("INSERT INTO Users (id, name, email, password, phone, gender, dob, role, provider, createdAt, updatedAt) VALUES (:id, :name, :email, :password, :phone, 'Male', '1998-05-24', 'rider', 'email', NOW(), NOW())");
+                    $insertStmt->execute([
+                        'id' => $userId,
+                        'name' => $name,
+                        'email' => $email,
+                        'password' => $hashed_password,
+                        'phone' => $phone
+                    ]);
+
+                    jsonResponse([
+                        "status" => "success",
+                        "success" => true,
+                        "message" => "Registration successful",
+                        "token" => $userId,
+                        "id" => $userId,
+                        "name" => $name,
+                        "email" => $email,
+                        "phone" => $phone,
+                        "role" => "rider",
+                        "user" => [
+                            "id" => $userId,
+                            "email" => $email,
+                            "name" => $name,
+                            "phone" => $phone,
+                            "gender" => "Male",
+                            "dob" => "1998-05-24",
+                            "role" => "rider"
+                        ]
+                    ], 201);
+                } catch (PDOException $e) {
+                    if ($e->getCode() == 23000 || (isset($e->errorInfo[1]) && $e->errorInfo[1] == 1062)) {
+                        jsonResponse([
+                            "status" => "error",
+                            "success" => false,
+                            "msg" => "Email is already registered",
+                            "message" => "Email is already registered"
+                        ], 409);
+                    }
+                    jsonResponse([
+                        "status" => "error", 
+                        "success" => false, 
+                        "msg" => "Registration could not be completed. Please try again later.",
+                        "message" => "Registration could not be completed. Please try again later."
+                    ], 500);
+                }
+            } else {
+                jsonResponse([
+                    "status" => "error", 
+                    "success" => false, 
+                    "msg" => "Database connection unavailable.",
+                    "message" => "Database connection unavailable."
+                ], 500);
+            }
             break;
 
         case 'send-email-otp':
-            $email = isset($input['email']) ? trim($input['email']) : '';
+            $email = isset($input['email']) ? filter_var(trim($input['email']), FILTER_VALIDATE_EMAIL) : '';
             jsonResponse([
+                "status" => "success",
                 "success" => true,
-                "msg" => "Verification code sent to {$email}. Check your inbox."
+                "msg" => "Verification code dispatched to {$email}."
             ]);
             break;
 
         case 'verify-email-otp':
             jsonResponse([
+                "status" => "success",
                 "success" => true,
                 "msg" => "Email verified successfully."
             ]);
             break;
 
         case 'social-login':
-            $email = isset($input['email']) ? strtolower(trim($input['email'])) : '';
-            $name = isset($input['name']) ? trim($input['name']) : 'Rider';
-            $provider = isset($input['provider']) ? trim($input['provider']) : 'google';
-            $photoURL = isset($input['photoURL']) ? trim($input['photoURL']) : '';
+            $email = isset($input['email']) ? filter_var(trim($input['email']), FILTER_VALIDATE_EMAIL) : '';
+            $name = isset($input['name']) ? htmlspecialchars(trim($input['name']), ENT_QUOTES, 'UTF-8') : 'Rider';
+            $provider = isset($input['provider']) ? htmlspecialchars(trim($input['provider']), ENT_QUOTES, 'UTF-8') : 'google';
+            $photoURL = isset($input['photoURL']) ? filter_var(trim($input['photoURL']), FILTER_VALIDATE_URL) : '';
 
             $userId = "social_" . abs(crc32($email));
 
-            if ($pdo) {
+            if ($pdo && $email) {
                 try {
-                    $stmt = $pdo->prepare("SELECT * FROM Users WHERE email = ? LIMIT 1");
-                    $stmt->execute([$email]);
-                    $user = $stmt->fetch();
+                    $stmt = $pdo->prepare("SELECT * FROM Users WHERE email = :email LIMIT 1");
+                    $stmt->execute(['email' => $email]);
+                    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
                     if (!$user) {
-                        $insertStmt = $pdo->prepare("INSERT INTO Users (id, name, email, password, phone, role, provider, photoURL, createdAt, updatedAt) VALUES (?, ?, ?, '', '', 'rider', ?, ?, NOW(), NOW())");
-                        $insertStmt->execute([$userId, $name, $email, $provider, $photoURL]);
+                        $insertStmt = $pdo->prepare("INSERT INTO Users (id, name, email, password, phone, gender, dob, role, provider, photoURL, createdAt, updatedAt) VALUES (:id, :name, :email, '', '', 'Male', '1998-05-24', 'rider', :provider, :photoURL, NOW(), NOW())");
+                        $insertStmt->execute([
+                            'id' => $userId,
+                            'name' => $name,
+                            'email' => $email,
+                            'provider' => $provider,
+                            'photoURL' => $photoURL
+                        ]);
                     } else {
                         $userId = $user['id'];
+                        $name = $user['name'] ?: $name;
                     }
-                } catch (Exception $e) {
+                } catch (PDOException $e) {
                 }
             }
 
             jsonResponse([
+                "status" => "success",
+                "success" => true,
                 "token" => $userId,
+                "id" => $userId,
+                "name" => $name,
+                "email" => $email,
+                "phone" => isset($user['phone']) ? $user['phone'] : '',
+                "gender" => isset($user['gender']) ? $user['gender'] : 'Male',
+                "dob" => isset($user['dob']) ? $user['dob'] : '1998-05-24',
                 "user" => [
                     "id" => $userId,
                     "email" => $email,
                     "name" => $name,
+                    "phone" => isset($user['phone']) ? $user['phone'] : '',
+                    "gender" => isset($user['gender']) ? $user['gender'] : 'Male',
+                    "dob" => isset($user['dob']) ? $user['dob'] : '1998-05-24',
                     "role" => "rider",
                     "provider" => $provider,
                     "photoURL" => $photoURL
@@ -138,11 +275,17 @@ function handleAuthRoute($action) {
 
         case 'me':
             $user = getAuthUser($pdo);
+            if (!$user) {
+                jsonResponse(["status" => "error", "success" => false, "msg" => "Unauthorized - Invalid or expired session."], 401);
+            }
+            if (isset($user['password'])) {
+                unset($user['password']);
+            }
             jsonResponse($user);
             break;
 
         case 'logout':
-            jsonResponse(["success" => true, "msg" => "Logged out successfully"]);
+            jsonResponse(["status" => "success", "success" => true, "msg" => "Logged out successfully"]);
             break;
 
         case 'active-users':
@@ -150,7 +293,7 @@ function handleAuthRoute($action) {
             break;
 
         default:
-            jsonResponse(["msg" => "Auth endpoint not found"], 404);
+            jsonResponse(["status" => "error", "success" => false, "msg" => "Auth endpoint not found"], 404);
             break;
     }
 }

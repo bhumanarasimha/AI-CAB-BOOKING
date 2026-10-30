@@ -80,7 +80,7 @@ const PerformanceTest = () => {
     successCountRef.current = 0;
     errorCountRef.current = 0;
     requestHistoryRef.current = [];
-    // eslint-disable-next-line react-hooks/purity
+     
     startTimeRef.current = Date.now();
     
     setMetrics({

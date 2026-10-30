@@ -34,19 +34,21 @@
     -webkit-tap-highlight-color: transparent;
   }
   html, body, #root {
-    height: 100%;
-    width: 100%;
+    height: 100% !important;
+    width: 100% !important;
+    overflow-y: auto !important;
+    touch-action: pan-y !important;
+    -webkit-overflow-scrolling: touch !important;
   }
   body {
     background-color: var(--bg-base);
     color: var(--text-main);
     font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
-    overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Globally hide scrollbars for clean mobile app feel while retaining smooth scrolling */
+  /* Globally hide scrollbar visuals while keeping 100% full mouse wheel & touchpad scrolling */
   * {
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
@@ -69,7 +71,7 @@
   .no-scrollbar { -ms-overflow-style: none !important; scrollbar-width: none !important; }
 }
 
-/* Global scrollbar killer outside layer for highest specificity */
+/* Global scrollbar killer outside layer */
 *::-webkit-scrollbar {
   display: none !important;
   width: 0px !important;
@@ -174,64 +176,6 @@
     transform: translateY(-1px);
   }
 
-  /* --- Map Markers --- */
-  .selection-pin-container {
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-  }
-
-  .selection-pin {
-    width: 32px;
-    height: 32px;
-    background: #ff3b30;
-    border-radius: 50% 50% 50% 0;
-    transform: rotate(-45deg);
-    border: 3px solid white;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .selection-pin::after {
-    content: '';
-    width: 12px;
-    height: 12px;
-    background: white;
-    border-radius: 50%;
-    transform: rotate(45deg);
-  }
-
-  .live-location-dot {
-    width: 14px;
-    height: 14px;
-    background: #007aff;
-    border: 2px solid white;
-    border-radius: 50%;
-    box-shadow: 0 0 10px rgba(0,122,255,0.5);
-    position: relative;
-    z-index: 2;
-  }
-
-  .live-location-pulse {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 14px;
-    height: 14px;
-    background: rgba(0,122,255,0.4);
-    border-radius: 50%;
-    animation: map-pulse 2s infinite;
-    z-index: 1;
-  }
-
-  @keyframes map-pulse {
-    0% { width: 14px; height: 14px; opacity: 1; }
-    100% { width: 40px; height: 40px; opacity: 0; }
-  }
-
   /* Text Field */
   .field {
     background: var(--bg-surface);
@@ -251,79 +195,10 @@
   .field::placeholder {
     color: var(--text-muted);
   }
-
-  /* AI Glow Chip */
-  .ai-chip {
-    background: linear-gradient(135deg, rgba(var(--brand-cyan-rgb), 0.12) 0%, rgba(var(--brand-indigo-rgb), 0.12) 100%);
-    border: 1px solid rgba(var(--brand-cyan-rgb), 0.25);
-    border-radius: 100px;
-    color: var(--brand-cyan);
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  /* Section Label */
-  .label {
-    color: var(--text-muted);
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  /* Divider */
-  .divider {
-    border: none;
-    border-top: 1px solid var(--border-ui);
-  }
-
-  /* Skeleton shimmer */
-  .skeleton {
-    background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.03) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.8s linear infinite;
-    border-radius: 10px;
-  }
-
-  /* Bottom Nav */
-  .bottom-nav {
-    background: linear-gradient(180deg, transparent 0%, var(--bg-base) 30%);
-  }
-
-  /* Confidence ring */
-  .ring-glow {
-    animation: glowRing 2s ease-in-out infinite;
-  }
-
-  /* Multi-Company Utilities */
-  .glass-panel {
-    background: var(--bg-glass);
-    backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid var(--border-ui);
-    box-shadow: var(--shadow-main);
-  }
-
-  .glow-text {
-    text-shadow: 0 0 10px var(--brand-glow);
-  }
-
-  .chip-premium {
-    background: linear-gradient(135deg, rgba(var(--brand-cyan-rgb), 0.15) 0%, rgba(var(--brand-indigo-rgb), 0.15) 100%);
-    border: 1px solid rgba(var(--brand-cyan-rgb), 0.3);
-    color: var(--brand-cyan);
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
 }
 
 /* ─────────────────────────────────────────────
-   MOBILE CONTAINER RESPONSIVENESS
+   MOBILE & DESKTOP RESPONSIVE CONTAINER
 ───────────────────────────────────────────── */
 .mobile-outer-wrapper {
   display: flex;
@@ -336,6 +211,7 @@
   overflow: hidden;
   padding: 16px;
   box-sizing: border-box;
+  position: relative;
 }
 
 .mobile-phone-frame {
@@ -350,7 +226,192 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Desktop View Mode Switcher Pill */
+.desktop-view-switcher {
+  position: fixed;
+  top: 14px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+}
+
+.view-switcher-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(15, 22, 35, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 30px;
+  padding: 4px 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.view-switcher-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted, #9CA3AF);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-left: 8px;
+  padding-right: 4px;
+}
+
+.switcher-btn {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9CA3AF;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.switcher-btn:hover {
+  color: #F1F5F9;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.switcher-btn.active {
+  background: var(--brand-cyan, #00D8FF);
+  color: #080C14;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(0, 216, 255, 0.3);
+}
+
+/* Desktop Mode Layout Overrides */
+.desktop-mode {
+  padding: 0 !important;
+  background-color: var(--bg-base, #080C14) !important;
+  align-items: stretch !important;
+}
+
+.desktop-mode .desktop-frame {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Desktop Web Application Top Navigation Bar */
+.desktop-top-header {
+  width: 100%;
+  background: rgba(15, 22, 35, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-ui, rgba(255, 255, 255, 0.12));
+  padding: 12px 24px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.desktop-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.desktop-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.desktop-brand-title {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--text-main, #F1F5F9);
+  letter-spacing: -0.02em;
+}
+
+.desktop-brand-badge {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--brand-cyan, #00D8FF);
+  background: rgba(0, 216, 255, 0.12);
+  border: 1px solid rgba(0, 216, 255, 0.25);
+  border-radius: 99px;
+  padding: 2px 8px;
+  text-transform: uppercase;
+}
+
+.desktop-nav-scroller {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  max-width: 1300px;
+  margin: 0 auto;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  white-space: nowrap;
+}
+
+.desktop-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted, #9CA3AF);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.desktop-nav-link:hover {
+  color: var(--text-main, #F1F5F9);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.desktop-nav-link.active {
+  background: linear-gradient(135deg, var(--brand-cyan, #00D8FF), #38BDF8);
+  color: #080C14;
+  font-weight: 800;
+  box-shadow: 0 2px 10px rgba(0, 216, 255, 0.35);
+  border-color: transparent;
+}
+
+.desktop-mode .mobile-content-area {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.desktop-bottom-nav > div {
+  max-width: 640px;
+  margin: 0 auto;
+  left: 0;
+  right: 0;
+  border-radius: 20px 20px 0 0;
+  border-left: 1px solid var(--border-ui, rgba(255, 255, 255, 0.12));
+  border-right: 1px solid var(--border-ui, rgba(255, 255, 255, 0.12));
 }
 
 .mobile-content-area {
@@ -360,24 +421,23 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  position: relative;
-  touch-action: pan-y;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Touch & Mouse Wheel Scrolling Enablement across All Pages & Android WebViews */
-html, body, #root {
   overflow-y: auto !important;
+  position: relative;
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch !important;
   overscroll-behavior-y: contain;
-  -webkit-overflow-scrolling: touch;
 }
 
-div, section, main, article, scrollview, .no-scrollbar, [style*="overflowY"], [style*="overflow-y"] {
-  min-height: 0;
-  touch-action: pan-y;
-  overscroll-behavior-y: contain;
-  -webkit-overflow-scrolling: touch;
+/* Ensure any page wrapper placed inside .mobile-content-area can expand and scroll vertically */
+.mobile-content-area > * {
+  min-height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+div, section, main, article, scrollview, .no-scrollbar {
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch !important;
 }
 
 /* Mobile & Android WebView full viewport override */
@@ -392,5 +452,8 @@ div, section, main, article, scrollview, .no-scrollbar, [style*="overflowY"], [s
     border-radius: 0 !important;
     border: none !important;
     box-shadow: none !important;
+  }
+  .desktop-view-switcher {
+    display: none !important;
   }
 }

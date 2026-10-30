@@ -21,9 +21,20 @@ $parts = array_values(array_filter(explode('/', $path)));
 
 // --- Route Matching ---
 
-// Auth Routes (/auth/*)
-if (isset($parts[0]) && $parts[0] === 'auth') {
-    $action = isset($parts[1]) ? $parts[1] : '';
+// Direct file routing support (e.g. /login.php, /register.php, /rides.php, /parcels.php)
+$filename = isset($parts[0]) ? basename($parts[0]) : '';
+if ($filename && file_exists(__DIR__ . '/' . $filename) && $filename !== 'index.php') {
+    require __DIR__ . '/' . $filename;
+    exit();
+}
+
+// Auth Routes (/auth/*, /login, /register)
+if (isset($parts[0]) && ($parts[0] === 'auth' || $parts[0] === 'login' || $parts[0] === 'register')) {
+    $action = ($parts[0] === 'login') 
+        ? 'login' 
+        : (($parts[0] === 'register') 
+            ? 'register' 
+            : (isset($parts[1]) ? $parts[1] : ''));
     handleAuthRoute($action);
 }
 

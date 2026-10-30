@@ -1,24 +1,41 @@
-# Build & IDE files
-.gradle/
-.idea/
-build/
-app/build/
-local.properties
 *.iml
-
-# Node modules & build outputs
-node_modules/
-Backend/node_modules/
-frontend/node_modules/
-frontend/dist/
-Web_frontend/node_modules/
-Web_frontend/dist/
-
-# Environment files
-.env
-Backend/.env
-frontend/.env
-
-# OS files
+.gradle
+/local.properties
+.idea/
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
 .DS_Store
-Thumbs.db
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.*
+
+# Build output
+dist/
+dist-ssr/
+
+# Logs & Excel Test Reports
+*.log
+*.xlsx
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Expo, Scratch, and Hidden Testing Folders
+.expo/
+scratch/
+testing/
+tests/

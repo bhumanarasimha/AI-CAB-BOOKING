@@ -7,7 +7,7 @@ import { useAuth } from '../../lib/AuthContext';
 const Welcome = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const userName = user?.displayName || 'Rider';
+  const userName = user?.name || user?.displayName || (user?.email ? user.email.split('@')[0] : 'Rider');
   const accent = '#00D8FF';
 
   useEffect(() => {

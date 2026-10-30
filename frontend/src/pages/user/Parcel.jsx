@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, MapPin, Package, Weight, Ruler, Clock, ArrowLeft, Camera, User, Phone, CheckCircle2, HelpCircle, XCircle, CreditCard, Sparkles, Navigation, Loader2 } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
 
-const createParcelOrder = (userId, orderData) => Promise.resolve('parcel_' + Date.now());
+const createParcelOrder = (_userId, _orderData) => Promise.resolve('parcel_' + Date.now());
 import InteractiveMap from '../../components/ui/InteractiveMap';
 import { useGPSLocation } from '../../hooks/useLocation';
 import VehicleLoader from '../../components/ui/VehicleLoader';
@@ -32,7 +32,7 @@ const AddressAutocomplete = ({ value, onChange, placeholder, icon: Icon }) => {
 
   return (
     <div style={{ position: 'relative', width: '100%' }}>
-      <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+      <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }}>
         <Icon size={17} color="var(--text-muted)" />
       </div>
       <input 
@@ -42,7 +42,7 @@ const AddressAutocomplete = ({ value, onChange, placeholder, icon: Icon }) => {
         onChange={e => onChange(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setTimeout(() => setFocused(false), 200)}
-        style={{ width: '100%', padding: '13px 14px 13px 42px', fontSize: '0.88rem' }}
+        style={{ width: '100%', padding: '13px 14px 13px 42px', fontSize: '0.88rem', height: '48px', minHeight: '48px', boxSizing: 'border-box' }}
       />
       {focused && suggestions.length > 0 && (
         <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px', background: 'var(--bg-elevated)', border: '1px solid var(--border-ui)', borderRadius: '12px', zIndex: 10, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
@@ -196,10 +196,6 @@ const Parcel = () => {
       {/* Main Content Sheet (Steps 1-3) */}
       {step < 4 && (
         <motion.div 
-          drag="y"
-          dragConstraints={{ top: 0, bottom: 450 }}
-          dragElastic={0.05}
-          dragTransition={{ bounceStiffness: 400, bounceDamping: 30 }}
           initial={{ y: 0 }}
           style={{
             position: 'relative',
@@ -211,8 +207,9 @@ const Parcel = () => {
             backdropFilter: 'blur(24px)',
             display: 'flex', 
             flexDirection: 'column',
-            height: 'calc(100% - 140px)',
-            touchAction: 'none'
+            flex: 1,
+            minHeight: 0,
+            touchAction: 'pan-y'
           }}
         >
           {/* Draggable Handle */}
@@ -231,24 +228,24 @@ const Parcel = () => {
             </div>
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }} className="no-scrollbar">
+          <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }} className="no-scrollbar">
             <AnimatePresence mode="wait">
               {step === 1 && (
-                <motion.div key="step1" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.2 }} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <motion.div key="step1" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.2 }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <p style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', paddingLeft: '4px' }}>Locations</p>
                     <AddressAutocomplete placeholder="Pickup location" value={pickup} onChange={setPickup} icon={MapPin} />
                     <AddressAutocomplete placeholder="Drop-off location" value={dropoff} onChange={setDropoff} icon={MapPin} />
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '4px' }}>
                     <p style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', paddingLeft: '4px' }}>Receiver Details</p>
                     <div style={{ position: 'relative' }}>
-                      <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><User size={17} color="var(--text-muted)" /></div>
-                      <input type="text" value={receiverName} onChange={e => setReceiverName(e.target.value)} placeholder="Receiver's Name" className="field" style={{ padding: '13px 14px 13px 42px', fontSize: '0.88rem', width: '100%' }} />
+                      <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }}><User size={17} color="var(--text-muted)" /></div>
+                      <input type="text" value={receiverName} onChange={e => setReceiverName(e.target.value)} placeholder="Receiver's Name" className="field" style={{ padding: '13px 14px 13px 42px', fontSize: '0.88rem', width: '100%', height: '48px', minHeight: '48px', boxSizing: 'border-box' }} />
                     </div>
                     <div style={{ position: 'relative' }}>
-                      <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><Phone size={17} color="var(--text-muted)" /></div>
-                      <input type="tel" value={receiverPhone} onChange={e => { const val = e.target.value.replace(/\D/g, ''); if (val.length <= 10) setReceiverPhone(val); }} placeholder="Receiver's Phone Number (10 digits)" className="field" style={{ padding: '13px 14px 13px 42px', fontSize: '0.88rem', width: '100%' }} />
+                      <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }}><Phone size={17} color="var(--text-muted)" /></div>
+                      <input type="tel" value={receiverPhone} onChange={e => { const val = e.target.value.replace(/\D/g, ''); if (val.length <= 10) setReceiverPhone(val); }} placeholder="Receiver's Phone Number (10 digits)" className="field" style={{ padding: '13px 14px 13px 42px', fontSize: '0.88rem', width: '100%', height: '48px', minHeight: '48px', boxSizing: 'border-box' }} />
                     </div>
                   </div>
                 </motion.div>
@@ -352,9 +349,9 @@ const Parcel = () => {
             </AnimatePresence>
           </div>
 
-          <div style={{ padding: '12px 16px', background: 'var(--bg-surface)', borderTop: '1px solid var(--border-ui)' }}>
+          <div style={{ padding: '12px 16px 85px', background: 'var(--bg-surface)', borderTop: '1px solid var(--border-ui)', zIndex: 40 }}>
             {step === 1 && (
-              <button className={canProceedStep1 ? "btn-primary w-full" : "w-full"} onClick={() => canProceedStep1 && setStep(2)} style={{ height: '52px', fontSize: '0.97rem', gap: '8px', background: canProceedStep1 ? 'var(--brand-indigo)' : 'var(--bg-card)', color: canProceedStep1 ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, transition: 'all 0.2s' }}>
+              <button className={canProceedStep1 ? "btn-primary w-full" : "w-full"} onClick={() => canProceedStep1 && setStep(2)} style={{ height: '52px', fontSize: '0.97rem', gap: '8px', background: canProceedStep1 ? 'var(--brand-indigo)' : 'var(--bg-elevated)', color: canProceedStep1 ? 'white' : 'var(--text-muted)', border: canProceedStep1 ? 'none' : '1px solid var(--border-ui)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, transition: 'all 0.2s', boxShadow: canProceedStep1 ? '0 6px 20px rgba(99,102,241,0.3)' : 'none' }}>
                 {canProceedStep1 ? "Continue to Parcel Type" : "Enter details to proceed"} <ChevronRight size={18} opacity={canProceedStep1 ? 1 : 0.5} />
               </button>
             )}
@@ -367,7 +364,7 @@ const Parcel = () => {
             {step === 3 && (
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button onClick={() => setStep(2)} style={{ width: '52px', height: '52px', borderRadius: '14px', background: 'var(--bg-card)', border: '1px solid var(--border-ui)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-main)' }}><ArrowLeft size={20} /></button>
-                <button onClick={() => canProceedStep3 && handleSchedule()} style={{ flex: 1, height: '52px', fontSize: '0.97rem', gap: '8px', background: canProceedStep3 ? 'var(--brand-cyan)' : 'var(--bg-card)', color: canProceedStep3 ? 'var(--bg-base)' : 'var(--text-muted)', border: 'none', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, transition: 'all 0.2s' }}>
+                <button onClick={() => canProceedStep3 && handleSchedule()} style={{ flex: 1, height: '52px', fontSize: '0.97rem', gap: '8px', background: canProceedStep3 ? 'var(--brand-cyan)' : 'var(--bg-elevated)', color: canProceedStep3 ? 'var(--bg-base)' : 'var(--text-muted)', border: canProceedStep3 ? 'none' : '1px solid var(--border-ui)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, transition: 'all 0.2s' }}>
                   {canProceedStep3 ? "Schedule Pickup" : "Missing Details"} <ChevronRight size={18} opacity={canProceedStep3 ? 1 : 0.5} />
                 </button>
               </div>

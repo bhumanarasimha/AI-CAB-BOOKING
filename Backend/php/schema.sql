@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS Users (
     role VARCHAR(20) DEFAULT 'rider',
     provider VARCHAR(20) DEFAULT 'email',
     photoURL VARCHAR(255) DEFAULT '',
+    gender VARCHAR(20) DEFAULT 'Male',
+    dob VARCHAR(30) DEFAULT '1998-05-24',
     preferences JSON DEFAULT NULL,
     savedPlaces JSON DEFAULT NULL,
     emergencyContacts JSON DEFAULT NULL,
