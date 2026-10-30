@@ -188,34 +188,34 @@ const CommuteDashboard = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-base, #080C14)', paddingBottom: '120px', position: 'relative' }}>
+    <div style={{ minHeight: '100vh', width: '100%', maxWidth: '100%', overflowX: 'hidden', background: 'var(--bg-base, #080C14)', paddingBottom: '120px', position: 'relative', boxSizing: 'border-box' }}>
 
       {/* Top Header */}
-      <div style={{ padding: '48px 20px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+      <div style={{ padding: '44px 16px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10, gap: '10px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
           <button 
             onClick={() => navigate(-1)}
-            style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'var(--bg-surface, #0F1623)', border: '1px solid var(--border-ui, rgba(255,255,255,0.1))', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+            style={{ width: '40px', height: '40px', borderRadius: '14px', background: 'var(--bg-surface, #0F1623)', border: '1px solid var(--border-ui, rgba(255,255,255,0.1))', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
             aria-label="Go Back"
           >
             <ArrowLeft size={18} color="var(--text-main, #F1F5F9)" />
           </button>
 
-          <div>
+          <div style={{ minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
               <Sparkles size={12} color="var(--brand-cyan, #00D8FF)" />
-              <span style={{ fontSize: '0.7rem', color: 'var(--brand-cyan, #00D8FF)', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: '0.68rem', color: 'var(--brand-cyan, #00D8FF)', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                 AI Smart Commute Hub
               </span>
             </div>
-            <h1 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--text-main, #F1F5F9)', letterSpacing: '-0.02em', lineHeight: '1.2' }}>
+            <h1 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-main, #F1F5F9)', letterSpacing: '-0.02em', lineHeight: '1.2', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               Daily Carpool & <span style={{ color: 'var(--brand-cyan, #00D8FF)' }}>Rideshare</span>
             </h1>
           </div>
         </div>
 
         {/* Role Toggle Pill */}
-        <div style={{ background: 'var(--bg-surface, #0F1623)', border: '1px solid var(--border-ui, rgba(255,255,255,0.12))', borderRadius: '16px', padding: '4px', display: 'flex', gap: '4px' }}>
+        <div style={{ background: 'var(--bg-surface, #0F1623)', border: '1px solid var(--border-ui, rgba(255,255,255,0.12))', borderRadius: '16px', padding: '3px', display: 'flex', gap: '4px', flexShrink: 0 }}>
           <button
             onClick={() => { setRole('rider'); saveCommuteState({ role: 'rider' }); }}
             style={{
@@ -242,7 +242,7 @@ const CommuteDashboard = () => {
       </div>
 
       {/* AI Savings & Eco Impact Metric Banner */}
-      <div style={{ padding: '0 20px', marginBottom: '20px' }}>
+      <div style={{ padding: '0 16px', marginBottom: '18px' }}>
         <motion.div
           initial={{ scale: 0.96, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -310,8 +310,8 @@ const CommuteDashboard = () => {
       </div>
 
       {/* Main Route & Schedule Setup Card */}
-      <div style={{ padding: '0 20px', marginBottom: '24px' }}>
-        <div style={{ background: 'var(--bg-surface, #0F1623)', borderRadius: '24px', padding: '20px', border: '1px solid var(--border-ui, rgba(255,255,255,0.08))', boxShadow: '0 12px 35px rgba(0,0,0,0.25)' }}>
+      <div style={{ padding: '0 16px', marginBottom: '24px' }}>
+        <div style={{ background: 'var(--bg-surface, #0F1623)', borderRadius: '24px', padding: '18px 16px', border: '1px solid var(--border-ui, rgba(255,255,255,0.08))', boxShadow: '0 12px 35px rgba(0,0,0,0.25)', overflow: 'hidden', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
             {/* Route Inputs with Swap & GPS Detect */}
@@ -460,12 +460,23 @@ const CommuteDashboard = () => {
               </div>
             </div>
 
-            {/* Shift & Schedule Row */}
-            <div style={{ background: 'var(--bg-elevated, rgba(255,255,255,0.03))', borderRadius: '16px', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px', border: '1px solid var(--border-ui, rgba(255,255,255,0.08))' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-                <Clock size={15} color="var(--brand-cyan, #00D8FF)" />
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '0.6rem', color: 'var(--text-muted, #9CA3AF)', textTransform: 'uppercase', fontWeight: 700 }}>Morning Out</span>
+            {/* Shift & Schedule - Responsive 2-Row Layout */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {/* Departure & Return Timings - 2 Equal Columns */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                {/* Morning Out */}
+                <div style={{
+                  background: 'var(--bg-elevated, rgba(255,255,255,0.03))',
+                  borderRadius: '16px', padding: '10px 12px',
+                  border: '1px solid var(--border-ui, rgba(255,255,255,0.08))',
+                  display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Clock size={13} color="var(--brand-cyan, #00D8FF)" />
+                    <span style={{ fontSize: '0.62rem', color: 'var(--text-muted, #9CA3AF)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.04em' }}>
+                      Morning Out
+                    </span>
+                  </div>
                   <input
                     type="time"
                     value={departureTime}
@@ -475,19 +486,25 @@ const CommuteDashboard = () => {
                     }}
                     style={{
                       background: 'transparent', border: 'none', color: 'var(--text-main, #F1F5F9)',
-                      fontSize: '0.85rem', fontWeight: 800, width: '100%', outline: 'none',
-                      colorScheme: 'dark', cursor: 'pointer'
+                      fontSize: '0.92rem', fontWeight: 800, width: '100%', outline: 'none',
+                      colorScheme: 'dark', cursor: 'pointer', padding: 0
                     }}
                   />
                 </div>
-              </div>
 
-              <div style={{ width: '1px', height: '26px', background: 'var(--border-ui, rgba(255,255,255,0.1))' }} />
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-                <Clock size={15} color="var(--brand-indigo, #6366F1)" />
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '0.6rem', color: 'var(--text-muted, #9CA3AF)', textTransform: 'uppercase', fontWeight: 700 }}>Evening Return</span>
+                {/* Evening Return */}
+                <div style={{
+                  background: 'var(--bg-elevated, rgba(255,255,255,0.03))',
+                  borderRadius: '16px', padding: '10px 12px',
+                  border: '1px solid var(--border-ui, rgba(255,255,255,0.08))',
+                  display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Clock size={13} color="var(--brand-indigo, #6366F1)" />
+                    <span style={{ fontSize: '0.62rem', color: 'var(--text-muted, #9CA3AF)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.04em' }}>
+                      Evening Return
+                    </span>
+                  </div>
                   <input
                     type="time"
                     value={returnTime}
@@ -497,38 +514,57 @@ const CommuteDashboard = () => {
                     }}
                     style={{
                       background: 'transparent', border: 'none', color: 'var(--text-main, #F1F5F9)',
-                      fontSize: '0.85rem', fontWeight: 800, width: '100%', outline: 'none',
-                      colorScheme: 'dark', cursor: 'pointer'
+                      fontSize: '0.92rem', fontWeight: 800, width: '100%', outline: 'none',
+                      colorScheme: 'dark', cursor: 'pointer', padding: 0
                     }}
                   />
                 </div>
               </div>
 
-              <div style={{ width: '1px', height: '26px', background: 'var(--border-ui, rgba(255,255,255,0.1))' }} />
+              {/* Schedule Recurrence Selector - Full Width */}
+              <div style={{
+                background: 'var(--bg-elevated, rgba(255,255,255,0.03))',
+                borderRadius: '16px', padding: '10px 12px',
+                border: '1px solid var(--border-ui, rgba(255,255,255,0.08))',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                  <span style={{ fontSize: '0.85rem' }}>📅</span>
+                  <span style={{ fontSize: '0.62rem', color: 'var(--text-muted, #9CA3AF)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.04em' }}>
+                    Schedule
+                  </span>
+                </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '0.6rem', color: 'var(--text-muted, #9CA3AF)', textTransform: 'uppercase', fontWeight: 700 }}>Schedule</span>
-                <select
-                  value={recurrence}
-                  onChange={(e) => {
-                    setRecurrence(e.target.value);
-                    saveCommuteState({ recurrence: e.target.value });
-                  }}
-                  style={{
-                    background: 'transparent', border: 'none', color: 'var(--brand-cyan, #00D8FF)',
-                    fontSize: '0.8rem', fontWeight: 800, outline: 'none', cursor: 'pointer',
-                    colorScheme: 'dark'
-                  }}
-                >
-                  <option value="mon-fri" style={{ background: '#0F1623' }}>Mon–Fri (Workdays)</option>
-                  <option value="today" style={{ background: '#0F1623' }}>Today Only</option>
-                  <option value="flexible" style={{ background: '#0F1623' }}>Hybrid 3 Days</option>
-                </select>
+                <div style={{ display: 'flex', gap: '6px', flex: 1, justifyContent: 'flex-end' }}>
+                  {[
+                    { id: 'mon-fri', label: 'Mon–Fri' },
+                    { id: 'today', label: 'Today Only' },
+                    { id: 'flexible', label: 'Hybrid' }
+                  ].map(s => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => {
+                        setRecurrence(s.id);
+                        saveCommuteState({ recurrence: s.id });
+                      }}
+                      style={{
+                        padding: '5px 10px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: 800,
+                        border: recurrence === s.id ? '1px solid var(--brand-cyan, #00D8FF)' : '1px solid rgba(255,255,255,0.06)',
+                        background: recurrence === s.id ? 'rgba(0, 216, 255, 0.15)' : 'rgba(255,255,255,0.03)',
+                        color: recurrence === s.id ? 'var(--brand-cyan, #00D8FF)' : 'var(--text-muted, #9CA3AF)',
+                        cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Commute Preference Filters */}
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {/* Commute Preference Filters - 2x2 Symmetrical Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               <button
                 type="button"
                 onClick={() => {
@@ -537,14 +573,17 @@ const CommuteDashboard = () => {
                   saveCommuteState({ preferences: updated });
                 }}
                 style={{
-                  padding: '6px 10px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer',
-                  background: preferences.acOnly ? 'rgba(0,216,255,0.15)' : 'rgba(255,255,255,0.03)',
+                  padding: '9px 10px', borderRadius: '12px', fontSize: '0.74rem', fontWeight: 800, cursor: 'pointer',
+                  background: preferences.acOnly ? 'rgba(0,216,255,0.14)' : 'rgba(255,255,255,0.03)',
                   border: `1px solid ${preferences.acOnly ? 'var(--brand-cyan, #00D8FF)' : 'rgba(255,255,255,0.08)'}`,
-                  color: preferences.acOnly ? 'var(--brand-cyan, #00D8FF)' : 'var(--text-muted, #9CA3AF)'
+                  color: preferences.acOnly ? 'var(--brand-cyan, #00D8FF)' : 'var(--text-muted, #9CA3AF)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                  transition: 'all 0.2s', minWidth: 0
                 }}
               >
-                ❄️ AC Only
+                <span>❄️</span> <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>AC Only</span>
               </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -553,14 +592,17 @@ const CommuteDashboard = () => {
                   saveCommuteState({ preferences: updated });
                 }}
                 style={{
-                  padding: '6px 10px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer',
-                  background: preferences.womenOnly ? 'rgba(236,72,153,0.18)' : 'rgba(255,255,255,0.03)',
+                  padding: '9px 10px', borderRadius: '12px', fontSize: '0.74rem', fontWeight: 800, cursor: 'pointer',
+                  background: preferences.womenOnly ? 'rgba(236,72,153,0.16)' : 'rgba(255,255,255,0.03)',
                   border: `1px solid ${preferences.womenOnly ? '#EC4899' : 'rgba(255,255,255,0.08)'}`,
-                  color: preferences.womenOnly ? '#F472B6' : 'var(--text-muted, #9CA3AF)'
+                  color: preferences.womenOnly ? '#F472B6' : 'var(--text-muted, #9CA3AF)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                  transition: 'all 0.2s', minWidth: 0
                 }}
               >
-                👩 Women-Only Pool
+                <span>👩</span> <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Women Only</span>
               </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -569,14 +611,17 @@ const CommuteDashboard = () => {
                   saveCommuteState({ preferences: updated });
                 }}
                 style={{
-                  padding: '6px 10px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer',
-                  background: preferences.evEco ? 'rgba(16,185,129,0.18)' : 'rgba(255,255,255,0.03)',
+                  padding: '9px 10px', borderRadius: '12px', fontSize: '0.74rem', fontWeight: 800, cursor: 'pointer',
+                  background: preferences.evEco ? 'rgba(16,185,129,0.16)' : 'rgba(255,255,255,0.03)',
                   border: `1px solid ${preferences.evEco ? '#10B981' : 'rgba(255,255,255,0.08)'}`,
-                  color: preferences.evEco ? '#34D399' : 'var(--text-muted, #9CA3AF)'
+                  color: preferences.evEco ? '#34D399' : 'var(--text-muted, #9CA3AF)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                  transition: 'all 0.2s', minWidth: 0
                 }}
               >
-                ⚡ EV / Eco
+                <span>⚡</span> <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>EV / Eco</span>
               </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -585,13 +630,15 @@ const CommuteDashboard = () => {
                   saveCommuteState({ preferences: updated });
                 }}
                 style={{
-                  padding: '6px 10px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer',
-                  background: preferences.quietRide ? 'rgba(99,102,241,0.18)' : 'rgba(255,255,255,0.03)',
+                  padding: '9px 10px', borderRadius: '12px', fontSize: '0.74rem', fontWeight: 800, cursor: 'pointer',
+                  background: preferences.quietRide ? 'rgba(99,102,241,0.16)' : 'rgba(255,255,255,0.03)',
                   border: `1px solid ${preferences.quietRide ? '#6366F1' : 'rgba(255,255,255,0.08)'}`,
-                  color: preferences.quietRide ? '#A5B4FC' : 'var(--text-muted, #9CA3AF)'
+                  color: preferences.quietRide ? '#A5B4FC' : 'var(--text-muted, #9CA3AF)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                  transition: 'all 0.2s', minWidth: 0
                 }}
               >
-                <VolumeX size={11} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} /> Quiet Ride
+                <VolumeX size={13} /> <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Quiet Ride</span>
               </button>
             </div>
 
@@ -618,7 +665,7 @@ const CommuteDashboard = () => {
       </div>
 
       {/* Active Matched Route Partners Section */}
-      <div style={{ padding: '0 20px' }}>
+      <div style={{ padding: '0 16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Users size={18} color="var(--brand-cyan, #00D8FF)" />
@@ -643,7 +690,7 @@ const CommuteDashboard = () => {
               style={{
                 background: 'var(--bg-surface, #0F1623)',
                 borderRadius: '22px',
-                padding: '18px',
+                padding: '16px',
                 border: '1px solid var(--border-ui, rgba(255,255,255,0.08))',
                 boxShadow: '0 8px 24px rgba(0,0,0,0.2)'
               }}
@@ -687,7 +734,7 @@ const CommuteDashboard = () => {
               </div>
 
               {/* Ride Route & Timing Details */}
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', background: 'var(--bg-elevated, rgba(255,255,255,0.03))', padding: '10px 14px', borderRadius: '14px', border: '1px solid var(--border-ui, rgba(255,255,255,0.06))', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', background: 'var(--bg-elevated, rgba(255,255,255,0.03))', padding: '10px 12px', borderRadius: '14px', border: '1px solid var(--border-ui, rgba(255,255,255,0.06))', marginBottom: '12px' }}>
                 <Clock size={14} color="var(--brand-cyan, #00D8FF)" />
                 <div style={{ display: 'flex', flex: 1, justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -717,21 +764,21 @@ const CommuteDashboard = () => {
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button 
                   onClick={() => navigate('/user/commute/chat')}
-                  style={{ flex: 1, height: '40px', background: 'var(--bg-elevated, rgba(255,255,255,0.04))', border: '1px solid var(--border-ui, rgba(255,255,255,0.1))', borderRadius: '12px', color: 'var(--text-main, #F1F5F9)', fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: 'pointer' }}
+                  style={{ flex: 1, minWidth: 0, height: '40px', background: 'var(--bg-elevated, rgba(255,255,255,0.04))', border: '1px solid var(--border-ui, rgba(255,255,255,0.1))', borderRadius: '12px', color: 'var(--text-main, #F1F5F9)', fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', cursor: 'pointer', padding: '0 4px' }}
                 >
-                  <MessageSquare size={14} color="var(--brand-cyan, #00D8FF)" /> Chat
+                  <MessageSquare size={13} color="var(--brand-cyan, #00D8FF)" /> Chat
                 </button>
                 <button 
                   onClick={() => navigate('/user/commute/compatibility')}
-                  style={{ flex: 1, height: '40px', background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '12px', color: '#A5B4FC', fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: 'pointer' }}
+                  style={{ flex: 1, minWidth: 0, height: '40px', background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '12px', color: '#A5B4FC', fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', cursor: 'pointer', padding: '0 4px' }}
                 >
-                  <Navigation size={14} color="#A5B4FC" /> Route Fit
+                  <Navigation size={13} color="#A5B4FC" /> Route Fit
                 </button>
                 <button 
                   onClick={() => handleRequestPool(match)}
-                  style={{ flex: 1.2, height: '40px', background: 'linear-gradient(135deg, #00D8FF, #0284C7)', border: 'none', borderRadius: '12px', color: '#080C14', fontSize: '0.82rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,216,255,0.3)' }}
+                  style={{ flex: 1.2, minWidth: 0, height: '40px', background: 'linear-gradient(135deg, #00D8FF, #0284C7)', border: 'none', borderRadius: '12px', color: '#080C14', fontSize: '0.8rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,216,255,0.3)', padding: '0 6px' }}
                 >
-                  <Car size={14} /> Pool Ride
+                  <Car size={13} /> Pool Ride
                 </button>
               </div>
             </motion.div>
