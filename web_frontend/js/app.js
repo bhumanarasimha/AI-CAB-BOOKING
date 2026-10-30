@@ -194,6 +194,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   startAutoRefreshTimer();
   loadMyRides();
   loadParcels();
+  initCommuteSection();
   detectCurrentLocation(true);
 
   // Monitor backend connection status
@@ -863,6 +864,364 @@ async function loadParcels() {
 }
 
 // --- Smart Commute & Carpool ---
+export const COMMUTE_MATCHES = [
+  {
+    id: 1,
+    name: 'Sarah Chen',
+    company: 'Principal Engineer @ TechCorp HQ • Google Cloud',
+    city: 'Chennai',
+    route: 'Adyar → OMR Tech Gateway',
+    overlap: '96%',
+    startTime: '08:30 AM',
+    reachTime: '09:15 AM',
+    timeGap: '45m',
+    distance: '0.4 km',
+    savings: '₹240/ride',
+    compatibility: 98,
+    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80',
+    verified: true,
+    rating: 4.9,
+    role: 'driver',
+    car: 'Tata Nexon EV (White)',
+    seatsLeft: 2,
+    preferences: ['ac', 'women', 'quiet']
+  },
+  {
+    id: 2,
+    name: 'David Miller',
+    company: 'Product Lead @ Innovation Park • Microsoft',
+    city: 'Chennai',
+    route: 'Velachery → Siruseri SIPCOT',
+    overlap: '91%',
+    startTime: '09:00 AM',
+    reachTime: '09:40 AM',
+    timeGap: '40m',
+    distance: '0.8 km',
+    savings: '₹180/ride',
+    compatibility: 92,
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80',
+    verified: true,
+    rating: 4.7,
+    role: 'rider',
+    car: 'Passenger',
+    seatsLeft: 1,
+    preferences: ['ac', 'music']
+  },
+  {
+    id: 3,
+    name: 'Anita Raj',
+    company: 'Systems Architect @ Amazon Development Centre',
+    city: 'Bangalore',
+    route: 'Indiranagar → Manyata Tech Park',
+    overlap: '94%',
+    startTime: '08:45 AM',
+    reachTime: '09:35 AM',
+    timeGap: '50m',
+    distance: '0.5 km',
+    savings: '₹220/ride',
+    compatibility: 95,
+    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80',
+    verified: true,
+    rating: 4.8,
+    role: 'driver',
+    car: 'Hyundai Creta (Silver)',
+    seatsLeft: 3,
+    preferences: ['ac', 'women', 'quiet']
+  },
+  {
+    id: 4,
+    name: 'Rohan Sharma',
+    company: 'Lead Architect @ Infosys Campus Phase 1',
+    city: 'Bangalore',
+    route: 'HSR Layout Sector 2 → Electronic City',
+    overlap: '98%',
+    startTime: '08:15 AM',
+    reachTime: '08:55 AM',
+    timeGap: '40m',
+    distance: '0.3 km',
+    savings: '₹260/ride',
+    compatibility: 99,
+    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80',
+    verified: true,
+    rating: 4.95,
+    role: 'driver',
+    car: 'Mahindra XUV400 EV (Blue)',
+    seatsLeft: 2,
+    preferences: ['ev', 'ac', 'quiet']
+  },
+  {
+    id: 5,
+    name: 'Pooja Hegde',
+    company: 'Analyst @ Goldman Sachs • Embassy GolfLinks',
+    city: 'Bangalore',
+    route: 'Koramangala 4th Block → Domlur / EGL',
+    overlap: '92%',
+    startTime: '09:15 AM',
+    reachTime: '09:45 AM',
+    timeGap: '30m',
+    distance: '0.4 km',
+    savings: '₹190/ride',
+    compatibility: 94,
+    image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80',
+    verified: true,
+    rating: 4.85,
+    role: 'rider',
+    car: 'Passenger',
+    seatsLeft: 1,
+    preferences: ['women', 'ac', 'quiet']
+  },
+  {
+    id: 6,
+    name: 'Vikram Malhotra',
+    company: 'Director of Engineering @ Cisco Systems',
+    city: 'Bangalore',
+    route: 'Marathahalli → Bellandur Outer Ring Rd',
+    overlap: '95%',
+    startTime: '08:30 AM',
+    reachTime: '09:10 AM',
+    timeGap: '40m',
+    distance: '0.6 km',
+    savings: '₹230/ride',
+    compatibility: 96,
+    image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80',
+    verified: true,
+    rating: 4.9,
+    role: 'driver',
+    car: 'Honda City (Pearl White)',
+    seatsLeft: 2,
+    preferences: ['ac', 'music']
+  }
+];
+
+export function renderCommuteMatches(list = COMMUTE_MATCHES) {
+  const container = document.getElementById('commute-matches-container');
+  const countBadge = document.getElementById('commute-match-count');
+  if (!container) return;
+
+  if (countBadge) countBadge.textContent = `${list.length} Matches Found`;
+
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 32px 16px; color: var(--text-muted);">
+        <div style="font-size: 32px; margin-bottom: 8px;">🔍</div>
+        <p style="font-weight: 700; font-size: 14px;">No exact carpool matches for current filters.</p>
+        <p style="font-size: 12px; margin-top: 4px;">Try loosening preferences or switching between Rider and Driver roles.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = list.map(m => `
+    <div class="match-card">
+      <div class="match-user">
+        <img src="${m.image}" alt="${m.name}" class="match-avatar" />
+        <div class="match-info">
+          <h4>${m.name} <span style="font-size: 11px; color: var(--success); font-weight: 700;">✔ Verified</span> <span style="font-size: 11px; color: #F59E0B; margin-left: 6px;">★ ${m.rating}</span></h4>
+          <div class="match-company">${m.company}</div>
+          <div class="match-schedule">⏰ ${m.startTime} • ${m.distance} detour • 🚗 ${m.car}</div>
+        </div>
+      </div>
+      <div class="match-stats">
+        <div class="match-badge">${m.overlap} Route Match</div>
+        <div style="font-weight: 800; font-size: 14px; color: var(--brand-cyan);">${m.savings}</div>
+        <div style="display: flex; gap: 8px; margin-top: 4px;">
+          <button class="btn-secondary match-chat-btn" data-user="${m.name}" style="padding: 6px 12px; font-size: 12px;">
+            💬 Chat
+          </button>
+          <button class="btn-cyan match-pool-btn" data-id="${m.id}" data-user="${m.name}" data-time="${m.startTime}" data-car="${m.car}" style="padding: 6px 14px; font-size: 12px; font-weight: 800;">
+            🚗 Pool
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  // Re-bind chat and pool actions
+  container.querySelectorAll('.match-chat-btn').forEach(btn => {
+    btn.addEventListener('click', () => openCommuteChat(btn.dataset.user));
+  });
+
+  container.querySelectorAll('.match-pool-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openCommutePoolModal({
+        name: btn.dataset.user,
+        time: btn.dataset.time,
+        car: btn.dataset.car
+      });
+    });
+  });
+}
+
+export function openCommutePoolModal(partner) {
+  const modal = document.getElementById('commute-pool-modal');
+  const partnerName = document.getElementById('pool-modal-partner');
+  const departureTime = document.getElementById('pool-modal-time');
+  const vehicle = document.getElementById('pool-modal-vehicle');
+  const chatBtn = document.getElementById('pool-modal-chat-btn');
+
+  if (partnerName) partnerName.textContent = partner.name || 'Sarah Chen';
+  if (departureTime) departureTime.textContent = partner.time || '08:30 AM';
+  if (vehicle) vehicle.textContent = partner.car || 'Tata Nexon EV';
+
+  if (chatBtn) {
+    chatBtn.onclick = () => {
+      modal?.classList.remove('active');
+      openCommuteChat(partner.name);
+    };
+  }
+
+  if (modal) modal.classList.add('active');
+  showToast(`Carpool request locked with ${partner.name}!`, 'success');
+}
+
+export function closeCommutePoolModal() {
+  const modal = document.getElementById('commute-pool-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+export function initCommuteSection() {
+  renderCommuteMatches();
+
+  // Load saved profile
+  try {
+    const saved = localStorage.getItem('smartride_commute_profile');
+    if (saved) {
+      const p = JSON.parse(saved);
+      if (p.source) {
+        const originInput = document.getElementById('commute-origin-input');
+        if (originInput) originInput.value = p.source;
+      }
+      if (p.destination) {
+        const destInput = document.getElementById('commute-dest-input');
+        if (destInput) destInput.value = p.destination;
+      }
+      if (p.departureTime) {
+        const mTime = document.getElementById('commute-time-morning');
+        if (mTime) mTime.value = p.departureTime;
+      }
+      if (p.returnTime) {
+        const eTime = document.getElementById('commute-time-evening');
+        if (eTime) eTime.value = p.returnTime;
+      }
+    }
+  } catch (e) {}
+
+  // GPS Location button
+  document.getElementById('commute-detect-gps-btn')?.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+      showToast('Geolocation is not supported by your browser.', 'warning');
+      return;
+    }
+    showToast('Detecting GPS location for daily commute origin...', 'info');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude.toFixed(4);
+        const lng = pos.coords.longitude.toFixed(4);
+        const originInput = document.getElementById('commute-origin-input');
+        if (originInput) {
+          originInput.value = `Indiranagar 100ft Road (${lat}, ${lng})`;
+        }
+        showToast('📍 Current GPS location applied as Commute Origin!', 'success');
+      },
+      () => {
+        const originInput = document.getElementById('commute-origin-input');
+        if (originInput) originInput.value = 'Indiranagar 100ft Road, Bangalore';
+        showToast('📍 GPS set to Indiranagar 100ft Road, Bangalore!', 'success');
+      },
+      { timeout: 6000, enableHighAccuracy: true }
+    );
+  });
+
+  // Swap button
+  document.getElementById('commute-swap-locations-btn')?.addEventListener('click', () => {
+    const originInput = document.getElementById('commute-origin-input');
+    const destInput = document.getElementById('commute-dest-input');
+    if (originInput && destInput) {
+      const temp = originInput.value;
+      originInput.value = destInput.value;
+      destInput.value = temp;
+      showToast('Commute Origin ⇄ Destination swapped!', 'info');
+    }
+  });
+
+  // Quick Hub chips
+  document.querySelectorAll('.commute-hub-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const destInput = document.getElementById('commute-dest-input');
+      if (destInput && chip.dataset.dest) {
+        destInput.value = chip.dataset.dest;
+        showToast(`Destination set to ${chip.textContent.trim()}!`, 'success');
+        renderCommuteMatches();
+      }
+    });
+  });
+
+  // Role buttons
+  const riderBtn = document.getElementById('commute-role-rider');
+  const driverBtn = document.getElementById('commute-role-driver');
+  riderBtn?.addEventListener('click', () => {
+    riderBtn.classList.add('active');
+    driverBtn?.classList.remove('active');
+    renderCommuteMatches(COMMUTE_MATCHES.filter(m => m.role === 'driver'));
+    showToast('Showing verified drivers offering carpool seats!', 'info');
+  });
+  driverBtn?.addEventListener('click', () => {
+    driverBtn.classList.add('active');
+    riderBtn?.classList.remove('active');
+    renderCommuteMatches(COMMUTE_MATCHES.filter(m => m.role === 'rider'));
+    showToast('Showing riders looking for shared seats along your route!', 'info');
+  });
+
+  // Preference chips toggle
+  ['commute-pref-ac', 'commute-pref-music', 'commute-pref-women', 'commute-pref-ev', 'commute-pref-quiet'].forEach(id => {
+    document.getElementById(id)?.addEventListener('click', function() {
+      this.classList.toggle('active');
+      filterAndRenderCommute();
+    });
+  });
+
+  function filterAndRenderCommute() {
+    const womenOnly = document.getElementById('commute-pref-women')?.classList.contains('active');
+    const evOnly = document.getElementById('commute-pref-ev')?.classList.contains('active');
+
+    let filtered = COMMUTE_MATCHES;
+    if (womenOnly) {
+      filtered = filtered.filter(m => m.preferences.includes('women'));
+    }
+    if (evOnly) {
+      filtered = filtered.filter(m => m.car?.toLowerCase().includes('ev'));
+    }
+    renderCommuteMatches(filtered);
+  }
+
+  // Save profile button
+  document.getElementById('save-commute-profile-btn')?.addEventListener('click', () => {
+    const profile = {
+      source: document.getElementById('commute-origin-input')?.value || '',
+      destination: document.getElementById('commute-dest-input')?.value || '',
+      departureTime: document.getElementById('commute-time-morning')?.value || '08:30',
+      returnTime: document.getElementById('commute-time-evening')?.value || '18:00',
+      role: document.getElementById('commute-role-driver')?.classList.contains('active') ? 'driver' : 'rider',
+      updatedAt: new Date().toISOString()
+    };
+    try {
+      localStorage.setItem('smartride_commute_profile', JSON.stringify(profile));
+    } catch (e) {}
+    showToast('💾 Commute route, schedule, and preferences saved!', 'success');
+  });
+
+  // Search button
+  document.getElementById('find-commute-matches-btn')?.addEventListener('click', () => {
+    filterAndRenderCommute();
+    document.getElementById('heading-commute')?.scrollIntoView({ behavior: 'smooth' });
+    showToast('🚀 AI route matching updated for current corridor!', 'success');
+  });
+
+  // Modal actions
+  document.getElementById('close-pool-modal')?.addEventListener('click', closeCommutePoolModal);
+  document.getElementById('pool-modal-done-btn')?.addEventListener('click', closeCommutePoolModal);
+}
+
 export function openCommuteChat(userName) {
   state.activeChatPartner = userName;
   state.activeChatId = `chat_${userName.toLowerCase().replace(/\s+/g, '_')}`;
