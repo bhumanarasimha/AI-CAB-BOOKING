@@ -39,3 +39,14 @@ __pycache__/
 scratch/
 testing/
 tests/
+
+# Automated Test Artifacts & Hidden Test Files
+*.test.js
+*.test.jsx
+*.spec.js
+*.spec.jsx
+web-api-results.json
+mobile-results.json
+Report.xlsx
+*-results.json
+test-results/
