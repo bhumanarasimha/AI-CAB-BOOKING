@@ -33,13 +33,25 @@ const RealTimeAnalysisCard = ({ onChipClick, context }) => {
   const distanceKm = context?.distanceKm || 8.4;
   const savings = context?.savings || 94;
 
-  const competitors = [
-    { name: 'SmartRide Metro', price: `₹${transitPrice}`, time: `${estMinutes + 6}m`, status: 'Lowest Fare', color: '#10B981' },
-    { name: 'SmartRide Auto', price: `₹${autoPrice}`, time: `${estMinutes}m`, status: 'Direct Pickup', color: '#00D8FF' },
-    { name: 'Rapido Auto', price: `₹${autoPrice + 14}`, time: `${estMinutes + 3}m`, status: 'Normal', color: '#F59E0B' },
-    { name: 'Uber Go', price: `₹${cabPrice + 25}`, time: `${Math.max(10, estMinutes - 2)}m`, status: '1.2x Surge', color: '#EF4444' },
-    { name: 'Ola Mini', price: `₹${cabPrice + 40}`, time: `${Math.max(12, estMinutes + 2)}m`, status: '1.3x Surge', color: '#EF4444' },
-  ];
+  const competitors = useMemo(() => {
+    if (context?.competitors && Array.isArray(context.competitors) && context.competitors.length > 0) {
+      return context.competitors.slice(0, 5).map(c => {
+        const name = c.type || c.provider || c.name || 'Cab';
+        const price = typeof c.fare === 'number' ? `₹${c.fare}` : (c.price || `₹${cabPrice}`);
+        const time = typeof c.eta === 'number' ? `${c.eta}m` : (c.time || `${estMinutes}m`);
+        const status = c.badge || (c.surgeMultiplier > 1 ? `${c.surgeMultiplier}x Surge` : (c.isSmart ? 'Zero Surge' : 'Live Fare'));
+        const color = c.isSmart ? '#00D8FF' : (c.providerKey === 'uber' || c.providerKey === 'ola' ? '#EF4444' : '#10B981');
+        return { name, price, time, status, color };
+      });
+    }
+    return [
+      { name: 'SmartRide Metro', price: `₹${transitPrice}`, time: `${estMinutes + 6}m`, status: 'Lowest Fare', color: '#10B981' },
+      { name: 'SmartRide Auto', price: `₹${autoPrice}`, time: `${estMinutes}m`, status: 'Direct Pickup', color: '#00D8FF' },
+      { name: 'Rapido Auto', price: `₹${autoPrice + 14}`, time: `${estMinutes + 3}m`, status: 'Normal', color: '#F59E0B' },
+      { name: 'Uber Go', price: `₹${cabPrice + 25}`, time: `${Math.max(10, estMinutes - 2)}m`, status: '1.2x Surge', color: '#EF4444' },
+      { name: 'Ola Mini', price: `₹${cabPrice + 40}`, time: `${Math.max(12, estMinutes + 2)}m`, status: '1.3x Surge', color: '#EF4444' },
+    ];
+  }, [context?.competitors, transitPrice, autoPrice, cabPrice, estMinutes]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
@@ -1034,13 +1046,51 @@ const AIChatBot = ({ isOpen, onClose, pickup = 'Current Location', dropoff = 'yo
     }
   }, [addBotMessage, chatFlows, context]);
 
-  const handleSend = useCallback(() => {
+  const handleSend = useCallback(async () => {
     if (!inputValue.trim()) return;
     const text = inputValue.trim();
     setInputValue('');
     setMessages(prev => [...prev, { id: Date.now(), type: 'user', text }]);
 
     setIsTyping(true);
+
+    try {
+      // 1. Attempt live query to real-time Multi-Agent AI endpoint
+      const res = await fetch('http://localhost:5000/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: text,
+          pickup: context.pickup,
+          destination: context.dropoff,
+          distanceKm: context.distanceKm,
+          quotes: context.competitors || [],
+          city: context.city
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.text) {
+          setIsTyping(false);
+          setMessages(prev => [
+            ...prev,
+            {
+              id: Date.now(),
+              type: 'bot',
+              text: data.text,
+              component: data.component || null,
+              chips: data.chips || ['⚡ Real-Time Analysis', 'Compare prices', 'Smart routes']
+            }
+          ]);
+          return;
+        }
+      }
+    } catch {
+      // Smooth fallback to local real-time analytical engine
+    }
+
+    // Local Autonomous Multi-Agent Reasoning Engine
     setTimeout(() => {
       setIsTyping(false);
       const lower = text.toLowerCase();
@@ -1099,14 +1149,14 @@ const AIChatBot = ({ isOpen, onClose, pickup = 'Current Location', dropoff = 'yo
         };
       } else {
         response = {
-          text: `I'm Chubby AI! Live real-time analysis for your trip from **${context.pickup}** to **${dropoff}** (~${context.distanceKm} km):`,
+          text: `I'm Chubby AI! Live real-time analysis for your trip from **${context.pickup}** to **${dropoff}** (~${context.distanceKm} km):\n\n• **Direct Cab**: ₹${context.cabPrice} (~${context.estMinutes} mins)\n• **Auto**: ₹${context.autoPrice}\n• **Metro/Transit**: ₹${context.transitPrice}\n\nAsk me anything about live fares, fastest routes, safety, or discounts!`,
           component: 'realtime_analysis',
           chips: ['⚡ Real-Time Analysis', 'Compare prices', 'Smart routes', 'Public Transit']
         };
       }
 
       setMessages(prev => [...prev, { id: Date.now(), type: 'bot', ...response }]);
-    }, 900);
+    }, 700);
   }, [inputValue, dropoff, context]);
 
   return (

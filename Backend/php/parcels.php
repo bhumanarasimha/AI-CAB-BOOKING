@@ -5,9 +5,11 @@ function handleParcelsRoute($method) {
     global $pdo;
     $input = getJsonInput();
     $user = getAuthUser($pdo);
+    $userId = ($user && isset($user['id'])) ? $user['id'] : 'guest_user';
+    $userName = ($user && isset($user['name'])) ? $user['name'] : 'Rider';
 
     if ($method === 'POST') {
-        $senderName = isset($input['senderName']) ? trim($input['senderName']) : $user['name'];
+        $senderName = isset($input['senderName']) ? trim($input['senderName']) : $userName;
         $senderPhone = isset($input['senderPhone']) ? trim($input['senderPhone']) : '7995665477';
         $receiverName = isset($input['receiverName']) ? trim($input['receiverName']) : 'Receiver';
         $receiverPhone = isset($input['receiverPhone']) ? trim($input['receiverPhone']) : '9876543210';
@@ -22,7 +24,7 @@ function handleParcelsRoute($method) {
         if ($pdo) {
             try {
                 $stmt = $pdo->prepare("INSERT INTO Parcels (id, userId, senderName, senderPhone, receiverName, receiverPhone, itemType, weight, pickup, destination, fare, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', NOW())");
-                $stmt->execute([$id, $user['id'], $senderName, $senderPhone, $receiverName, $receiverPhone, $itemType, $weight, $pickup, $destination, $fare]);
+                $stmt->execute([$id, $userId, $senderName, $senderPhone, $receiverName, $receiverPhone, $itemType, $weight, $pickup, $destination, $fare]);
             } catch (Exception $e) {
             }
         }
@@ -31,7 +33,7 @@ function handleParcelsRoute($method) {
             "success" => true,
             "parcel" => [
                 "id" => $id,
-                "userId" => $user['id'],
+                "userId" => $userId,
                 "senderName" => $senderName,
                 "senderPhone" => $senderPhone,
                 "receiverName" => $receiverName,
@@ -52,7 +54,7 @@ function handleParcelsRoute($method) {
         if ($pdo) {
             try {
                 $stmt = $pdo->prepare("SELECT * FROM Parcels WHERE userId = ? ORDER BY createdAt DESC");
-                $stmt->execute([$user['id']]);
+                $stmt->execute([$userId]);
                 $parcels = $stmt->fetchAll();
             } catch (Exception $e) {
             }

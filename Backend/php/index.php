@@ -85,6 +85,12 @@ if (isset($parts[0]) && $parts[0] === 'ai') {
     $action = isset($parts[1]) ? $parts[1] : 'decide';
     $input = getJsonInput();
 
+    if ($action === 'chat') {
+        require_once __DIR__ . '/ai.php';
+        handleAiRoute($method);
+        exit();
+    }
+
     if ($action === 'explain') {
         $fare = isset($input['fare']) ? floatval($input['fare']) : 145;
         $eta = isset($input['eta']) ? intval($input['eta']) : 3;

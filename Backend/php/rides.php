@@ -5,6 +5,7 @@ function handleRidesRoute($method, $rideId = null, $subResource = null) {
     global $pdo;
     $input = getJsonInput();
     $user = getAuthUser($pdo);
+    $userId = ($user && isset($user['id'])) ? $user['id'] : 'guest_user';
 
     if ($method === 'POST' && !$rideId) {
         $pickup = isset($input['pickup']) ? trim($input['pickup']) : 'City Center';
@@ -19,7 +20,7 @@ function handleRidesRoute($method, $rideId = null, $subResource = null) {
         if ($pdo) {
             try {
                 $stmt = $pdo->prepare("INSERT INTO Rides (id, userId, pickup, destination, provider, cabType, fare, etaMinutes, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'CONFIRMED', NOW())");
-                $stmt->execute([$id, $user['id'], $pickup, $destination, $provider, $cabType, $fare, $etaMinutes]);
+                $stmt->execute([$id, $userId, $pickup, $destination, $provider, $cabType, $fare, $etaMinutes]);
             } catch (Exception $e) {
             }
         }
@@ -28,7 +29,7 @@ function handleRidesRoute($method, $rideId = null, $subResource = null) {
             "success" => true,
             "ride" => [
                 "id" => $id,
-                "userId" => $user['id'],
+                "userId" => $userId,
                 "pickup" => $pickup,
                 "destination" => $destination,
                 "provider" => $provider,
@@ -46,7 +47,7 @@ function handleRidesRoute($method, $rideId = null, $subResource = null) {
         if ($pdo) {
             try {
                 $stmt = $pdo->prepare("SELECT * FROM Rides WHERE userId = ? ORDER BY createdAt DESC");
-                $stmt->execute([$user['id']]);
+                $stmt->execute([$userId]);
                 $rides = $stmt->fetchAll();
             } catch (Exception $e) {
             }
@@ -55,7 +56,7 @@ function handleRidesRoute($method, $rideId = null, $subResource = null) {
             $rides = [
                 [
                     "id" => "ride_mock_1",
-                    "userId" => $user['id'],
+                    "userId" => $userId,
                     "pickup" => "City Center",
                     "destination" => "Airport Terminal 1",
                     "provider" => "Uber",
@@ -84,7 +85,7 @@ function handleRidesRoute($method, $rideId = null, $subResource = null) {
         }
         jsonResponse([
             "id" => $rideId,
-            "userId" => $user['id'],
+            "userId" => $userId,
             "pickup" => "City Center",
             "destination" => "Airport",
             "provider" => "Uber",

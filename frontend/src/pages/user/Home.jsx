@@ -17,8 +17,9 @@ import {
   Minimize2,
   ArrowLeft 
 } from 'lucide-react-native';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Sparkles } from 'lucide-react';
 import InteractiveMap from '../../components/ui/InteractiveMap';
+import AIChatBot from '../../components/ui/AIChatBot';
 import { useAuth } from '../../lib/AuthContext';
 import { useGPSLocation } from '../../hooks/useLocation';
 import { matches } from './commute/matches';
@@ -139,6 +140,7 @@ const Home = () => {
   const [isLocating, setIsLocating] = useState(false);
   const [matchingSuggestions, setMatchingSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     if (location.address && location.address !== 'Detecting location...' && location.address !== 'Detecting GPS location...' && !pickupText) {
@@ -409,9 +411,13 @@ const Home = () => {
             {/* AI Recommendation Card */}
             <View style={[styles.aiCard, isBright && styles.aiCardLight]}>
               <View style={styles.aiHeader}>
-                <View style={[styles.aiBadge, isBright && styles.aiBadgeLight]}>
-                  <Text style={[styles.aiBadgeText, isBright && styles.aiBadgeTextLight]}>Ask Chubby AI</Text>
-                </View>
+                <Pressable 
+                  onPress={() => setChatOpen(true)}
+                  style={[styles.aiBadge, isBright && styles.aiBadgeLight, { cursor: 'pointer' }]}
+                  aria-label="Ask Chubby AI"
+                >
+                  <Text style={[styles.aiBadgeText, isBright && styles.aiBadgeTextLight]}>⚡ Ask Chubby AI</Text>
+                </Pressable>
                 <View style={[styles.savingsTag, isBright && styles.savingsTagLight]}>
                   <Text style={styles.savingsText}>Save up to 42%</Text>
                 </View>
@@ -566,6 +572,40 @@ const Home = () => {
           </ScrollView>
         )}
       </View>
+
+      {/* Floating Chubby AI Trigger */}
+      <Pressable
+        onPress={() => setChatOpen(true)}
+        style={{
+          position: 'absolute',
+          bottom: 85,
+          right: 20,
+          backgroundColor: 'linear-gradient(135deg, #00D8FF, #6366F1)',
+          background: 'linear-gradient(135deg, #00D8FF, #6366F1)',
+          borderRadius: 24,
+          paddingVertical: 10,
+          paddingHorizontal: 14,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 6,
+          boxShadow: '0 8px 24px rgba(0, 216, 255, 0.4)',
+          elevation: 10,
+          zIndex: 90,
+          cursor: 'pointer'
+        }}
+        aria-label="Open Chubby AI Assistant"
+      >
+        <Sparkles size={16} color="#080C14" />
+        <Text style={{ fontSize: 12, fontWeight: '800', color: '#080C14' }}>Chubby AI</Text>
+      </Pressable>
+
+      {/* Chubby AI Interactive Assistant */}
+      <AIChatBot
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+        pickup={pickupText || location.address || 'Current Location'}
+        dropoff={destinationText || 'City Center'}
+      />
     </View>
   );
 };

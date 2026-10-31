@@ -1311,7 +1311,7 @@ export function toggleChatbot() {
   if (win) win.classList.toggle('active');
 }
 
-export function handleChatbotSend() {
+export async function handleChatbotSend() {
   const input = document.getElementById('chatbot-input');
   const msgList = document.getElementById('chatbot-messages');
   if (!input || !msgList || !input.value.trim()) return;
@@ -1325,41 +1325,96 @@ export function handleChatbotSend() {
   userMsg.textContent = query;
   msgList.appendChild(userMsg);
 
-  // Generate intelligent AI Assistant response
-  setTimeout(() => {
-    const botMsg = document.createElement('div');
-    botMsg.className = 'chat-msg bot';
-    botMsg.innerHTML = getChatbotResponse(query);
-    msgList.appendChild(botMsg);
-    msgList.scrollTop = msgList.scrollHeight;
-  }, 400);
+  // Append typing indicator
+  const typingMsg = document.createElement('div');
+  typingMsg.className = 'chat-msg bot typing-indicator';
+  typingMsg.innerHTML = '<span style="opacity: 0.7; font-size: 12px;">⚡ Chubby AI is analyzing live telemetry...</span>';
+  msgList.appendChild(typingMsg);
+  msgList.scrollTop = msgList.scrollHeight;
 
+  const pickup = document.getElementById('pickup-input')?.value || 'Indiranagar, Bangalore';
+  const dest = document.getElementById('dropoff-input')?.value || 'Electronic City, Bangalore';
+  const distanceKm = state.distanceKm || 12.5;
+
+  try {
+    const res = await fetch('http://localhost:5000/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query,
+        pickup,
+        destination: dest,
+        distanceKm,
+        quotes: state.quotes || []
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.text) {
+        typingMsg.remove();
+        const botMsg = document.createElement('div');
+        botMsg.className = 'chat-msg bot';
+        botMsg.innerHTML = data.text
+          .replace(/\n/g, '<br/>')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        msgList.appendChild(botMsg);
+        msgList.scrollTop = msgList.scrollHeight;
+        return;
+      }
+    }
+  } catch (err) {
+    // Fallback to local intelligence
+  }
+
+  // Local fallback
+  typingMsg.remove();
+  const botMsg = document.createElement('div');
+  botMsg.className = 'chat-msg bot';
+  botMsg.innerHTML = getChatbotResponse(query);
+  msgList.appendChild(botMsg);
   msgList.scrollTop = msgList.scrollHeight;
 }
 
 function getChatbotResponse(text) {
   const q = text.toLowerCase();
-  if (q.includes('cheapest') || q.includes('fare') || q.includes('price')) {
-    const cheapest = [...state.quotes].sort((a, b) => a.fare - b.fare)[0];
-    return `💰 The lowest fare right now is <strong>${cheapest?.type || 'Rapido Bike'}</strong> at <strong>₹${cheapest?.fare || 45}</strong>.`;
+  const quotes = state.quotes || [];
+  const cheapest = quotes.length > 0 ? [...quotes].sort((a, b) => a.fare - b.fare)[0] : null;
+  const fastest = quotes.length > 0 ? [...quotes].sort((a, b) => a.eta - b.eta)[0] : null;
+
+  if (q.includes('cheapest') || q.includes('fare') || q.includes('price') || q.includes('cost')) {
+    if (cheapest) {
+      return `💰 <strong>Cheapest Option</strong>: <strong>${cheapest.type}</strong> (${cheapest.provider}) at <strong>₹${cheapest.fare}</strong> (${cheapest.eta}m ETA). Save up to ₹45 vs surge cabs!`;
+    }
+    return `💰 Current lowest fare is <strong>Rapido Auto</strong> at <strong>₹65</strong>.`;
   }
-  if (q.includes('fastest') || q.includes('eta') || q.includes('time')) {
-    const fastest = [...state.quotes].sort((a, b) => a.eta - b.eta)[0];
-    return `⚡ The quickest pickup is <strong>${fastest?.type || 'SmartRide EV'}</strong> arriving in <strong>${fastest?.eta || 2} mins</strong>.`;
+  if (q.includes('fastest') || q.includes('eta') || q.includes('time') || q.includes('quick')) {
+    if (fastest) {
+      return `⚡ <strong>Fastest Pickup</strong>: <strong>${fastest.type}</strong> arrives in only <strong>${fastest.eta} minutes</strong>!`;
+    }
+    return `⚡ Fastest pickup is <strong>SmartRide EV</strong> arriving in <strong>2 mins</strong>.`;
   }
-  if (q.includes('parcel') || q.includes('courier')) {
-    return `📦 We have 3 parcel tiers: <strong>Express Bike</strong> (≤5kg), <strong>Standard Car</strong> (≤20kg), and <strong>Heavy Van</strong> (≤100kg). Head to the Parcel tab to book!`;
+  if (q.includes('real time') || q.includes('analysis') || q.includes('traffic') || q.includes('live')) {
+    const pickup = document.getElementById('pickup-input')?.value || 'Origin';
+    const dest = document.getElementById('dropoff-input')?.value || 'Destination';
+    return `⚡ <strong>Live Real-Time Telemetry</strong>:<br/>• Route: <strong>${pickup}</strong> ➔ <strong>${dest}</strong><br/>• Traffic Delay: +2 mins (Normal Flow)<br/>• Recommended: <strong>${cheapest?.type || 'SmartRide EV'}</strong> at <strong>₹${cheapest?.fare || 145}</strong>!`;
   }
-  if (q.includes('safety') || q.includes('sos')) {
-    return `🛡️ Safety is top priority! You can hit the red <strong>Emergency SOS</strong> button anytime to notify contacts and dispatch with your live GPS location.`;
+  if (q.includes('parcel') || q.includes('courier') || q.includes('delivery')) {
+    return `📦 <strong>SmartRide Parcel Express</strong>: 3 tiers available: <strong>Express Bike</strong> (≤5kg), <strong>Standard Car</strong> (≤20kg), and <strong>Heavy Van</strong> (≤100kg). Head to the Parcel tab to book!`;
+  }
+  if (q.includes('safety') || q.includes('sos') || q.includes('emergency')) {
+    return `🛡️ <strong>Safety Shield Active</strong>: 24/7 route anomaly tracking, 4-digit PIN verification, and 1-tap <strong>Emergency SOS</strong> broadcast to your contacts and police.`;
   }
   if (q.includes('commute') || q.includes('carpool')) {
-    return `👥 Commute matches you with colleagues sharing your route. You can save up to ₹4,500 and 18kg CO2 monthly!`;
+    return `👥 <strong>Smart Commute</strong>: Match with colleagues sharing your route to save up to ₹4,800/month and reduce 22kg CO2. Check out the Smart Commute tab!`;
   }
-  if (q.includes('explain') || q.includes('xai') || q.includes('shap') || q.includes('lime') || q.includes('why') || q.includes('reason')) {
-    return `🧠 Our <strong>Explainable AI (EMMDE)</strong> engine uses SHAP waterfall feature attribution and LIME surrogate rules to break down decisions across 5 agents (Fare, Stability, Effort, Context, Carbon). Head to the <strong>Explainable AI</strong> tab to run live What-If simulations!`;
+  if (q.includes('offer') || q.includes('coupon') || q.includes('promo') || q.includes('discount')) {
+    return `🎟️ <strong>Active Promo</strong>: Use code <strong>SMART20</strong> for 20% OFF your current ride!`;
   }
-  return `✨ I can help you compare live cab fares across Uber, Ola, Rapido, and SmartRide EV, estimate parcel costs, or inspect our Explainable AI models. What would you like to do?`;
+  if (q.includes('explain') || q.includes('xai') || q.includes('shap') || q.includes('lime') || q.includes('why')) {
+    return `🧠 <strong>Explainable AI (EMMDE)</strong>: Evaluates 5 agents (Fare, Stability, Effort, Context, Carbon) with SHAP waterfall and LIME rules. Head to the Explainable AI tab!`;
+  }
+  return `✨ I'm <strong>Chubby AI</strong>! I can compare real-time fares across Uber, Ola, Rapido, and SmartRide EV, forecast traffic surges, check parcel rates, or book your ride. What would you like to know?`;
 }
 
 // ============================================================================
@@ -1982,6 +2037,25 @@ function setupEventListeners() {
   document.getElementById('chatbot-send-btn')?.addEventListener('click', handleChatbotSend);
   document.getElementById('chatbot-input')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') handleChatbotSend();
+  });
+
+  // Home Ask Chubby AI Badge Click -> Open Chubby AI
+  const homeAiBadge = document.getElementById('home-ask-ai-badge');
+  if (homeAiBadge) {
+    homeAiBadge.style.cursor = 'pointer';
+    homeAiBadge.addEventListener('click', toggleChatbot);
+  }
+
+  // Profile Change Photo / Avatar Button
+  document.getElementById('profile-change-photo-btn')?.addEventListener('click', () => {
+    const avatars = ['⚡', '🚗', '🚀', '👤', '🧑‍💻', '⭐', '🌟', '🛡️'];
+    const badge = document.getElementById('profile-avatar-badge');
+    const current = badge ? badge.textContent.trim() : 'R';
+    const nextIdx = (avatars.indexOf(current) + 1) % avatars.length;
+    const nextAvatar = avatars[nextIdx];
+    if (badge) badge.textContent = nextAvatar;
+    localStorage.setItem('smartride_user_avatar', nextAvatar);
+    showToast(`Profile avatar updated to ${nextAvatar}!`, 'success');
   });
 
   // User Profile Header Click -> Open Profile Page directly

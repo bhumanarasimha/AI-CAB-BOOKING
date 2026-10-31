@@ -5,22 +5,23 @@ function handleChatsRoute($method, $chatId = null, $subResource = null) {
     global $pdo;
     $input = getJsonInput();
     $user = getAuthUser($pdo);
+    $userId = ($user && isset($user['id'])) ? $user['id'] : 'guest_user';
 
     if ($method === 'POST' && !$chatId) {
         $targetUserId = isset($input['targetUserId']) ? trim($input['targetUserId']) : 'user_target';
-        $id = "chat_" . abs(crc32($user['id'] . $targetUserId));
+        $id = "chat_" . abs(crc32($userId . $targetUserId));
 
         if ($pdo) {
             try {
                 $stmt = $pdo->prepare("INSERT INTO Chats (id, user1Id, user2Id, createdAt) VALUES (?, ?, ?, NOW()) ON DUPLICATE KEY UPDATE id=id");
-                $stmt->execute([$id, $user['id'], $targetUserId]);
+                $stmt->execute([$id, $userId, $targetUserId]);
             } catch (Exception $e) {
             }
         }
 
         jsonResponse([
             "id" => $id,
-            "user1Id" => $user['id'],
+            "user1Id" => $userId,
             "user2Id" => $targetUserId,
             "createdAt" => date('c')
         ]);
@@ -31,7 +32,7 @@ function handleChatsRoute($method, $chatId = null, $subResource = null) {
         if ($pdo) {
             try {
                 $stmt = $pdo->prepare("SELECT * FROM Chats WHERE user1Id = ? OR user2Id = ? ORDER BY createdAt DESC");
-                $stmt->execute([$user['id'], $user['id']]);
+                $stmt->execute([$userId, $userId]);
                 $chats = $stmt->fetchAll();
             } catch (Exception $e) {
             }
@@ -62,7 +63,7 @@ function handleChatsRoute($method, $chatId = null, $subResource = null) {
         if ($pdo) {
             try {
                 $stmt = $pdo->prepare("INSERT INTO Messages (id, chatId, senderId, text, createdAt) VALUES (?, ?, ?, ?, NOW())");
-                $stmt->execute([$msgId, $chatId, $user['id'], $text]);
+                $stmt->execute([$msgId, $chatId, $userId, $text]);
             } catch (Exception $e) {
             }
         }
@@ -70,7 +71,7 @@ function handleChatsRoute($method, $chatId = null, $subResource = null) {
         jsonResponse([
             "id" => $msgId,
             "chatId" => $chatId,
-            "senderId" => $user['id'],
+            "senderId" => $userId,
             "text" => $text,
             "createdAt" => date('c')
         ], 201);
