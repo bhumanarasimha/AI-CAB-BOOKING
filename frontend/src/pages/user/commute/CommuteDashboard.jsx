@@ -48,9 +48,10 @@ const CommuteDashboard = () => {
         if (parsed.role) setRole(parsed.role);
         if (parsed.preferences) setPreferences(parsed.preferences);
       } else {
-        // Defaults if empty
-        setSource('Indiranagar 100ft Road, Bangalore');
-        setDestination('Electronic City Phase 1, Bangalore');
+        // Defaults if empty - Chennai corridor & user saved pickup
+        const savedPickup = typeof localStorage !== 'undefined' ? localStorage.getItem('smartride_user_pickup') : null;
+        setSource((savedPickup && !savedPickup.includes('Ekambareswara')) ? savedPickup : 'Poonamallee High Road, Chennai');
+        setDestination('Tidel Park, OMR Tech Corridor, Chennai');
       }
     } catch {
       // Fallback
@@ -99,7 +100,8 @@ const CommuteDashboard = () => {
       },
       (_err) => {
         // High-accuracy fallback
-        const fallbackAddress = 'Indiranagar 100ft Road, Bangalore';
+        const savedPickup = typeof localStorage !== 'undefined' ? localStorage.getItem('smartride_user_pickup') : null;
+        const fallbackAddress = (savedPickup && !savedPickup.includes('Ekambareswara')) ? savedPickup : 'Poonamallee High Road, Chennai';
         setSource(fallbackAddress);
         setDetectingGps(false);
         setGpsSuccess(true);
@@ -565,7 +567,7 @@ const CommuteDashboard = () => {
                 background: 'var(--bg-elevated, rgba(255,255,255,0.03))',
                 borderRadius: '16px', padding: '10px 12px',
                 border: '1px solid var(--border-ui, rgba(255,255,255,0.08))',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px'
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                   <span style={{ fontSize: '0.85rem' }}>📅</span>

@@ -139,6 +139,7 @@ const Home = () => {
   const [pickupText, setPickupText] = useState('');
   const [destinationText, setDestinationText] = useState('');
   const [isLocating, setIsLocating] = useState(false);
+  const [activeSearchInput, setActiveSearchInput] = useState('destination'); // 'pickup' | 'destination'
   const [matchingSuggestions, setMatchingSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearchingPlaces, setIsSearchingPlaces] = useState(false);
@@ -146,8 +147,20 @@ const Home = () => {
   const searchDebounceRef = useRef(null);
 
   useEffect(() => {
+    // 1. Check if user has a previously confirmed pickup
+    const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('smartride_user_pickup') : null;
+    if (saved && !saved.includes('Ekambareswara') && !saved.includes('Agraharam')) {
+      setPickupText(saved);
+      return;
+    }
+
+    // 2. Reject ISP Sowcarpet address; default to Current Location
     if (location.address && location.address !== 'Detecting location...' && location.address !== 'Detecting GPS location...' && !pickupText) {
-      setPickupText(location.address);
+      if (location.address.includes('Ekambareswara') || location.address.includes('Agraharam') || location.address.includes('Sowcarpet')) {
+        setPickupText('Current Location');
+      } else {
+        setPickupText(location.address);
+      }
     }
   }, [location.address, pickupText]);
 
@@ -157,18 +170,31 @@ const Home = () => {
       if (location.detectHighAccuracyGPS) {
         const res = await location.detectHighAccuracyGPS();
         if (res && res.address) {
-          setPickupText(res.address);
+          const cleanAddr = (res.address.includes('Ekambareswara') || res.address.includes('Agraharam'))
+            ? 'Current Location'
+            : res.address;
+          setPickupText(cleanAddr);
+          if (cleanAddr !== 'Current Location') {
+            localStorage.setItem('smartride_user_pickup', cleanAddr);
+          }
         }
       }
     } catch (err) {
       console.warn("GPS detection failed:", err);
+      setPickupText('Current Location');
     } finally {
       setIsLocating(false);
     }
   };
 
-  const handleDestinationChange = (txt) => {
-    setDestinationText(txt);
+  const handleSearchPlaces = (txt, targetInput = 'destination') => {
+    setActiveSearchInput(targetInput);
+    if (targetInput === 'pickup') {
+      setPickupText(txt);
+    } else {
+      setDestinationText(txt);
+    }
+
     if (!txt || txt.trim().length === 0) {
       setMatchingSuggestions([]);
       setShowSuggestions(false);
@@ -206,16 +232,30 @@ const Home = () => {
     }, 150);
   };
 
+  const handlePickupChange = (txt) => {
+    handleSearchPlaces(txt, 'pickup');
+  };
+
+  const handleDestinationChange = (txt) => {
+    handleSearchPlaces(txt, 'destination');
+  };
+
   const handleSelectSuggestion = (place) => {
     const selectedTitle = typeof place === 'object' ? (place.name || place.fullText) : place;
-    setDestinationText(selectedTitle);
     setShowSuggestions(false);
-    navigate('/user/ride-comparison', {
-      state: {
-        pickup: pickupText || location.address || 'Current Location',
-        dropoff: selectedTitle
-      }
-    });
+
+    if (activeSearchInput === 'pickup') {
+      setPickupText(selectedTitle);
+      localStorage.setItem('smartride_user_pickup', selectedTitle);
+    } else {
+      setDestinationText(selectedTitle);
+      navigate('/user/ride-comparison', {
+        state: {
+          pickup: (pickupText && !pickupText.includes('Ekambareswara')) ? pickupText : (location.address || 'Current Location'),
+          dropoff: selectedTitle
+        }
+      });
+    }
   };
 
   const handleGoToRideComparison = () => {
@@ -467,7 +507,12 @@ const Home = () => {
                       <Text style={[styles.routeLabel, isBright && styles.routeLabelLight]}>PICKUP</Text>
                       <TextInput
                         value={pickupText}
-                        onChangeText={setPickupText}
+                        onChangeText={handlePickupChange}
+                        onFocus={() => {
+                          if (pickupText.trim().length > 0) {
+                            handlePickupChange(pickupText);
+                          }
+                        }}
                         placeholder={location.loading ? "Detecting GPS..." : "Enter pickup location"}
                         placeholderTextColor={isBright ? '#94A3B8' : '#64748B'}
                         style={[styles.routeInputText, isBright && styles.routeInputTextLight]}
@@ -514,7 +559,7 @@ const Home = () => {
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: isBright ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)' }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Text style={{ fontSize: 10, fontWeight: '800', color: isBright ? '#64748B' : '#94A3B8', textTransform: 'uppercase', letterSpacing: 0.6 }}>
-                        Nearby Places (≤ 100 km Radius)
+                        {activeSearchInput === 'pickup' ? 'Select Pickup Location (≤ 100 km)' : 'Select Destination (≤ 100 km)'}
                       </Text>
                       <View style={{ backgroundColor: '#10B98120', paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4 }}>
                         <Text style={{ fontSize: 8, fontWeight: '800', color: '#10B981' }}>GEO-LOCKED</Text>

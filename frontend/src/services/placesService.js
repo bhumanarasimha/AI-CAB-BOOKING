@@ -245,6 +245,11 @@ async function fetchPhotonNearbySuggestions(query, userCoords = DEFAULT_USER_COO
       if (countryCode && countryCode !== 'IN') continue;
       if (countryName && !countryName.includes('india') && !countryName.includes('bharat')) continue;
 
+      const fullCheck = `${p.name || ''} ${p.street || ''} ${p.city || ''} ${p.state || ''} ${countryName}`.toLowerCase();
+      if (fullCheck.includes('brazil') || fullCheck.includes('brasil') || fullCheck.includes('são paulo') || fullCheck.includes('sao paulo') || fullCheck.includes('france') || fullCheck.includes('united states') || fullCheck.includes('germany')) {
+        continue;
+      }
+
       // Extract coordinates: GeoJSON is [lon, lat]
       const [featLon, featLat] = f.geometry?.coordinates || [];
       if (featLat == null || featLon == null) continue;
@@ -318,7 +323,10 @@ async function fetchNominatimNearbySuggestions(query, userCoords = DEFAULT_USER_
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&viewbox=${left},${bottom},${right},${top}&bounded=1&countrycodes=in&limit=${limit}`;
     const res = await fetch(url, {
       signal: controller.signal,
-      headers: { 'Accept': 'application/json' }
+      headers: { 
+        'Accept': 'application/json',
+        'User-Agent': 'SmartRide-AI-Cab/1.0'
+      }
     });
     clearTimeout(timeoutId);
 

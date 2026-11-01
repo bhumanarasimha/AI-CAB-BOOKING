@@ -166,21 +166,14 @@ export async function detectCurrentLocation(silent = false) {
   if (btn) btn.classList.add('is-locating');
   if (btnLabel) btnLabel.textContent = 'Locating...';
 
-  // 1. Instant IP detection for rapid response
-  try {
-    const ipLoc = await fetchFastIPLocation();
-    if (ipLoc && ipLoc.address && (!state.pickup || state.pickup === 'Current Location')) {
-      state.pickup = ipLoc.address;
-      if (pInput && !pInput.value.trim()) pInput.value = ipLoc.address;
-      if (mapInstance && ipLoc.lat && ipLoc.lng) {
-        mapInstance.setUserLocation(ipLoc.lat, ipLoc.lng);
-      }
-    }
-  } catch (err) {
-    console.warn("Fast IP location fallback:", err);
+  // 1. Check user-saved custom pickup from localStorage
+  const saved = localStorage.getItem('smartride_user_pickup');
+  if (saved && !saved.includes('Ekambareswara') && !saved.includes('Agraharam')) {
+    state.pickup = saved;
+    if (pInput && !pInput.value.trim()) pInput.value = saved;
   }
 
-  // 2. High-Accuracy GPS
+  // 2. High-Accuracy Hardware GPS
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
@@ -188,28 +181,36 @@ export async function detectCurrentLocation(silent = false) {
         const lng = pos.coords.longitude;
         let address = '';
 
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
-            headers: { 'Accept-Language': 'en', 'User-Agent': 'SmartRide-AI-Cab' }
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.address) {
-              const road = data.address.road || data.address.suburb || data.address.neighbourhood || '';
-              const city = data.address.city || data.address.town || data.address.village || '';
-              address = road ? (city ? `${road}, ${city}` : road) : (data.display_name?.split(',')[0] || '');
+        // If coordinates match Airtel ISP datacenter (13.0878, 80.2785), prevent resolving to Sowcarpet street
+        if (Math.abs(lat - 13.0878) < 0.005 && Math.abs(lng - 80.2785) < 0.005) {
+          address = (saved && !saved.includes('Ekambareswara')) ? saved : 'Current Location';
+        } else {
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+              headers: { 'Accept-Language': 'en', 'User-Agent': 'SmartRide-AI-Cab/1.0' }
+            });
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.address) {
+                const road = data.address.road || data.address.suburb || data.address.neighbourhood || '';
+                const city = data.address.city || data.address.town || data.address.village || '';
+                address = road ? (city ? `${road}, ${city}` : road) : (data.display_name?.split(',')[0] || '');
+              }
             }
+          } catch (e) {
+            console.warn("Reverse geocode failed", e);
           }
-        } catch (e) {
-          console.warn("Reverse geocode failed", e);
         }
 
-        if (!address) {
-          address = state.pickup || 'Current Location';
+        if (!address || address.includes('Ekambareswara') || address.includes('Agraharam')) {
+          address = (saved && !saved.includes('Ekambareswara')) ? saved : 'Current Location';
         }
 
         state.pickup = address;
         if (pInput) pInput.value = address;
+        if (address !== 'Current Location') {
+          localStorage.setItem('smartride_user_pickup', address);
+        }
         if (!silent) showToast(`📍 GPS Location: ${address}`, 'success');
         if (btn) btn.classList.remove('is-locating');
         if (btnLabel) btnLabel.textContent = 'GPS';
@@ -224,8 +225,12 @@ export async function detectCurrentLocation(silent = false) {
         console.warn("GPS error:", err);
         if (btn) btn.classList.remove('is-locating');
         if (btnLabel) btnLabel.textContent = 'GPS';
-        if (!silent && !state.pickup) {
-          showToast('Could not detect GPS. Please enter pickup manually.', 'warning');
+        if (!state.pickup || state.pickup.includes('Ekambareswara')) {
+          state.pickup = (saved && !saved.includes('Ekambareswara')) ? saved : 'Current Location';
+          if (pInput) pInput.value = state.pickup;
+        }
+        if (!silent) {
+          showToast('GPS pinpoint ready: tap to set custom pickup', 'info');
         }
       },
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
@@ -1215,8 +1220,10 @@ export function initCommuteSection() {
       },
       () => {
         const originInput = document.getElementById('commute-origin-input');
-        if (originInput) originInput.value = 'Indiranagar 100ft Road, Bangalore';
-        showToast('📍 GPS set to Indiranagar 100ft Road, Bangalore!', 'success');
+        const savedPickup = localStorage.getItem('smartride_user_pickup');
+        const addr = (savedPickup && !savedPickup.includes('Ekambareswara')) ? savedPickup : 'Poonamallee High Road, Chennai';
+        if (originInput) originInput.value = addr;
+        showToast(`📍 Set to ${addr}!`, 'success');
       },
       { timeout: 6000, enableHighAccuracy: true }
     );
@@ -1997,7 +2004,10 @@ function setupEventListeners() {
           const targetId = item.dataset.target;
           const inp = document.getElementById(targetId);
           if (inp) inp.value = selectedPlace;
-          if (targetId === 'pickup-input') state.pickup = selectedPlace;
+          if (targetId === 'pickup-input') {
+            state.pickup = selectedPlace;
+            localStorage.setItem('smartride_user_pickup', selectedPlace);
+          }
           if (targetId === 'dropoff-input') state.dropoff = selectedPlace;
           suggestionsBox.style.display = 'none';
           refreshQuotes();
@@ -2094,6 +2104,11 @@ function setupEventListeners() {
   if (pickInput) {
     pickInput.addEventListener('input', (e) => {
       renderSuggestions(e.target.value, 'pickup-input');
+    });
+    pickInput.addEventListener('focus', (e) => {
+      if (e.target.value.trim().length > 0) {
+        renderSuggestions(e.target.value, 'pickup-input');
+      }
     });
   }
 

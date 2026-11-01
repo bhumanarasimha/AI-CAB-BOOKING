@@ -1160,7 +1160,7 @@ const AIChatBot = ({ isOpen, onClose, pickup = 'Current Location', dropoff = 'yo
     }, 700);
   }, [inputValue, dropoff, context]);
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {isOpen && (
         <>
@@ -1403,6 +1403,11 @@ const AIChatBot = ({ isOpen, onClose, pickup = 'Current Location', dropoff = 'yo
       )}
     </AnimatePresence>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(modalContent, document.body);
+  }
+  return modalContent;
 };
 
 export default AIChatBot;
