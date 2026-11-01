@@ -16,24 +16,62 @@ import {
 } from './ai-engine.js';
 import { FleetRadarMap } from './map.js';
 
-const CITY_LANDMARKS = [
-  'Tidel Park, OMR Tech Corridor',
-  'Airport Terminal 2, Meenambakkam',
-  'Marina Beach Promenade',
-  'Central Railway Station, Kannappar Thidal',
-  'Phoenix MarketCity Mall, Velachery',
-  'Express Avenue Mall, Royapettah',
-  'DLF Cybercity, Porur',
-  'Anna Nagar West Roundtana',
-  'Koyambedu CMBT Bus Station',
-  'Besant Nagar Beach',
-  'Guindy IT Park & National Park',
-  'Kapaleeshwarar Temple, Mylapore',
-  'Vadapalani Forum Vijaya Mall',
-  'Hitech City, Cyber Towers',
-  'Indiranagar 100ft Road',
-  'MG Road Metro Station',
+const COMPREHENSIVE_CITY_LANDMARKS = [
+  // Colleges & Educational Hubs
+  { name: 'Saveetha Engineering College', address: 'Chettipadu – Nemam Road, Thandalam, Chennai', icon: '🎓' },
+  { name: 'Saveetha University (SIMATS)', address: 'Poonamallee High Road, Velappanchavadi, Chennai', icon: '🎓' },
+  { name: 'Saveetha Medical College & Hospital', address: 'Saveetha Nagar, Thandalam, Kanchipuram', icon: '🏥' },
+  { name: 'Saveetha Dental College & Hospital', address: '162, Poonamallee High Road, Chennai', icon: '🏥' },
+  { name: 'Saveetha School of Management & Law', address: 'Poonamallee Bypass Road, Chennai', icon: '🎓' },
+  { name: 'SRM Institute of Science and Technology', address: 'Kattankulathur, Chengalpattu, Tamil Nadu', icon: '🎓' },
+  { name: 'SRM University Ramapuram Campus', address: 'Bharathi Salai, Ramapuram, Chennai', icon: '🎓' },
+  { name: 'VIT Chennai (Vellore Institute of Tech)', address: 'Vandalur-Kelambakkam Road, Chennai', icon: '🎓' },
+  { name: 'IIT Madras (Indian Institute of Technology)', address: 'Sardar Patel Road, Adyar, Chennai', icon: '🎓' },
+  { name: 'Anna University Guindy Campus', address: 'Sardar Patel Road, Guindy, Chennai', icon: '🎓' },
+  { name: 'Loyola College', address: 'Sterling Road, Nungambakkam, Chennai', icon: '🎓' },
+  { name: 'Madras Christian College (MCC)', address: 'Tambaram East, Chennai', icon: '🎓' },
+  { name: 'SSN College of Engineering', address: 'Rajiv Gandhi Salai (OMR), Kalavakkam', icon: '🎓' },
+  { name: 'Sathyabama Institute of Science and Technology', address: 'Jeppiaar Nagar, Rajiv Gandhi Salai, Chennai', icon: '🎓' },
+  { name: 'Hindustan Institute of Tech & Science (HITS)', address: 'Rajiv Gandhi Salai (OMR), Padur', icon: '🎓' },
+  { name: 'Panimalar Engineering College', address: 'Bangalore Trunk Road, Poonamallee, Chennai', icon: '🎓' },
+  { name: 'Rajalakshmi Engineering College (REC)', address: 'Rajalakshmi Nagar, Thandalam, Chennai', icon: '🎓' },
+  { name: 'Sri Venkateswara College of Engineering (SVCE)', address: 'Pennalur, Sriperumbudur, Tamil Nadu', icon: '🎓' },
+
+  // Tech Parks & Offices
+  { name: 'Tidel Park, OMR Tech Corridor', address: 'Rajiv Gandhi Salai, Taramani, Chennai', icon: '🏢' },
+  { name: 'DLF Cybercity, Porur', address: 'Mount Poonamallee Road, Manapakkam, Chennai', icon: '🏢' },
+  { name: 'RMZ Millenia Business Park', address: 'MGR Road, Perungudi, Chennai', icon: '🏢' },
+  { name: 'Ascendas International Tech Park (ITPB)', address: 'CSIR Road, Taramani, Chennai', icon: '🏢' },
+  { name: 'Ramanujan IT City', address: 'Rajiv Gandhi Salai, Taramani, Chennai', icon: '🏢' },
+  { name: 'Olympia Technology Park', address: '1, SIDCO Industrial Estate, Guindy, Chennai', icon: '🏢' },
+  { name: 'SIPCOT IT Park, Siruseri', address: 'Rajiv Gandhi Salai (OMR), Siruseri, Tamil Nadu', icon: '🏢' },
+  { name: 'Electronic City Phase 1 & 2', address: 'Hosur Road, South Bangalore', icon: '🏢' },
+  { name: 'Manyata Embassy Business Park', address: 'Outer Ring Road, Nagavara, Bangalore', icon: '🏢' },
+  { name: 'Hitech City Cyber Towers', address: 'Madhapur, Hitech City, Hyderabad', icon: '🏢' },
+
+  // Transit & Airports
+  { name: 'Airport Terminal 2 (Meenambakkam)', address: 'GST Road, Meenambakkam, Chennai', icon: '✈️' },
+  { name: 'Chennai Central Railway Station (Dr. MGR Central)', address: 'Kannappar Thidal, Periamet, Chennai', icon: '🚆' },
+  { name: 'Chennai Egmore Railway Station', address: 'Gandhi Irwin Road, Egmore, Chennai', icon: '🚆' },
+  { name: 'Tambaram Railway Station & Transit Hub', address: 'GST Road, Tambaram, Chennai', icon: '🚆' },
+  { name: 'Koyambedu CMBT Bus Terminus', address: 'Jawaharlal Nehru Road, Koyambedu, Chennai', icon: '🚌' },
+  { name: 'Kilambakkam KCBT Bus Terminus', address: 'GST Road, Kilambakkam, Vandalur', icon: '🚌' },
+  { name: 'Kempegowda International Airport (BLR)', address: 'Devanahalli, Bangalore, Karnataka', icon: '✈️' },
+
+  // Shopping Malls & Landmarks
+  { name: 'Phoenix MarketCity Mall, Velachery', address: '142, Velachery Road, Indira Gandhi Nagar, Chennai', icon: '🛍️' },
+  { name: 'Express Avenue Mall, Royapettah', address: '2, Club House Road, Royapettah, Chennai', icon: '🛍️' },
+  { name: 'VR Chennai Mall', address: '100 Feet Road, Anna Nagar, Chennai', icon: '🛍️' },
+  { name: 'Forum Vijaya Mall, Vadapalani', address: 'Arcot Road, NSK Salai, Vadapalani, Chennai', icon: '🛍️' },
+  { name: 'Marina Beach Promenade', address: 'Kamarajar Salai, Triplicane, Chennai', icon: '🏖️' },
+  { name: 'Besant Nagar Elliot\'s Beach (Bessie)', address: '6th Avenue, Besant Nagar, Chennai', icon: '🏖️' },
+  { name: 'Kapaleeshwarar Temple, Mylapore', address: 'Vadakkumada St, Mylapore, Chennai', icon: '🛕' },
+  { name: 'Anna Nagar West Roundtana', address: '3rd Avenue, Anna Nagar West, Chennai', icon: '🌳' },
+  { name: 'Indiranagar 100ft Road', address: 'Indiranagar, Bangalore, Karnataka', icon: '📍' },
+  { name: 'MG Road Metro Station', address: 'MG Road, Central Bangalore, Karnataka', icon: '📍' }
 ];
+
+const CITY_LANDMARKS = COMPREHENSIVE_CITY_LANDMARKS.map(l => l.name);
 
 async function fetchFastIPLocation() {
   try {
@@ -1839,7 +1877,9 @@ function setupEventListeners() {
   const dropInput = document.getElementById('dropoff-input');
   const suggestionsBox = document.getElementById('route-suggestions-dropdown');
 
-  function renderSuggestions(query, targetInputId) {
+  let webSuggestDebounce = null;
+
+  async function renderSuggestions(query, targetInputId) {
     if (!suggestionsBox) return;
     if (!query || query.trim().length < 1) {
       suggestionsBox.style.display = 'none';
@@ -1847,35 +1887,104 @@ function setupEventListeners() {
     }
 
     const q = query.trim().toLowerCase();
-    const matches = CITY_LANDMARKS.filter(item => item.toLowerCase().includes(q));
 
-    if (matches.length === 0) {
-      suggestionsBox.style.display = 'none';
-      return;
+    // Tier 1: Instant local matches
+    const localMatches = COMPREHENSIVE_CITY_LANDMARKS.filter(item => 
+      item.name.toLowerCase().includes(q) || 
+      item.address.toLowerCase().includes(q)
+    ).slice(0, 7);
+
+    const renderList = (items, isSearching = false) => {
+      if (!items || items.length === 0) {
+        if (!isSearching) suggestionsBox.style.display = 'none';
+        return;
+      }
+
+      suggestionsBox.innerHTML = `
+        <div style="padding: 6px 12px; font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center;">
+          <span>Matching Places & Campuses</span>
+          ${isSearching ? '<span style="color: var(--brand-cyan); font-size: 9px;">⚡ Live search...</span>' : ''}
+        </div>
+        ${items.map(item => `
+          <div class="suggestion-item" data-place="${item.name}" data-address="${item.address || ''}" data-target="${targetInputId}" style="padding: 10px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.04);">
+            <span style="font-size: 18px; flex-shrink: 0;">${item.icon || '📍'}</span>
+            <div style="flex: 1; min-width: 0;">
+              <strong style="font-size: 13px; color: var(--text-main); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.name}</strong>
+              ${item.address ? `<span style="font-size: 11px; color: var(--text-muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">${item.address}</span>` : ''}
+            </div>
+            <span style="font-size: 11px; color: var(--brand-cyan); opacity: 0.8;">➔</span>
+          </div>
+        `).join('')}
+      `;
+
+      suggestionsBox.style.display = 'block';
+
+      suggestionsBox.querySelectorAll('.suggestion-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const selectedPlace = item.dataset.place;
+          const targetId = item.dataset.target;
+          const inp = document.getElementById(targetId);
+          if (inp) inp.value = selectedPlace;
+          if (targetId === 'pickup-input') state.pickup = selectedPlace;
+          if (targetId === 'dropoff-input') state.dropoff = selectedPlace;
+          suggestionsBox.style.display = 'none';
+          refreshQuotes();
+          handleRouteSend();
+        });
+      });
+    };
+
+    // Render local items right away
+    if (localMatches.length > 0) {
+      renderList(localMatches, true);
     }
 
-    suggestionsBox.innerHTML = matches.map(place => `
-      <div class="suggestion-item" data-place="${place}" data-target="${targetInputId}">
-        <span>📍</span>
-        <span style="font-weight: 600;">${place}</span>
-      </div>
-    `).join('');
+    // Tier 2: Debounced Live Geocoding via Photon OpenStreetMap
+    clearTimeout(webSuggestDebounce);
+    webSuggestDebounce = setTimeout(async () => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2200);
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query.trim())}&limit=6`, { signal: controller.signal });
+        clearTimeout(timeoutId);
 
-    suggestionsBox.style.display = 'block';
+        if (res.ok) {
+          const data = await res.json();
+          if (data.features && Array.isArray(data.features)) {
+            const onlineResults = data.features.map(f => {
+              const p = f.properties || {};
+              const name = p.name || p.street || p.city || 'Location';
+              const parts = [p.street, p.locality || p.district, p.city, p.state].filter(Boolean);
+              const address = parts.length > 0 ? parts.join(', ') : 'India';
 
-    suggestionsBox.querySelectorAll('.suggestion-item').forEach(item => {
-      item.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const selectedPlace = item.dataset.place;
-        const targetId = item.dataset.target;
-        const inp = document.getElementById(targetId);
-        if (inp) inp.value = selectedPlace;
-        if (targetId === 'pickup-input') state.pickup = selectedPlace;
-        if (targetId === 'dropoff-input') state.dropoff = selectedPlace;
-        suggestionsBox.style.display = 'none';
-        handleRouteSend();
-      });
-    });
+              let icon = '📍';
+              if (p.osm_value === 'college' || p.osm_value === 'university' || p.osm_value === 'school') icon = '🎓';
+              else if (p.osm_value === 'hospital' || p.osm_value === 'clinic' || p.osm_value === 'blood_bank') icon = '🏥';
+              else if (p.osm_value === 'aerodrome' || p.osm_value === 'airport') icon = '✈️';
+              else if (p.osm_value === 'station' || p.osm_value === 'bus_stop') icon = '🚆';
+              else if (p.osm_value === 'mall' || p.osm_value === 'supermarket') icon = '🛍️';
+
+              return { name, address, icon };
+            });
+
+            // Merge with local deduplicated
+            const seen = new Set(localMatches.map(m => m.name.toLowerCase().trim()));
+            const merged = [...localMatches];
+            for (const item of onlineResults) {
+              const lower = item.name.toLowerCase().trim();
+              if (!seen.has(lower)) {
+                seen.add(lower);
+                merged.push(item);
+              }
+            }
+            renderList(merged.slice(0, 8), false);
+          }
+        }
+      } catch {
+        renderList(localMatches, false);
+      }
+    }, 150);
   }
 
   if (dropInput) {

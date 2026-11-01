@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, MapPin, Clock, Star, X, Search as SearchIcon, Loader2 } from 'lucide-react';
+import { searchAllPlaces, searchLocalLandmarks } from '../../services/placesService';
 
 const recentPlaces = [
   { name: 'T. Nagar (Thyagaraya Nagar)', address: 'Chennai, Tamil Nadu', type: 'recent' },
@@ -83,13 +84,29 @@ const Search = () => {
         }
       );
     } else {
-      // Fallback: filter static list if Google Maps isn't available
-      setIsLoadingSuggestions(false);
-      setSuggestions(
-        staticFallback.filter((s) =>
-          s.name.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      );
+      // High-accuracy fallback: instant comprehensive landmarks + online Photon/OSM geocoding
+      const local = searchLocalLandmarks(searchQuery, 8);
+      if (local.length > 0) {
+        setSuggestions(local.map(l => ({
+          name: l.name,
+          address: l.address,
+          placeId: l.id,
+          rating: 4.8
+        })));
+      }
+      searchAllPlaces(searchQuery).then(results => {
+        setIsLoadingSuggestions(false);
+        if (results && results.length > 0) {
+          setSuggestions(results.map(r => ({
+            name: r.name,
+            address: r.address,
+            placeId: r.id,
+            rating: 4.8
+          })));
+        }
+      }).catch(() => {
+        setIsLoadingSuggestions(false);
+      });
     }
   }, []);
 

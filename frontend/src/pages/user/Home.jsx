@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { searchAllPlaces, searchLocalLandmarks } from '../../services/placesService';
 import { useNavigate } from 'react-router-dom';
 import { View, Text, Pressable, ScrollView, Image, StyleSheet, TextInput } from 'react-native';
 import { 
@@ -140,7 +141,9 @@ const Home = () => {
   const [isLocating, setIsLocating] = useState(false);
   const [matchingSuggestions, setMatchingSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearchingPlaces, setIsSearchingPlaces] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const searchDebounceRef = useRef(null);
 
   useEffect(() => {
     if (location.address && location.address !== 'Detecting location...' && location.address !== 'Detecting GPS location...' && !pickupText) {
@@ -166,23 +169,47 @@ const Home = () => {
 
   const handleDestinationChange = (txt) => {
     setDestinationText(txt);
-    if (txt.trim().length > 1) {
-      const filtered = landmarkSuggestions.filter(item => item.toLowerCase().includes(txt.toLowerCase()));
-      setMatchingSuggestions(filtered);
-      setShowSuggestions(filtered.length > 0);
-    } else {
+    if (!txt || txt.trim().length === 0) {
       setMatchingSuggestions([]);
       setShowSuggestions(false);
+      setIsSearchingPlaces(false);
+      return;
     }
+
+    setShowSuggestions(true);
+    setIsSearchingPlaces(true);
+
+    // Instant local matches from comprehensive database
+    const localMatches = searchLocalLandmarks(txt, 6);
+    if (localMatches.length > 0) {
+      setMatchingSuggestions(localMatches);
+    }
+
+    clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(async () => {
+      try {
+        const liveResults = await searchAllPlaces(txt, (partial) => {
+          setMatchingSuggestions(partial);
+        });
+        if (liveResults && liveResults.length > 0) {
+          setMatchingSuggestions(liveResults);
+        }
+      } catch (e) {
+        console.warn("Place search warning:", e);
+      } finally {
+        setIsSearchingPlaces(false);
+      }
+    }, 150);
   };
 
   const handleSelectSuggestion = (place) => {
-    setDestinationText(place);
+    const selectedTitle = typeof place === 'object' ? (place.name || place.fullText) : place;
+    setDestinationText(selectedTitle);
     setShowSuggestions(false);
     navigate('/user/ride-comparison', {
       state: {
         pickup: pickupText || location.address || 'Current Location',
-        dropoff: place
+        dropoff: selectedTitle
       }
     });
   };
@@ -459,10 +486,8 @@ const Home = () => {
                       value={destinationText}
                       onChangeText={handleDestinationChange}
                       onFocus={() => {
-                        if (destinationText.trim().length > 1) {
-                          const matches = landmarkSuggestions.filter(item => item.toLowerCase().includes(destinationText.toLowerCase()));
-                          setMatchingSuggestions(matches);
-                          setShowSuggestions(matches.length > 0);
+                        if (destinationText.trim().length > 0) {
+                          handleDestinationChange(destinationText);
                         }
                       }}
                       placeholder="Where do you want to go?"
@@ -479,19 +504,46 @@ const Home = () => {
                 </Pressable>
               </View>
 
-              {/* Suggestions Dropdown */}
+              {/* Suggestions Dropdown with Live Geocoding */}
               {showSuggestions && matchingSuggestions.length > 0 && (
                 <View style={[styles.suggestionsDropdown, isBright && styles.suggestionsDropdownLight]}>
-                  {matchingSuggestions.map((item, idx) => (
-                    <Pressable
-                      key={idx}
-                      onPress={() => handleSelectSuggestion(item)}
-                      style={[styles.suggestionItem, isBright && styles.suggestionItemLight]}
-                    >
-                      <MapPin size={13} color={isBright ? '#0284C7' : '#00D8FF'} style={{ marginRight: 8 }} />
-                      <Text style={[styles.suggestionText, isBright && styles.suggestionTextLight]}>{item}</Text>
-                    </Pressable>
-                  ))}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: isBright ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)' }}>
+                    <Text style={{ fontSize: 10, fontWeight: '800', color: isBright ? '#64748B' : '#94A3B8', textTransform: 'uppercase', letterSpacing: 0.6 }}>
+                      Matching Places & Campuses
+                    </Text>
+                    {isSearchingPlaces && (
+                      <Text style={{ fontSize: 10, color: isBright ? '#0284C7' : '#00D8FF', fontWeight: '700' }}>
+                        ⚡ Searching...
+                      </Text>
+                    )}
+                  </View>
+                  <ScrollView style={{ maxHeight: 220 }} nestedScrollEnabled={true}>
+                    {matchingSuggestions.map((item, idx) => {
+                      const name = typeof item === 'object' ? item.name : item;
+                      const address = typeof item === 'object' ? item.address : '';
+                      const icon = typeof item === 'object' ? (item.icon || '📍') : '📍';
+                      return (
+                        <Pressable
+                          key={item.id || idx}
+                          onPress={() => handleSelectSuggestion(item)}
+                          style={[styles.suggestionItem, isBright && styles.suggestionItemLight]}
+                        >
+                          <Text style={{ fontSize: 16, marginRight: 10 }}>{icon}</Text>
+                          <View style={{ flex: 1 }}>
+                            <Text style={[styles.suggestionText, isBright && styles.suggestionTextLight, { fontWeight: '700', fontSize: 13 }]}>
+                              {name}
+                            </Text>
+                            {address ? (
+                              <Text style={{ fontSize: 11, color: isBright ? '#64748B' : '#94A3B8', marginTop: 2 }} numberOfLines={1}>
+                                {address}
+                              </Text>
+                            ) : null}
+                          </View>
+                          <ChevronRight size={14} color={isBright ? '#94A3B8' : '#64748B'} />
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
                 </View>
               )}
             </View>

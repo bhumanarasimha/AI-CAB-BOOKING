@@ -9,6 +9,7 @@ import {
   Crosshair, Check, Car, User, Users, Leaf, VolumeX, Shield, PhoneCall
 } from 'lucide-react';
 import { matches, POPULAR_COMMUTE_HUBS } from './matches';
+import { searchAllPlaces, searchLocalLandmarks } from '../../../services/placesService';
 
 const CommuteDashboard = () => {
   const navigate = useNavigate();
@@ -127,8 +128,8 @@ const CommuteDashboard = () => {
     setLoading(prev => ({ ...prev, [type]: true }));
     setActiveInput(type);
 
-    // Fast local matches from POPULAR_COMMUTE_HUBS
-    const localFiltered = POPULAR_COMMUTE_HUBS.filter(h => 
+    // Fast local matches from POPULAR_COMMUTE_HUBS & COMPREHENSIVE_LANDMARKS
+    const hubMatches = POPULAR_COMMUTE_HUBS.filter(h => 
       h.name.toLowerCase().includes(query.toLowerCase()) ||
       h.city.toLowerCase().includes(query.toLowerCase()) ||
       h.landmark.toLowerCase().includes(query.toLowerCase())
@@ -137,6 +138,23 @@ const CommuteDashboard = () => {
       main_text: h.name,
       secondary_text: `${h.landmark} • ${h.city}`
     }));
+
+    const extraLandmarks = searchLocalLandmarks(query, 6).map(l => ({
+      display_name: l.fullText,
+      main_text: l.name,
+      secondary_text: l.address
+    }));
+
+    // Merge deduplicated
+    const seen = new Set(hubMatches.map(h => h.main_text.toLowerCase().trim()));
+    const localFiltered = [...hubMatches];
+    for (const el of extraLandmarks) {
+      const lower = el.main_text.toLowerCase().trim();
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        localFiltered.push(el);
+      }
+    }
 
     if (window.google?.maps?.places) {
       try {
@@ -163,9 +181,30 @@ const CommuteDashboard = () => {
       }
     }
 
-    // Immediate local results
+    // Immediate local results + async live geocoding
     setSuggestions(prev => ({ ...prev, [type]: localFiltered }));
-    setLoading(prev => ({ ...prev, [type]: false }));
+    searchAllPlaces(query).then(places => {
+      setLoading(prev => ({ ...prev, [type]: false }));
+      if (places && places.length > 0) {
+        const liveFormatted = places.map(p => ({
+          display_name: p.fullText || `${p.name}, ${p.address}`,
+          main_text: p.name,
+          secondary_text: p.address
+        }));
+        const combinedSeen = new Set(localFiltered.map(x => x.main_text.toLowerCase().trim()));
+        const mergedAll = [...localFiltered];
+        for (const item of liveFormatted) {
+          const l = item.main_text.toLowerCase().trim();
+          if (!combinedSeen.has(l)) {
+            combinedSeen.add(l);
+            mergedAll.push(item);
+          }
+        }
+        setSuggestions(prev => ({ ...prev, [type]: mergedAll.slice(0, 8) }));
+      }
+    }).catch(() => {
+      setLoading(prev => ({ ...prev, [type]: false }));
+    });
   };
 
   // Filter dynamic matches
