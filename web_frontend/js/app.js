@@ -32,6 +32,46 @@ function normalizeIndianPlaceName(str) {
     .replace(/th/g, 't').replace(/dh/g, 'd').replace(/[^a-z0-9]/g, '');
 }
 
+function scoreCityLandmarkMatch(item, query) {
+  if (!query || !item) return 0;
+  const q = query.trim().toLowerCase();
+  const qNorm = normalizeIndianPlaceName(query);
+  const nameLower = (item.name || '').toLowerCase();
+  const nameNorm = normalizeIndianPlaceName(item.name || '');
+
+  // 1. Exact or Name prefix match
+  if (nameLower === q || nameNorm === qNorm) return 100;
+  if (nameLower.startsWith(q) || nameNorm.startsWith(qNorm)) return 100;
+
+  // 2. Word prefix match in name
+  const nameWords = nameLower.split(/[\s,–\-()]+/);
+  if (nameWords.some(w => w.length > 0 && w.startsWith(q))) return 90;
+
+  // 3. Aliases prefix / keyword match
+  if (item.aliases && item.aliases.length > 0) {
+    if (item.aliases.some(a => {
+      const aLower = a.toLowerCase();
+      return aLower.startsWith(q) || normalizeIndianPlaceName(a).startsWith(qNorm) || (q.length >= 3 && aLower.includes(q));
+    })) {
+      return 95;
+    }
+  }
+
+  // 4. Substring in place name
+  if (nameLower.includes(q) || nameNorm.includes(qNorm)) return 75;
+
+  // 5. Meaningful address locality prefix match (disregard generic region words)
+  if (item.address) {
+    const addrWords = item.address.toLowerCase().split(/[\s,–\-()]+/);
+    const ignoredWords = new Set(['chennai', 'tamil', 'nadu', 'india', 'road', 'salai', 'street', 'nagar', 'bazaar']);
+    const meaningfulAddrWords = addrWords.filter(w => !ignoredWords.has(w));
+    if (meaningfulAddrWords.some(w => w.length > 0 && w.startsWith(q))) return 50;
+  }
+
+  return 0;
+}
+
+
 const COMPREHENSIVE_CITY_LANDMARKS = [
   // Poonamallee Corridor (Poonamallee / Ponamallee)
   { name: 'Poonamallee Bus Terminus & Bypass', address: 'Poonamallee High Road, Chennai', lat: 13.0487, lng: 80.1114, aliases: ['ponamallee', 'ponamal', 'poonamalli', 'ponamalli', 'poonamallee bypass'], icon: '🚌' },
@@ -1891,7 +1931,7 @@ function setupEventListeners() {
 
   let webSuggestDebounce = null;
 
-  async function renderSuggestions(query, targetInputId) {
+    async function renderSuggestions(query, targetInputId) {
     if (!suggestionsBox) return;
     if (!query || query.trim().length < 1) {
       suggestionsBox.style.display = 'none';
@@ -1905,22 +1945,22 @@ function setupEventListeners() {
     const userLng = state.userLng || 80.2785;
     const maxRadiusKm = 100;
 
-    // Tier 1: Instant local matches strictly within 100km
+    // Tier 1: Instant local matches strictly within 100km with score
     const localMatches = [];
     for (const item of COMPREHENSIVE_CITY_LANDMARKS) {
-      const match = item.name.toLowerCase().includes(q) ||
-                    item.address.toLowerCase().includes(q) ||
-                    normalizeIndianPlaceName(item.name).includes(qNorm) ||
-                    (item.aliases && item.aliases.some(a => a.includes(q) || normalizeIndianPlaceName(a).includes(qNorm)));
-
-      if (match) {
+      const rawScore = scoreCityLandmarkMatch(item, query);
+      if (rawScore > 0) {
         const dist = haversineDistKm(userLat, userLng, item.lat, item.lng);
         if (dist <= maxRadiusKm) {
-          localMatches.push({ ...item, distanceKm: Math.round(dist * 10) / 10 });
+          // Curated landmarks get +15 hub priority bonus
+          localMatches.push({ ...item, score: rawScore + 15, distanceKm: Math.round(dist * 10) / 10 });
         }
       }
     }
-    localMatches.sort((a, b) => a.distanceKm - b.distanceKm);
+    localMatches.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return a.distanceKm - b.distanceKm;
+    });
 
     const renderList = (items, isSearching = false) => {
       if (!items || items.length === 0) {
@@ -1971,13 +2011,14 @@ function setupEventListeners() {
       renderList(localMatches, true);
     }
 
-    // Tier 2: Debounced Live Geocoding via Photon OpenStreetMap
+    // Tier 2: Debounced Live Geocoding via Photon OpenStreetMap with Centered Lat/Lon & 100km Geofence
     clearTimeout(webSuggestDebounce);
     webSuggestDebounce = setTimeout(async () => {
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 2200);
-        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query.trim())}&limit=6`, { signal: controller.signal });
+        // Pass user's coordinates to Photon API so results center on Chennai/user location
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query.trim())}&lat=${userLat}&lon=${userLng}&limit=16`, { signal: controller.signal });
         clearTimeout(timeoutId);
 
         if (res.ok) {
@@ -1988,10 +2029,13 @@ function setupEventListeners() {
               const p = f.properties || {};
               // STRICT: India only
               if (p.countrycode && p.countrycode.toUpperCase() !== 'IN') continue;
+              const country = (p.country || '').toLowerCase();
+              if (country && !country.includes('india') && !country.includes('bharat')) continue;
+
               const [lon, lat] = f.geometry?.coordinates || [];
               if (lat == null || lon == null) continue;
               const dist = haversineDistKm(userLat, userLng, lat, lon);
-              // STRICT: ≤ 100km radius only
+              // STRICT: <= 100km radius only (Zero tolerance for Brazil, France, or other states)
               if (dist > maxRadiusKm) continue;
 
               const name = p.name || p.street || p.city || 'Location';
@@ -2005,7 +2049,8 @@ function setupEventListeners() {
               else if (p.osm_value === 'station' || p.osm_value === 'bus_stop') icon = '🚆';
               else if (p.osm_value === 'mall' || p.osm_value === 'supermarket') icon = '🛍️';
 
-              onlineResults.push({ name, address, icon, distanceKm: Math.round(dist * 10) / 10 });
+              const itemScore = scoreCityLandmarkMatch({ name, address }, query) || 60;
+              onlineResults.push({ name, address, icon, distanceKm: Math.round(dist * 10) / 10, score: itemScore });
             }
 
             // Merge with local deduplicated
@@ -2018,6 +2063,13 @@ function setupEventListeners() {
                 merged.push(item);
               }
             }
+
+            // Score-first sort, then distance
+            merged.sort((a, b) => {
+              if (b.score !== a.score) return b.score - a.score;
+              return a.distanceKm - b.distanceKm;
+            });
+
             renderList(merged.slice(0, 8), false);
           }
         }

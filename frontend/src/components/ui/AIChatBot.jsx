@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mic, Send, ChevronRight, TrendingDown, Navigation, Zap, Clock, Leaf, DollarSign, Train, Bike, Car, Footprints, ArrowRight, BarChart2 } from 'lucide-react';
 
