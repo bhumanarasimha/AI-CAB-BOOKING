@@ -189,11 +189,13 @@ const MapPicker = () => {
 
   return (
     <div style={{ height: '100%', width: '100%', position: 'relative', background: 'var(--bg-base)' }}>
-      {/* Background Map */}
+      {/* Background Map with Blue Pin centered in visible frame */}
       <InteractiveMap 
         center={pickerCoords} 
         userLocation={location.coords}
         onLocationChange={handleLocationChange}
+        showMarkerPin={true}
+        offsetY={0}
       />
 
       {/* Header Overlay */}

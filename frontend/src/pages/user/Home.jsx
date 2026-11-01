@@ -147,22 +147,30 @@ const Home = () => {
   const searchDebounceRef = useRef(null);
 
   useEffect(() => {
-    // 1. Check if user has a previously confirmed pickup
+    // 1. Proactively purge any poisoned legacy address from localStorage
+    try {
+      const p = localStorage.getItem('smartride_user_pickup');
+      if (p && (p.includes('Ekambareswara') || p.includes('Agraharam') || p.includes('Sowcarpet'))) {
+        localStorage.removeItem('smartride_user_pickup');
+      }
+    } catch {}
+
+    // 2. Check if user has a previously confirmed pickup
     const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('smartride_user_pickup') : null;
-    if (saved && !saved.includes('Ekambareswara') && !saved.includes('Agraharam')) {
+    if (saved && !saved.includes('Ekambareswara') && !saved.includes('Agraharam') && !saved.includes('Sowcarpet')) {
       setPickupText(saved);
       return;
     }
 
-    // 2. Reject ISP Sowcarpet address; default to Current Location
-    if (location.address && location.address !== 'Detecting location...' && location.address !== 'Detecting GPS location...' && !pickupText) {
+    // 3. Reject ISP Sowcarpet address; default to Current Location or real GPS street
+    if (location.address && location.address !== 'Detecting location...' && location.address !== 'Detecting GPS location...') {
       if (location.address.includes('Ekambareswara') || location.address.includes('Agraharam') || location.address.includes('Sowcarpet')) {
         setPickupText('Current Location');
-      } else {
+      } else if (!pickupText || pickupText === 'Current Location') {
         setPickupText(location.address);
       }
     }
-  }, [location.address, pickupText]);
+  }, [location.address]);
 
   const handleDetectGPS = async () => {
     setIsLocating(true);
@@ -330,6 +338,7 @@ const Home = () => {
           userLocation={location.coords}
           showControls={false}
           theme={isBright ? 'light' : 'dark'}
+          offsetY={0}
           onSelectCab={(cab) => navigate('/user/ride-comparison', { state: { selectedProvider: cab.type } })}
         />
       </View>

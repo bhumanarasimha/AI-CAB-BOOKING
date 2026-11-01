@@ -167,8 +167,14 @@ export async function detectCurrentLocation(silent = false) {
   if (btnLabel) btnLabel.textContent = 'Locating...';
 
   // 1. Check user-saved custom pickup from localStorage
+  try {
+    const rawSaved = localStorage.getItem('smartride_user_pickup');
+    if (rawSaved && (rawSaved.includes('Ekambareswara') || rawSaved.includes('Agraharam') || rawSaved.includes('Sowcarpet'))) {
+      localStorage.removeItem('smartride_user_pickup');
+    }
+  } catch {}
   const saved = localStorage.getItem('smartride_user_pickup');
-  if (saved && !saved.includes('Ekambareswara') && !saved.includes('Agraharam')) {
+  if (saved && !saved.includes('Ekambareswara') && !saved.includes('Agraharam') && !saved.includes('Sowcarpet')) {
     state.pickup = saved;
     if (pInput && !pInput.value.trim()) pInput.value = saved;
   }

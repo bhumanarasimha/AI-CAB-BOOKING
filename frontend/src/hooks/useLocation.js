@@ -10,10 +10,16 @@ export const useGPSLocation = () => {
   // Retrieve user's previously confirmed pickup or fallback to neutral Current Location
   const getInitialPickup = () => {
     if (typeof localStorage !== 'undefined') {
-      const saved = localStorage.getItem('smartride_user_pickup');
-      if (saved && !saved.includes('Ekambareswara') && !saved.includes('Agraharam')) {
-        return saved;
-      }
+      try {
+        const saved = localStorage.getItem('smartride_user_pickup');
+        if (saved) {
+          if (saved.includes('Ekambareswara') || saved.includes('Agraharam') || saved.includes('Sowcarpet')) {
+            localStorage.removeItem('smartride_user_pickup');
+          } else {
+            return saved;
+          }
+        }
+      } catch {}
     }
     return currentLocation?.address || 'Current Location';
   };
@@ -49,8 +55,10 @@ export const useGPSLocation = () => {
     if (!rawAddr) return 'Current Location';
     // Reject ISP datacenter Sowcarpet fallback street (Airtel gateway)
     if (rawAddr.includes('Ekambareswara') || rawAddr.includes('Agraharam') || rawAddr.includes('Sowcarpet')) {
-      const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('smartride_user_pickup') : null;
-      return (saved && !saved.includes('Ekambareswara')) ? saved : 'Current Location';
+      try {
+        localStorage.removeItem('smartride_user_pickup');
+      } catch {}
+      return 'Current Location';
     }
     return rawAddr;
   };
@@ -60,11 +68,12 @@ export const useGPSLocation = () => {
     if (geoCache.current[cacheKey]) return geoCache.current[cacheKey];
 
     // If coordinates match known Airtel ISP gateway in Sowcarpet (13.0878, 80.2785), avoid resolving to fake street
-    if (Math.abs(lat - 13.0878) < 0.005 && Math.abs(lng - 80.2785) < 0.005) {
-      const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('smartride_user_pickup') : null;
-      const addr = (saved && !saved.includes('Ekambareswara')) ? saved : 'Current Location';
-      geoCache.current[cacheKey] = addr;
-      return addr;
+    if (Math.abs(lat - 13.0878) < 0.008 && Math.abs(lng - 80.2785) < 0.008) {
+      try {
+        localStorage.removeItem('smartride_user_pickup');
+      } catch {}
+      geoCache.current[cacheKey] = 'Current Location';
+      return 'Current Location';
     }
 
     return new Promise((resolve) => {

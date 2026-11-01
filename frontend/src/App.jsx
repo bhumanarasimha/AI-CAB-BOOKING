@@ -164,6 +164,18 @@ function App() {
     // Load saved text size
     const savedSize = localStorage.getItem('app-text-size') || '2';
     document.body.style.fontSize = savedSize === '1' ? '14px' : savedSize === '3' ? '18px' : savedSize === '4' ? '20px' : '16px';
+
+    // Proactively purge legacy ISP Sowcarpet addresses
+    try {
+      const p = localStorage.getItem('smartride_user_pickup');
+      if (p && (p.includes('Ekambareswara') || p.includes('Agraharam') || p.includes('Sowcarpet'))) {
+        localStorage.removeItem('smartride_user_pickup');
+      }
+      const c = localStorage.getItem('smartride_commute_profile');
+      if (c && (c.includes('Ekambareswara') || c.includes('Agraharam') || c.includes('Sowcarpet'))) {
+        localStorage.removeItem('smartride_commute_profile');
+      }
+    } catch {}
   }, []);
 
   return (

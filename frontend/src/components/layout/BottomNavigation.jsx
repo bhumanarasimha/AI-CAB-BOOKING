@@ -144,6 +144,7 @@ const styles = StyleSheet.create({
     borderRadius: 99,
     backgroundColor: 'var(--brand-cyan, #00D8FF)',
     marginTop: 3,
+    alignSelf: 'center',
   },
 });
 

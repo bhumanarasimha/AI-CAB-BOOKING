@@ -21,9 +21,9 @@ export class FleetRadarMap {
     this.radarAngle = 0;
     this.pulseRadius = 0;
 
-    // Route points
-    this.pickup = { x: -140, y: 60, name: 'Current Location' };
-    this.dropoff = { x: 180, y: -120, name: 'Downtown Tech Park' };
+    // Route points - Blue Pin positioned in dead-center of the frame
+    this.pickup = { x: 0, y: 0, name: 'Current Location' };
+    this.dropoff = { x: 160, y: -110, name: 'Tidel Park, OMR Tech Corridor' };
 
     // Nearby Simulated Fleet
     this.cabs = [
@@ -198,11 +198,12 @@ export class FleetRadarMap {
   }
 
   drawCityGrid(ctx) {
-    ctx.strokeStyle = 'rgba(99, 102, 241, 0.08)';
-    ctx.lineWidth = 1;
-
+    const extent = 650;
     const gridSize = 60;
-    const extent = 500;
+
+    // 1. Urban City Blocks / Neighborhood outlines (High contrast)
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.22)';
+    ctx.lineWidth = 1.2;
 
     for (let x = -extent; x <= extent; x += gridSize) {
       ctx.beginPath();
@@ -217,17 +218,72 @@ export class FleetRadarMap {
       ctx.stroke();
     }
 
-    // Simulated main highways
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(-extent, 60);
-    ctx.lineTo(extent, 60);
-    ctx.moveTo(60, -extent);
-    ctx.lineTo(60, extent);
-    ctx.moveTo(-extent, -120);
-    ctx.lineTo(extent, -120);
-    ctx.stroke();
+    // 2. City Arterial Roads (Bright, visible slate roads)
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+    ctx.lineWidth = 3.5;
+    [-180, -60, 60, 180].forEach(offset => {
+      ctx.beginPath();
+      ctx.moveTo(-extent, offset);
+      ctx.lineTo(extent, offset);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(offset, -extent);
+      ctx.lineTo(offset, extent);
+      ctx.stroke();
+    });
+
+    // 3. Major Expressways & Highways (Glowing Cyan & Indigo)
+    const highways = [
+      { y1: -70, y2: -70, name: '🛣️ Poonamallee High Road (NH48)' },
+      { y1: 70, y2: 70, name: '🛣️ OMR IT Express Corridor' },
+      { x1: -80, x2: -80, vertical: true, name: '🛣️ Inner Ring Road (100ft)' },
+      { x1: 90, x2: 90, vertical: true, name: '🛣️ GST Road / Airport Link' }
+    ];
+
+    highways.forEach(hw => {
+      ctx.save();
+      // Outer neon road glow
+      ctx.strokeStyle = 'rgba(0, 216, 255, 0.65)';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      if (hw.vertical) {
+        ctx.moveTo(hw.x1, -extent);
+        ctx.lineTo(hw.x2, extent);
+      } else {
+        ctx.moveTo(-extent, hw.y1);
+        ctx.lineTo(extent, hw.y2);
+      }
+      ctx.stroke();
+
+      // Inner bright road core
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (hw.vertical) {
+        ctx.moveTo(hw.x1, -extent);
+        ctx.lineTo(hw.x2, extent);
+      } else {
+        ctx.moveTo(-extent, hw.y1);
+        ctx.lineTo(extent, hw.y2);
+      }
+      ctx.stroke();
+
+      // Highway text label
+      ctx.font = 'bold 10px Outfit, sans-serif';
+      ctx.fillStyle = '#00D8FF';
+      ctx.textAlign = 'left';
+      if (hw.vertical) {
+        ctx.save();
+        ctx.translate(hw.x1 + 10, -180);
+        ctx.rotate(Math.PI / 2);
+        ctx.fillText(hw.name, 0, 0);
+        ctx.restore();
+      } else {
+        ctx.fillText(hw.name, -260, hw.y1 - 6);
+      }
+      ctx.restore();
+    });
   }
 
   drawRoute(ctx) {
@@ -330,33 +386,45 @@ export class FleetRadarMap {
     ctx.save();
     ctx.translate(pickup.x, pickup.y);
 
-    // Animated expanding pulse wave ring
+    // 1. Dual-wave animated expanding radar pulse waves
     ctx.beginPath();
     ctx.arc(0, 0, pulseRadius, 0, Math.PI * 2);
     ctx.strokeStyle = `rgba(0, 216, 255, ${Math.max(0, 1 - pulseRadius / 70)})`;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.stroke();
 
-    // Semi-transparent location accuracy aura
+    const secondPulse = (pulseRadius + 35) % 70;
     ctx.beginPath();
-    ctx.arc(0, 0, 24, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(0, 216, 255, 0.25)';
+    ctx.arc(0, 0, secondPulse, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(0, 216, 255, ${Math.max(0, 0.7 - secondPulse / 70)})`;
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+
+    // 2. High-visibility semi-transparent accuracy aura
+    ctx.beginPath();
+    ctx.arc(0, 0, 28, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 216, 255, 0.28)';
     ctx.fill();
 
-    // Solid core GPS blue dot
+    // 3. Solid center GPS blue pin / dot with bold white border
     ctx.beginPath();
-    ctx.arc(0, 0, 9, 0, Math.PI * 2);
+    ctx.arc(0, 0, 12, 0, Math.PI * 2);
     ctx.fillStyle = '#00D8FF';
     ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 3.5;
+    ctx.shadowColor = '#00D8FF';
+    ctx.shadowBlur = 18;
     ctx.fill();
     ctx.stroke();
 
-    // Label
-    ctx.font = 'bold 11px Outfit, sans-serif';
+    // Reset shadow
+    ctx.shadowBlur = 0;
+
+    // 4. Center Blue Pin Label Badge
+    ctx.font = 'bold 12px Outfit, sans-serif';
     ctx.fillStyle = '#00D8FF';
     ctx.textAlign = 'center';
-    ctx.fillText('📍 PICKUP', 0, -18);
+    ctx.fillText('📍 CURRENT LOCATION (GPS)', 0, -22);
 
     ctx.restore();
   }

@@ -6,21 +6,24 @@ const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyDZBmG
 
 // Premium Dark Cyber Map Styling for Google Maps
 const DARK_MAP_STYLE = [
-  { elementType: "geometry", stylers: [{ color: "#090d16" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#090d16" }, { weight: 3 }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#748290" }] },
+  { elementType: "geometry", stylers: [{ color: "#0c1424" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#080c14" }, { weight: 3 }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#cbd5e1" }] },
   { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#00d8ff" }] },
-  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#4f657d" }] },
-  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#0d1722" }] },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: "#16202e" }] },
-  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#111a26" }] },
-  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#8a99a8" }] },
-  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#1e2d42" }] },
-  { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#00d8ff" }, { weight: 0.8 }] },
-  { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#00d8ff" }] },
-  { featureType: "transit", elementType: "geometry", stylers: [{ color: "#141e2b" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#05070c" }] },
-  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#3e526a" }] }
+  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#132d24" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#283b56" }] },
+  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#1c2a3e" }, { weight: 1 }] },
+  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#f1f5f9" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#0284c7" }] },
+  { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#00d8ff" }, { weight: 1.5 }] },
+  { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#ffffff" }] },
+  { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#364e72" }] },
+  { featureType: "road.arterial", elementType: "labels.text.fill", stylers: [{ color: "#f8fafc" }] },
+  { featureType: "transit", elementType: "geometry", stylers: [{ color: "#1e293b" }] },
+  { featureType: "transit.station", elementType: "labels.text.fill", stylers: [{ color: "#38bdf8" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#102542" }] },
+  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#38bdf8" }] }
 ];
 
 // Clean Modern Daylight Light Map Styling for Google Maps
@@ -79,7 +82,8 @@ const InteractiveMap = ({
   onSelectCab, 
   showMarkerPin = false,
   showControls = false,
-  theme = 'dark'
+  theme = 'dark',
+  offsetY = 0
 }) => {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -120,6 +124,7 @@ const InteractiveMap = ({
 
       if (mapInstanceRef.current) {
         mapInstanceRef.current.panTo(newCoords);
+        if (offsetY) mapInstanceRef.current.panBy(0, offsetY);
       }
       if (onLocationChange) {
         onLocationChange(newCoords);
@@ -146,12 +151,13 @@ const InteractiveMap = ({
     return () => navigator.geolocation.clearWatch(watchId);
   }, [onLocationChange]);
 
-  // Sync external center updates
+  // Sync external center updates with optional frame offsetY centering
   useEffect(() => {
     if (center && mapInstanceRef.current) {
       mapInstanceRef.current.panTo(center);
+      if (offsetY) mapInstanceRef.current.panBy(0, offsetY);
     }
-  }, [center]);
+  }, [center, offsetY]);
 
 
   // 2. Initialize real Google Map
@@ -245,11 +251,11 @@ const InteractiveMap = ({
       zIndex: 999,
       icon: {
         path: maps.SymbolPath.CIRCLE,
-        scale: 10,
-        fillColor: '#1A73E8',
+        scale: 12,
+        fillColor: '#00D8FF',
         fillOpacity: 1,
         strokeColor: '#FFFFFF',
-        strokeWeight: 3.5
+        strokeWeight: 4
       }
     });
   }, [activeCoords, locationAccuracy, isMapReady]);
@@ -310,12 +316,14 @@ const InteractiveMap = ({
           setActiveCoords(freshCoords);
           if (mapInstanceRef.current) {
             mapInstanceRef.current.panTo(freshCoords);
+            if (offsetY) mapInstanceRef.current.panBy(0, offsetY);
             mapInstanceRef.current.setZoom(16);
           }
         },
         () => {
           if (mapInstanceRef.current) {
             mapInstanceRef.current.panTo(activeCoords);
+            if (offsetY) mapInstanceRef.current.panBy(0, offsetY);
             mapInstanceRef.current.setZoom(16);
           }
         },
@@ -353,28 +361,42 @@ const InteractiveMap = ({
         }} 
       />
 
-      {/* Center Fixed Pin (for MapPicker / destination choosing) */}
+      {/* Center Fixed Blue Pin (Dead-Center of Visible Frame) */}
       {showMarkerPin && (
         <div style={{
           position: 'absolute',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -100%)',
-          zIndex: 20,
+          zIndex: 25,
           pointerEvents: 'none'
         }}>
+          {/* Ground Pulsing Target Shadow */}
           <div style={{
-            width: '28px',
-            height: '28px',
+            position: 'absolute',
+            bottom: '-4px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '20px',
+            height: '6px',
+            borderRadius: '50%',
+            background: 'rgba(0, 216, 255, 0.5)',
+            boxShadow: '0 0 12px #00D8FF'
+          }} />
+          {/* Main Blue Pin Head */}
+          <div style={{
+            width: '32px',
+            height: '32px',
             borderRadius: '50% 50% 50% 0',
-            background: '#00D8FF',
+            background: 'linear-gradient(135deg, #00D8FF, #0284C7)',
             transform: 'rotate(-45deg)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 0 20px #00D8FF'
+            boxShadow: '0 0 24px rgba(0, 216, 255, 0.85), 0 4px 12px rgba(0,0,0,0.5)',
+            border: '2px solid #FFFFFF'
           }}>
-            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#080C14' }} />
+            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#080C14', boxShadow: 'inset 0 0 4px #00D8FF' }} />
           </div>
         </div>
       )}
@@ -567,16 +589,16 @@ const InteractiveMap = ({
         </>
       )}
 
-      {/* Top and Bottom Subtle Vignettes for UI readability */}
+      {/* Light subtle vignettes to keep entire map visible */}
       <div style={{
         position: 'absolute',
         top: 0,
         left: 0,
         right: 0,
-        height: '80px',
+        height: '40px',
         background: mapTheme === 'dark'
-          ? 'linear-gradient(to bottom, rgba(8, 12, 20, 0.75) 0%, transparent 100%)'
-          : 'linear-gradient(to bottom, rgba(248, 250, 252, 0.8) 0%, transparent 100%)',
+          ? 'linear-gradient(to bottom, rgba(8, 12, 20, 0.35) 0%, transparent 100%)'
+          : 'linear-gradient(to bottom, rgba(248, 250, 252, 0.4) 0%, transparent 100%)',
         pointerEvents: 'none',
         zIndex: 2
       }} />
@@ -586,10 +608,10 @@ const InteractiveMap = ({
         bottom: 0,
         left: 0,
         right: 0,
-        height: '90px',
+        height: '40px',
         background: mapTheme === 'dark'
-          ? 'linear-gradient(to top, rgba(8, 12, 20, 0.8) 0%, transparent 100%)'
-          : 'linear-gradient(to top, rgba(248, 250, 252, 0.85) 0%, transparent 100%)',
+          ? 'linear-gradient(to top, rgba(8, 12, 20, 0.4) 0%, transparent 100%)'
+          : 'linear-gradient(to top, rgba(248, 250, 252, 0.4) 0%, transparent 100%)',
         pointerEvents: 'none',
         zIndex: 2
       }} />
