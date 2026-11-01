@@ -2238,17 +2238,41 @@ button, input, select, textarea {
 
 .chat-window {
   position: absolute;
-  bottom: 70px;
+  bottom: 74px;
   right: 0;
-  width: 360px;
-  height: 480px;
+  width: 390px;
+  max-width: 92vw;
+  height: 560px;
+  max-height: 82vh;
   background: var(--bg-surface);
   border: 1px solid var(--border-ui);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-main);
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 25px rgba(0, 216, 255, 0.15);
   display: none;
   flex-direction: column;
   overflow: hidden;
+  backdrop-filter: blur(20px);
+  z-index: 1000;
+}
+
+.chat-chip {
+  padding: 5px 11px;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--bg-elevated);
+  color: var(--brand-cyan);
+  border: 1px solid var(--border-ui);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.chat-chip:hover {
+  background: rgba(0, 216, 255, 0.15);
+  border-color: var(--brand-cyan);
+  transform: translateY(-1px);
 }
 
 .chat-window.active {

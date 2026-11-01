@@ -1972,35 +1972,53 @@
   </div>
 
   <!-- ==========================================================================
-       Floating AI Assistant Chatbot Widget
+       Floating AI Assistant Chatbot Widget (Chubby AI)
        ========================================================================== -->
   <div class="floating-chatbot">
-    <div class="chat-window" id="chatbot-window" role="region" aria-label="AI Assistant Window">
+    <div class="chat-window" id="chatbot-window" role="region" aria-label="Chubby AI Assistant Window">
       <div class="chat-header">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 18px;">🤖</span>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 36px; height: 36px; border-radius: 12px; background: linear-gradient(135deg, var(--brand-indigo), var(--brand-cyan)); display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 0 15px rgba(0, 216, 255, 0.4); position: relative;">
+            <span>⚡</span>
+            <span style="position: absolute; bottom: -2px; right: -2px; width: 10px; height: 10px; border-radius: 50%; background: #10B981; border: 2px solid var(--bg-surface);"></span>
+          </div>
           <div>
-            <strong style="font-size: 13px;">SmartRide AI Copilot</strong>
-            <p style="font-size: 10px; color: var(--brand-cyan);">Online • EMMDE Assistant</p>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <strong style="font-size: 14px; color: #FFFFFF; font-weight: 800;">Chubby AI</strong>
+              <span style="font-size: 9px; font-weight: 800; color: var(--brand-cyan); background: rgba(0, 216, 255, 0.12); border: 1px solid rgba(0, 216, 255, 0.3); padding: 1px 5px; border-radius: 4px;">REAL-TIME</span>
+            </div>
+            <p style="font-size: 11px; color: var(--text-muted); margin-top: 1px;">Live Traffic Radar & Fare Intelligence</p>
           </div>
         </div>
-        <button id="chatbot-close-btn" style="background: transparent; border: none; font-size: 16px; color: var(--text-muted); cursor: pointer;" aria-label="Close Chatbot">✕</button>
+        <button id="chatbot-close-btn" style="width: 30px; height: 30px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-ui); font-size: 14px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;" aria-label="Close Chubby AI">✕</button>
+      </div>
+
+      <!-- Quick Action Suggestion Chips Bar -->
+      <div class="chat-quick-chips" style="padding: 8px 12px; border-bottom: 1px solid var(--border-ui); display: flex; gap: 6px; overflow-x: auto; background: rgba(255,255,255,0.02); scrollbar-width: none;">
+        <button type="button" class="chat-chip" data-query="⚡ Real-Time Route Analysis">⚡ Radar</button>
+        <button type="button" class="chat-chip" data-query="Which ride is cheapest right now?">💰 Cheapest</button>
+        <button type="button" class="chat-chip" data-query="What is the fastest pickup ETA?">⏱️ Fastest</button>
+        <button type="button" class="chat-chip" data-query="Show me public transit and metro routes">🚇 Metro</button>
+        <button type="button" class="chat-chip" data-query="Tell me about SmartRide carpool commute">👥 Carpool</button>
+        <button type="button" class="chat-chip" data-query="What are the parcel express rates?">📦 Parcel</button>
+        <button type="button" class="chat-chip" data-query="What safety features and emergency SOS exist?">🛡️ Safety</button>
+        <button type="button" class="chat-chip" data-query="Are there any active promo discount coupons?">🎟️ Promo</button>
       </div>
 
       <div class="chat-messages" id="chatbot-messages">
         <div class="chat-msg bot">
-          👋 Hello! I'm your SmartRide AI Copilot. Ask me about real-time cab fares, which ride is cheapest, parcel delivery rates, or carpool matches!
+          👋 Hello! I'm <strong>Chubby AI</strong>, your real-time travel assistant. I can analyze live traffic telemetry, compare fares across Uber, Ola, Rapido, and SmartRide EV, forecast demand surges, or help you book!
         </div>
       </div>
 
       <div class="chat-input-bar">
-        <input type="text" id="chatbot-input" class="chat-input" placeholder="Ask AI assistant anything..." aria-label="Ask assistant" />
-        <button id="chatbot-send-btn" class="chat-send-btn" aria-label="Send message">➤</button>
+        <input type="text" id="chatbot-input" class="chat-input" placeholder="Ask Chubby AI about fares, traffic, routes..." aria-label="Ask Chubby AI" />
+        <button id="chatbot-send-btn" class="chat-send-btn" aria-label="Send message" style="background: linear-gradient(135deg, var(--brand-indigo), var(--brand-cyan)); border: none; color: #080C14; font-weight: 800; border-radius: 10px; width: 34px; height: 34px; cursor: pointer; display: flex; align-items: center; justify-content: center;">➤</button>
       </div>
     </div>
 
-    <button class="chat-trigger-btn" id="chatbot-toggle-btn" aria-label="Toggle AI Chatbot Assistant" title="SmartRide AI Copilot">
-      🤖
+    <button class="chat-trigger-btn" id="chatbot-toggle-btn" aria-label="Toggle Chubby AI Assistant" title="Ask Chubby AI">
+      ⚡
     </button>
   </div>
 

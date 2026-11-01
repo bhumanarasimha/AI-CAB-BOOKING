@@ -1169,34 +1169,53 @@ const AIChatBot = ({ isOpen, onClose, pickup = 'Current Location', dropoff = 'yo
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', zIndex: 998 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(8, 12, 20, 0.75)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              zIndex: 99998,
+            }}
           />
 
-          {/* Chat Panel */}
-          <motion.div
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              width: '100%',
-              height: '82%',
-              background: 'var(--bg-surface)',
-              borderTopLeftRadius: '28px',
-              borderTopRightRadius: '28px',
-              zIndex: 999,
-              display: 'flex',
-              flexDirection: 'column',
-              border: '1px solid var(--border-ui)',
-              boxShadow: '0 -20px 60px rgba(0,0,0,0.4)',
-              overflow: 'hidden',
-            }}
-          >
-            {/* Header */}
+          {/* Viewport-Anchored Fixed Sheet Wrapper */}
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            pointerEvents: 'none',
+          }}>
+            {/* Chat Panel */}
+            <motion.div
+              initial={{ y: '100%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '100%', opacity: 0 }}
+              transition={{ type: 'spring', damping: 32, stiffness: 320 }}
+              style={{
+                pointerEvents: 'auto',
+                width: '100%',
+                maxWidth: '460px',
+                height: '85vh',
+                maxHeight: '760px',
+                background: 'var(--bg-surface, #0F1623)',
+                borderTopLeftRadius: '28px',
+                borderTopRightRadius: '28px',
+                display: 'flex',
+                flexDirection: 'column',
+                border: '1px solid var(--border-ui, rgba(255, 255, 255, 0.12))',
+                borderBottom: 'none',
+                boxShadow: '0 -20px 60px rgba(0,0,0,0.6)',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Native Mobile Drag Handle */}
+              <div style={{ width: '38px', height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.2)', margin: '8px auto 2px', flexShrink: 0 }} />
+
+              {/* Header */}
             <div style={{
               padding: '16px 20px 14px',
               background: 'var(--bg-surface)',
@@ -1378,7 +1397,8 @@ const AIChatBot = ({ isOpen, onClose, pickup = 'Current Location', dropoff = 'yo
               </div>
             </div>
           </motion.div>
-        </>
+        </div>
+      </>
       )}
     </AnimatePresence>
   );

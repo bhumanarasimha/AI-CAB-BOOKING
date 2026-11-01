@@ -2035,6 +2035,18 @@ function setupEventListeners() {
   document.getElementById('chatbot-toggle-btn')?.addEventListener('click', toggleChatbot);
   document.getElementById('chatbot-close-btn')?.addEventListener('click', toggleChatbot);
   document.getElementById('chatbot-send-btn')?.addEventListener('click', handleChatbotSend);
+  // Bind Chubby AI quick suggestion chips
+  document.querySelectorAll('.chat-chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const query = chip.dataset.query;
+      const input = document.getElementById('chatbot-input');
+      if (input && query) {
+        input.value = query;
+        handleChatbotSend();
+      }
+    });
+  });
+
   document.getElementById('chatbot-input')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') handleChatbotSend();
   });
