@@ -179,8 +179,12 @@ const Home = () => {
     setShowSuggestions(true);
     setIsSearchingPlaces(true);
 
-    // Instant local matches from comprehensive database
-    const localMatches = searchLocalLandmarks(txt, 6);
+    const userCoords = location?.coords?.lat 
+      ? { lat: location.coords.lat, lng: location.coords.lng } 
+      : { lat: 13.0878, lng: 80.2785 };
+
+    // Instant local matches strictly within 100km radius
+    const localMatches = searchLocalLandmarks(txt, userCoords, 100, 7);
     if (localMatches.length > 0) {
       setMatchingSuggestions(localMatches);
     }
@@ -188,9 +192,9 @@ const Home = () => {
     clearTimeout(searchDebounceRef.current);
     searchDebounceRef.current = setTimeout(async () => {
       try {
-        const liveResults = await searchAllPlaces(txt, (partial) => {
+        const liveResults = await searchAllPlaces(txt, userCoords, (partial) => {
           setMatchingSuggestions(partial);
-        });
+        }, 100);
         if (liveResults && liveResults.length > 0) {
           setMatchingSuggestions(liveResults);
         }
@@ -508,9 +512,14 @@ const Home = () => {
               {showSuggestions && matchingSuggestions.length > 0 && (
                 <View style={[styles.suggestionsDropdown, isBright && styles.suggestionsDropdownLight]}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: isBright ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)' }}>
-                    <Text style={{ fontSize: 10, fontWeight: '800', color: isBright ? '#64748B' : '#94A3B8', textTransform: 'uppercase', letterSpacing: 0.6 }}>
-                      Matching Places & Campuses
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '800', color: isBright ? '#64748B' : '#94A3B8', textTransform: 'uppercase', letterSpacing: 0.6 }}>
+                        Nearby Places (≤ 100 km Radius)
+                      </Text>
+                      <View style={{ backgroundColor: '#10B98120', paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4 }}>
+                        <Text style={{ fontSize: 8, fontWeight: '800', color: '#10B981' }}>GEO-LOCKED</Text>
+                      </View>
+                    </View>
                     {isSearchingPlaces && (
                       <Text style={{ fontSize: 10, color: isBright ? '#0284C7' : '#00D8FF', fontWeight: '700' }}>
                         ⚡ Searching...
@@ -530,9 +539,18 @@ const Home = () => {
                         >
                           <Text style={{ fontSize: 16, marginRight: 10 }}>{icon}</Text>
                           <View style={{ flex: 1 }}>
-                            <Text style={[styles.suggestionText, isBright && styles.suggestionTextLight, { fontWeight: '700', fontSize: 13 }]}>
-                              {name}
-                            </Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                              <Text style={[styles.suggestionText, isBright && styles.suggestionTextLight, { fontWeight: '700', fontSize: 13 }]}>
+                                {name}
+                              </Text>
+                              {item.distanceKm != null && item.distanceKm <= 100 && (
+                                <View style={{ backgroundColor: isBright ? 'rgba(2, 132, 199, 0.12)' : 'rgba(0, 216, 255, 0.16)', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6 }}>
+                                  <Text style={{ fontSize: 10, fontWeight: '800', color: isBright ? '#0284C7' : '#00D8FF' }}>
+                                    {item.distanceKm} km
+                                  </Text>
+                                </View>
+                              )}
+                            </View>
                             {address ? (
                               <Text style={{ fontSize: 11, color: isBright ? '#64748B' : '#94A3B8', marginTop: 2 }} numberOfLines={1}>
                                 {address}

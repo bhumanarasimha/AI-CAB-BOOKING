@@ -16,59 +16,71 @@ import {
 } from './ai-engine.js';
 import { FleetRadarMap } from './map.js';
 
-const COMPREHENSIVE_CITY_LANDMARKS = [
-  // Colleges & Educational Hubs
-  { name: 'Saveetha Engineering College', address: 'Chettipadu – Nemam Road, Thandalam, Chennai', icon: '🎓' },
-  { name: 'Saveetha University (SIMATS)', address: 'Poonamallee High Road, Velappanchavadi, Chennai', icon: '🎓' },
-  { name: 'Saveetha Medical College & Hospital', address: 'Saveetha Nagar, Thandalam, Kanchipuram', icon: '🏥' },
-  { name: 'Saveetha Dental College & Hospital', address: '162, Poonamallee High Road, Chennai', icon: '🏥' },
-  { name: 'Saveetha School of Management & Law', address: 'Poonamallee Bypass Road, Chennai', icon: '🎓' },
-  { name: 'SRM Institute of Science and Technology', address: 'Kattankulathur, Chengalpattu, Tamil Nadu', icon: '🎓' },
-  { name: 'SRM University Ramapuram Campus', address: 'Bharathi Salai, Ramapuram, Chennai', icon: '🎓' },
-  { name: 'VIT Chennai (Vellore Institute of Tech)', address: 'Vandalur-Kelambakkam Road, Chennai', icon: '🎓' },
-  { name: 'IIT Madras (Indian Institute of Technology)', address: 'Sardar Patel Road, Adyar, Chennai', icon: '🎓' },
-  { name: 'Anna University Guindy Campus', address: 'Sardar Patel Road, Guindy, Chennai', icon: '🎓' },
-  { name: 'Loyola College', address: 'Sterling Road, Nungambakkam, Chennai', icon: '🎓' },
-  { name: 'Madras Christian College (MCC)', address: 'Tambaram East, Chennai', icon: '🎓' },
-  { name: 'SSN College of Engineering', address: 'Rajiv Gandhi Salai (OMR), Kalavakkam', icon: '🎓' },
-  { name: 'Sathyabama Institute of Science and Technology', address: 'Jeppiaar Nagar, Rajiv Gandhi Salai, Chennai', icon: '🎓' },
-  { name: 'Hindustan Institute of Tech & Science (HITS)', address: 'Rajiv Gandhi Salai (OMR), Padur', icon: '🎓' },
-  { name: 'Panimalar Engineering College', address: 'Bangalore Trunk Road, Poonamallee, Chennai', icon: '🎓' },
-  { name: 'Rajalakshmi Engineering College (REC)', address: 'Rajalakshmi Nagar, Thandalam, Chennai', icon: '🎓' },
-  { name: 'Sri Venkateswara College of Engineering (SVCE)', address: 'Pennalur, Sriperumbudur, Tamil Nadu', icon: '🎓' },
+function haversineDistKm(lat1, lon1, lat2, lon2) {
+  if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return 99999;
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
 
-  // Tech Parks & Offices
-  { name: 'Tidel Park, OMR Tech Corridor', address: 'Rajiv Gandhi Salai, Taramani, Chennai', icon: '🏢' },
-  { name: 'DLF Cybercity, Porur', address: 'Mount Poonamallee Road, Manapakkam, Chennai', icon: '🏢' },
-  { name: 'RMZ Millenia Business Park', address: 'MGR Road, Perungudi, Chennai', icon: '🏢' },
-  { name: 'Ascendas International Tech Park (ITPB)', address: 'CSIR Road, Taramani, Chennai', icon: '🏢' },
-  { name: 'Ramanujan IT City', address: 'Rajiv Gandhi Salai, Taramani, Chennai', icon: '🏢' },
-  { name: 'Olympia Technology Park', address: '1, SIDCO Industrial Estate, Guindy, Chennai', icon: '🏢' },
-  { name: 'SIPCOT IT Park, Siruseri', address: 'Rajiv Gandhi Salai (OMR), Siruseri, Tamil Nadu', icon: '🏢' },
-  { name: 'Electronic City Phase 1 & 2', address: 'Hosur Road, South Bangalore', icon: '🏢' },
-  { name: 'Manyata Embassy Business Park', address: 'Outer Ring Road, Nagavara, Bangalore', icon: '🏢' },
-  { name: 'Hitech City Cyber Towers', address: 'Madhapur, Hitech City, Hyderabad', icon: '🏢' },
+function normalizeIndianPlaceName(str) {
+  if (!str) return '';
+  return str.toLowerCase()
+    .replace(/oo/g, 'o').replace(/ee/g, 'i').replace(/ll/g, 'l').replace(/aa/g, 'a')
+    .replace(/th/g, 't').replace(/dh/g, 'd').replace(/[^a-z0-9]/g, '');
+}
+
+const COMPREHENSIVE_CITY_LANDMARKS = [
+  // Poonamallee Corridor (Poonamallee / Ponamallee)
+  { name: 'Poonamallee Bus Terminus & Bypass', address: 'Poonamallee High Road, Chennai', lat: 13.0487, lng: 80.1114, aliases: ['ponamallee', 'ponamal', 'poonamalli', 'ponamalli', 'poonamallee bypass'], icon: '🚌' },
+  { name: 'Poonamallee High Road (EVR Periyar Salai)', address: 'National Highway 48, Chennai', lat: 13.0612, lng: 80.1245, aliases: ['ponamallee high road', 'ponamal road'], icon: '🛣️' },
+  { name: 'Saveetha University (SIMATS)', address: 'Poonamallee High Road, Velappanchavadi, Chennai', lat: 13.0574, lng: 80.1232, aliases: ['saveetha', 'simats', 'ponamal saveetha'], icon: '🎓' },
+  { name: 'Saveetha Engineering College', address: 'Chettipadu – Nemam Road, Thandalam, Chennai', lat: 13.0265, lng: 80.0159, aliases: ['saveetha engineering', 'saveetha college'], icon: '🎓' },
+  { name: 'Saveetha Medical College & Hospital', address: 'Saveetha Nagar, Thandalam, Kanchipuram', lat: 13.0246, lng: 80.0173, aliases: ['saveetha medical', 'saveetha hospital'], icon: '🏥' },
+  { name: 'Saveetha Dental College & Hospital', address: '162, Poonamallee High Road, Chennai', lat: 13.0590, lng: 80.1330, aliases: ['saveetha dental'], icon: '🏥' },
+  { name: 'Panimalar Engineering College', address: 'Bangalore Trunk Road, Poonamallee, Chennai', lat: 13.0478, lng: 80.0762, aliases: ['panimalar', 'panimalar poonamallee'], icon: '🎓' },
+  { name: 'Porur Roundtana & Junction', address: 'Mount Poonamallee Road, Porur, Chennai', lat: 13.0360, lng: 80.1585, aliases: ['porur', 'porur junction'], icon: '📍' },
+  { name: 'DLF Cybercity, Porur', address: 'Mount Poonamallee Road, Manapakkam, Chennai', lat: 13.0289, lng: 80.1650, aliases: ['dlf', 'dlf porur'], icon: '🏢' },
+  { name: 'Maduravoyal Flyover & Bypass', address: 'Koyambedu – Maduravoyal Highway, Chennai', lat: 13.0655, lng: 80.1680, aliases: ['maduravoyal'], icon: '🛣️' },
+  { name: 'Koyambedu CMBT Bus Terminus', address: 'Jawaharlal Nehru Road, Koyambedu, Chennai', lat: 13.0694, lng: 80.1948, aliases: ['koyambedu', 'cmbt'], icon: '🚌' },
+
+  // Educational Hubs
+  { name: 'SRM Institute of Science and Technology', address: 'Kattankulathur, Chengalpattu, Tamil Nadu', lat: 12.8231, lng: 80.0442, aliases: ['srm', 'srm ktr'], icon: '🎓' },
+  { name: 'VIT Chennai (Vellore Institute of Tech)', address: 'Vandalur-Kelambakkam Road, Chennai', lat: 12.8406, lng: 80.1534, aliases: ['vit', 'vit chennai'], icon: '🎓' },
+  { name: 'IIT Madras (Indian Institute of Technology)', address: 'Sardar Patel Road, Adyar, Chennai', lat: 12.9915, lng: 80.2337, aliases: ['iit', 'iitm'], icon: '🎓' },
+  { name: 'Anna University Guindy Campus', address: 'Sardar Patel Road, Guindy, Chennai', lat: 13.0102, lng: 80.2355, aliases: ['anna university'], icon: '🎓' },
+  { name: 'Loyola College', address: 'Sterling Road, Nungambakkam, Chennai', lat: 13.0624, lng: 80.2333, aliases: ['loyola'], icon: '🎓' },
+  { name: 'SSN College of Engineering', address: 'Rajiv Gandhi Salai (OMR), Kalavakkam', lat: 12.7508, lng: 80.1970, aliases: ['ssn'], icon: '🎓' },
+
+  // Tech Parks & Corridors
+  { name: 'Tidel Park, OMR Tech Corridor', address: 'Rajiv Gandhi Salai, Taramani, Chennai', lat: 12.9893, lng: 80.2474, aliases: ['tidel park'], icon: '🏢' },
+  { name: 'RMZ Millenia Business Park', address: 'MGR Road, Perungudi, Chennai', lat: 12.9658, lng: 80.2428, aliases: ['rmz millenia'], icon: '🏢' },
+  { name: 'Ascendas International Tech Park (ITPB)', address: 'CSIR Road, Taramani, Chennai', lat: 12.9865, lng: 80.2435, aliases: ['ascendas'], icon: '🏢' },
+  { name: 'Ramanujan IT City', address: 'Rajiv Gandhi Salai, Taramani, Chennai', lat: 12.9880, lng: 80.2450, aliases: ['ramanujan'], icon: '🏢' },
+  { name: 'Olympia Technology Park', address: '1, SIDCO Industrial Estate, Guindy, Chennai', lat: 13.0118, lng: 80.2078, aliases: ['olympia'], icon: '🏢' },
+  { name: 'SIPCOT IT Park, Siruseri', address: 'Rajiv Gandhi Salai (OMR), Siruseri, Tamil Nadu', lat: 12.8285, lng: 80.2220, aliases: ['siruseri'], icon: '🏢' },
+  { name: 'Sriperumbudur Industrial Hub & SIPCOT', address: 'Bangalore Highway NH48, Sriperumbudur', lat: 12.9699, lng: 79.9405, aliases: ['sriperumbudur'], icon: '🏢' },
 
   // Transit & Airports
-  { name: 'Airport Terminal 2 (Meenambakkam)', address: 'GST Road, Meenambakkam, Chennai', icon: '✈️' },
-  { name: 'Chennai Central Railway Station (Dr. MGR Central)', address: 'Kannappar Thidal, Periamet, Chennai', icon: '🚆' },
-  { name: 'Chennai Egmore Railway Station', address: 'Gandhi Irwin Road, Egmore, Chennai', icon: '🚆' },
-  { name: 'Tambaram Railway Station & Transit Hub', address: 'GST Road, Tambaram, Chennai', icon: '🚆' },
-  { name: 'Koyambedu CMBT Bus Terminus', address: 'Jawaharlal Nehru Road, Koyambedu, Chennai', icon: '🚌' },
-  { name: 'Kilambakkam KCBT Bus Terminus', address: 'GST Road, Kilambakkam, Vandalur', icon: '🚌' },
-  { name: 'Kempegowda International Airport (BLR)', address: 'Devanahalli, Bangalore, Karnataka', icon: '✈️' },
+  { name: 'Airport Terminal 2 (Meenambakkam)', address: 'GST Road, Meenambakkam, Chennai', lat: 12.9941, lng: 80.1709, aliases: ['airport', 'chennai airport'], icon: '✈️' },
+  { name: 'Chennai Central Railway Station (Dr. MGR Central)', address: 'Kannappar Thidal, Periamet, Chennai', lat: 13.0827, lng: 80.2755, aliases: ['central station'], icon: '🚆' },
+  { name: 'Chennai Egmore Railway Station', address: 'Gandhi Irwin Road, Egmore, Chennai', lat: 13.0783, lng: 80.2612, aliases: ['egmore'], icon: '🚆' },
+  { name: 'Tambaram Railway Station & Transit Hub', address: 'GST Road, Tambaram, Chennai', lat: 12.9249, lng: 80.1000, aliases: ['tambaram'], icon: '🚆' },
+  { name: 'Kilambakkam KCBT Bus Terminus', address: 'GST Road, Kilambakkam, Vandalur', lat: 12.8682, lng: 80.0712, aliases: ['kilambakkam', 'kcbt'], icon: '🚌' },
 
   // Shopping Malls & Landmarks
-  { name: 'Phoenix MarketCity Mall, Velachery', address: '142, Velachery Road, Indira Gandhi Nagar, Chennai', icon: '🛍️' },
-  { name: 'Express Avenue Mall, Royapettah', address: '2, Club House Road, Royapettah, Chennai', icon: '🛍️' },
-  { name: 'VR Chennai Mall', address: '100 Feet Road, Anna Nagar, Chennai', icon: '🛍️' },
-  { name: 'Forum Vijaya Mall, Vadapalani', address: 'Arcot Road, NSK Salai, Vadapalani, Chennai', icon: '🛍️' },
-  { name: 'Marina Beach Promenade', address: 'Kamarajar Salai, Triplicane, Chennai', icon: '🏖️' },
-  { name: 'Besant Nagar Elliot\'s Beach (Bessie)', address: '6th Avenue, Besant Nagar, Chennai', icon: '🏖️' },
-  { name: 'Kapaleeshwarar Temple, Mylapore', address: 'Vadakkumada St, Mylapore, Chennai', icon: '🛕' },
-  { name: 'Anna Nagar West Roundtana', address: '3rd Avenue, Anna Nagar West, Chennai', icon: '🌳' },
-  { name: 'Indiranagar 100ft Road', address: 'Indiranagar, Bangalore, Karnataka', icon: '📍' },
-  { name: 'MG Road Metro Station', address: 'MG Road, Central Bangalore, Karnataka', icon: '📍' }
+  { name: 'Phoenix MarketCity Mall, Velachery', address: '142, Velachery Road, Indira Gandhi Nagar, Chennai', lat: 12.9922, lng: 80.2173, aliases: ['phoenix mall'], icon: '🛍️' },
+  { name: 'Express Avenue Mall, Royapettah', address: '2, Club House Road, Royapettah, Chennai', lat: 13.0588, lng: 80.2642, aliases: ['express avenue'], icon: '🛍️' },
+  { name: 'VR Chennai Mall', address: '100 Feet Road, Anna Nagar, Chennai', lat: 13.0847, lng: 80.1983, aliases: ['vr mall'], icon: '🛍️' },
+  { name: 'Forum Vijaya Mall, Vadapalani', address: 'Arcot Road, NSK Salai, Vadapalani, Chennai', lat: 13.0505, lng: 80.2093, aliases: ['forum mall'], icon: '🛍️' },
+  { name: 'Marina Beach Promenade', address: 'Kamarajar Salai, Triplicane, Chennai', lat: 13.0399, lng: 80.2785, aliases: ['marina beach'], icon: '🏖️' },
+  { name: 'Besant Nagar Elliot\'s Beach (Bessie)', address: '6th Avenue, Besant Nagar, Chennai', lat: 12.9990, lng: 80.2700, aliases: ['besant nagar beach'], icon: '🏖️' },
+  { name: 'Kapaleeshwarar Temple, Mylapore', address: 'Vadakkumada St, Mylapore, Chennai', lat: 13.0335, lng: 80.2694, aliases: ['kapaleeshwarar'], icon: '🛕' },
+  { name: 'Anna Nagar West Roundtana', address: '3rd Avenue, Anna Nagar West, Chennai', lat: 13.0850, lng: 80.2100, aliases: ['anna nagar'], icon: '🌳' },
+  { name: 'Mahabalipuram Shore Temple & Heritage Site', address: 'East Coast Road (ECR), Mahabalipuram', lat: 12.6186, lng: 80.1989, aliases: ['mahabalipuram'], icon: '🏖️' },
+  { name: 'Kanchipuram Temple City', address: 'Kanchipuram, Tamil Nadu', lat: 12.8342, lng: 79.7036, aliases: ['kanchipuram'], icon: '🛕' }
 ];
 
 const CITY_LANDMARKS = COMPREHENSIVE_CITY_LANDMARKS.map(l => l.name);
@@ -1887,12 +1899,28 @@ function setupEventListeners() {
     }
 
     const q = query.trim().toLowerCase();
+    const qNorm = normalizeIndianPlaceName(query);
 
-    // Tier 1: Instant local matches
-    const localMatches = COMPREHENSIVE_CITY_LANDMARKS.filter(item => 
-      item.name.toLowerCase().includes(q) || 
-      item.address.toLowerCase().includes(q)
-    ).slice(0, 7);
+    const userLat = state.userLat || 13.0878;
+    const userLng = state.userLng || 80.2785;
+    const maxRadiusKm = 100;
+
+    // Tier 1: Instant local matches strictly within 100km
+    const localMatches = [];
+    for (const item of COMPREHENSIVE_CITY_LANDMARKS) {
+      const match = item.name.toLowerCase().includes(q) ||
+                    item.address.toLowerCase().includes(q) ||
+                    normalizeIndianPlaceName(item.name).includes(qNorm) ||
+                    (item.aliases && item.aliases.some(a => a.includes(q) || normalizeIndianPlaceName(a).includes(qNorm)));
+
+      if (match) {
+        const dist = haversineDistKm(userLat, userLng, item.lat, item.lng);
+        if (dist <= maxRadiusKm) {
+          localMatches.push({ ...item, distanceKm: Math.round(dist * 10) / 10 });
+        }
+      }
+    }
+    localMatches.sort((a, b) => a.distanceKm - b.distanceKm);
 
     const renderList = (items, isSearching = false) => {
       if (!items || items.length === 0) {
@@ -1902,14 +1930,17 @@ function setupEventListeners() {
 
       suggestionsBox.innerHTML = `
         <div style="padding: 6px 12px; font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center;">
-          <span>Matching Places & Campuses</span>
+          <div style="display: flex; align-items: center; gap: 6px;"><span>Nearby Places (≤ 100 km Radius)</span><span style="color: #10B981; font-weight: 800; font-size: 8px; background: rgba(16,185,129,0.15); padding: 1px 5px; border-radius: 4px;">GEO-LOCKED</span></div>
           ${isSearching ? '<span style="color: var(--brand-cyan); font-size: 9px;">⚡ Live search...</span>' : ''}
         </div>
         ${items.map(item => `
           <div class="suggestion-item" data-place="${item.name}" data-address="${item.address || ''}" data-target="${targetInputId}" style="padding: 10px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.04);">
             <span style="font-size: 18px; flex-shrink: 0;">${item.icon || '📍'}</span>
             <div style="flex: 1; min-width: 0;">
-              <strong style="font-size: 13px; color: var(--text-main); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.name}</strong>
+              <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <strong style="font-size: 13px; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.name}</strong>
+                ${item.distanceKm != null ? `<span style="background: rgba(0, 216, 255, 0.16); color: var(--brand-cyan); font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 4px;">${item.distanceKm} km</span>` : ''}
+              </div>
               ${item.address ? `<span style="font-size: 11px; color: var(--text-muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">${item.address}</span>` : ''}
             </div>
             <span style="font-size: 11px; color: var(--brand-cyan); opacity: 0.8;">➔</span>
@@ -1952,11 +1983,20 @@ function setupEventListeners() {
         if (res.ok) {
           const data = await res.json();
           if (data.features && Array.isArray(data.features)) {
-            const onlineResults = data.features.map(f => {
+            const onlineResults = [];
+            for (const f of data.features) {
               const p = f.properties || {};
+              // STRICT: India only
+              if (p.countrycode && p.countrycode.toUpperCase() !== 'IN') continue;
+              const [lon, lat] = f.geometry?.coordinates || [];
+              if (lat == null || lon == null) continue;
+              const dist = haversineDistKm(userLat, userLng, lat, lon);
+              // STRICT: ≤ 100km radius only
+              if (dist > maxRadiusKm) continue;
+
               const name = p.name || p.street || p.city || 'Location';
               const parts = [p.street, p.locality || p.district, p.city, p.state].filter(Boolean);
-              const address = parts.length > 0 ? parts.join(', ') : 'India';
+              const address = parts.length > 0 ? parts.join(', ') : 'Tamil Nadu, India';
 
               let icon = '📍';
               if (p.osm_value === 'college' || p.osm_value === 'university' || p.osm_value === 'school') icon = '🎓';
@@ -1965,8 +2005,8 @@ function setupEventListeners() {
               else if (p.osm_value === 'station' || p.osm_value === 'bus_stop') icon = '🚆';
               else if (p.osm_value === 'mall' || p.osm_value === 'supermarket') icon = '🛍️';
 
-              return { name, address, icon };
-            });
+              onlineResults.push({ name, address, icon, distanceKm: Math.round(dist * 10) / 10 });
+            }
 
             // Merge with local deduplicated
             const seen = new Set(localMatches.map(m => m.name.toLowerCase().trim()));
