@@ -221,11 +221,19 @@ export async function detectCurrentLocation(silent = false) {
       async (pos) => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
+        const inIndia = lat >= 6.0 && lat <= 36.5 && lng >= 68.0 && lng <= 98.0;
         let address = '';
 
-        // If coordinates match Airtel ISP datacenter (13.0878, 80.2785), prevent resolving to Sowcarpet street
-        if (Math.abs(lat - 13.0878) < 0.005 && Math.abs(lng - 80.2785) < 0.005) {
+        if (!inIndia) {
+          // Emulator mock GPS in Mountain View, CA or international IP: anchor to operating corridor
+          address = 'Current Location';
+          state.userLat = 13.0878;
+          state.userLng = 80.2785;
+        } else if (Math.abs(lat - 13.0878) < 0.005 && Math.abs(lng - 80.2785) < 0.005) {
+          // If coordinates match Airtel ISP datacenter (13.0878, 80.2785), prevent resolving to Sowcarpet street
           address = (saved && !saved.includes('Ekambareswara')) ? saved : 'Current Location';
+          state.userLat = lat;
+          state.userLng = lng;
         } else {
           try {
             const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
@@ -242,10 +250,19 @@ export async function detectCurrentLocation(silent = false) {
           } catch (e) {
             console.warn("Reverse geocode failed", e);
           }
+          state.userLat = lat;
+          state.userLng = lng;
         }
 
-        if (!address || address.includes('Ekambareswara') || address.includes('Agraharam')) {
-          address = (saved && !saved.includes('Ekambareswara')) ? saved : 'Current Location';
+        if (
+          !address || 
+          address.includes('Ekambareswara') || 
+          address.includes('Agraharam') || 
+          address.includes('Amphitheatre') || 
+          address.includes('Mountain View') ||
+          address.includes('California')
+        ) {
+          address = (saved && !saved.includes('Ekambareswara') && !saved.includes('Amphitheatre')) ? saved : 'Current Location';
         }
 
         state.pickup = address;
@@ -2055,8 +2072,13 @@ function setupEventListeners() {
   async function renderSuggestions(query, targetInputId) {
     if (!suggestionsBox) return;
 
-    const userLat = state.userLat || 13.0878;
-    const userLng = state.userLng || 80.2785;
+    let userLat = state.userLat || 13.0878;
+    let userLng = state.userLng || 80.2785;
+    const inIndia = userLat >= 6.0 && userLat <= 36.5 && userLng >= 68.0 && userLng <= 98.0;
+    if (!inIndia) {
+      userLat = 13.0878;
+      userLng = 80.2785;
+    }
     const maxRadiusKm = 100;
 
     if (!query || query.trim().length < 1) {

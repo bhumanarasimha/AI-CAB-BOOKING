@@ -13,7 +13,11 @@ export const useGPSLocation = () => {
       try {
         const saved = localStorage.getItem('smartride_user_pickup');
         if (saved) {
-          if (saved.includes('Ekambareswara') || saved.includes('Agraharam') || saved.includes('Sowcarpet')) {
+          if (
+            saved.includes('Ekambareswara') || saved.includes('Agraharam') || saved.includes('Sowcarpet') ||
+            saved.includes('Amphitheatre') || saved.includes('Mountain View') || saved.includes('California') ||
+            saved.includes('Shoreline')
+          ) {
             localStorage.removeItem('smartride_user_pickup');
           } else {
             return saved;
@@ -24,8 +28,20 @@ export const useGPSLocation = () => {
     return currentLocation?.address || 'Current Location';
   };
 
+  const isOperatingCountry = (lat, lng) => {
+    return typeof lat === 'number' && typeof lng === 'number' &&
+      lat >= 6.0 && lat <= 36.5 && lng >= 68.0 && lng <= 98.0;
+  };
+
+  const getEffectiveCoords = (coords) => {
+    if (coords && isOperatingCountry(coords.lat, coords.lng)) {
+      return coords;
+    }
+    return { lat: 13.0827, lng: 80.2707 };
+  };
+
   const [location, setLocation] = useState({
-    coords: currentLocation?.coords || { lat: 13.0827, lng: 80.2707 },
+    coords: getEffectiveCoords(currentLocation?.coords),
     address: getInitialPickup(),
     loading: !currentLocation,
     error: null
@@ -55,6 +71,19 @@ export const useGPSLocation = () => {
     if (!rawAddr) return 'Current Location';
     // Reject ISP datacenter Sowcarpet fallback street (Airtel gateway)
     if (rawAddr.includes('Ekambareswara') || rawAddr.includes('Agraharam') || rawAddr.includes('Sowcarpet')) {
+      try {
+        localStorage.removeItem('smartride_user_pickup');
+      } catch {}
+      return 'Current Location';
+    }
+    // Reject Android Emulator default mock GPS in Mountain View, CA
+    if (
+      rawAddr.includes('Amphitheatre') || 
+      rawAddr.includes('Mountain View') || 
+      rawAddr.includes('California') || 
+      rawAddr.includes('Shoreline') ||
+      rawAddr.includes('Charleston Rd')
+    ) {
       try {
         localStorage.removeItem('smartride_user_pickup');
       } catch {}
@@ -207,16 +236,20 @@ export const useGPSLocation = () => {
         const { latitude, longitude, accuracy } = position.coords;
         const currentLoc = locationRef.current;
 
+        const safeCoords = getEffectiveCoords({ lat: latitude, lng: longitude });
+        const inIndia = isOperatingCountry(latitude, longitude);
+
         const currentCoords = currentLoc?.coords;
         const distance = currentCoords ?
-          Math.sqrt(Math.pow(latitude - currentCoords.lat, 2) + Math.pow(longitude - currentCoords.lng, 2)) * 111000 :
+          Math.sqrt(Math.pow(safeCoords.lat - currentCoords.lat, 2) + Math.pow(safeCoords.lng - currentCoords.lng, 2)) * 111000 :
           100;
 
         if (distance > 5 || currentLoc.loading) {
-          const address = await reverseGeocode(latitude, longitude);
+          const rawAddress = inIndia ? await reverseGeocode(latitude, longitude) : 'Current Location';
+          const cleanAddress = sanitizeAddress(rawAddress);
           setLocation({
-            coords: { lat: latitude, lng: longitude },
-            address: sanitizeAddress(address),
+            coords: safeCoords,
+            address: cleanAddress,
             loading: false,
             error: null
           });
@@ -272,10 +305,12 @@ export const useGPSLocation = () => {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
-          const address = await reverseGeocode(latitude, longitude);
-          const sanitized = sanitizeAddress(address);
+          const safeCoords = getEffectiveCoords({ lat: latitude, lng: longitude });
+          const inIndia = isOperatingCountry(latitude, longitude);
+          const rawAddress = inIndia ? await reverseGeocode(latitude, longitude) : 'Current Location';
+          const sanitized = sanitizeAddress(rawAddress);
           const finalLoc = {
-            coords: { lat: latitude, lng: longitude },
+            coords: safeCoords,
             address: sanitized || 'Current Location',
             loading: false,
             error: null

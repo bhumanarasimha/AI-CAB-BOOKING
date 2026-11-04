@@ -8,6 +8,24 @@
 export const DEFAULT_USER_COORDS = { lat: 13.0878, lng: 80.2785 }; // Default: Chennai Central Corridor
 
 /**
+ * Resolve effective operating anchor coordinates.
+ * If user coordinates are in India (lat 6° to 37°, lng 68° to 98°), use them directly.
+ * If user coordinates are outside India (such as Android emulator default mock in Mountain View, CA: 37.42, -122.08),
+ * safely anchor to DEFAULT_USER_COORDS (Chennai Central Corridor: 13.0878, 80.2785) so curated landmarks and nearby places
+ * are never discarded on developer/testing emulators.
+ */
+export function getSafeOperatingCoords(coords) {
+  if (!coords || typeof coords.lat !== 'number' || typeof coords.lng !== 'number') {
+    return DEFAULT_USER_COORDS;
+  }
+  const inIndia = coords.lat >= 6.0 && coords.lat <= 36.5 && coords.lng >= 68.0 && coords.lng <= 98.0;
+  if (!inIndia) {
+    return DEFAULT_USER_COORDS;
+  }
+  return coords;
+}
+
+/**
  * Calculate Haversine distance between two coordinates in Kilometers
  */
 export function haversineDistance(lat1, lon1, lat2, lon2) {
@@ -163,17 +181,16 @@ export function scoreMatch(item, query) {
  * Filter Curated Landmarks within 100km radius with Relevance-First Scoring
  */
 export function searchLocalLandmarks(query, userCoords = DEFAULT_USER_COORDS, maxDistanceKm = 100, limit = 8) {
-  // Robust argument resolution if limit was passed as 2nd arg
-  let effectiveCoords = userCoords;
   let effectiveLimit = limit;
   let effectiveMaxDist = maxDistanceKm;
   if (typeof userCoords === 'number') {
     effectiveLimit = userCoords;
-    effectiveCoords = DEFAULT_USER_COORDS;
+    userCoords = DEFAULT_USER_COORDS;
   }
 
-  const latAnchor = effectiveCoords?.lat || DEFAULT_USER_COORDS.lat;
-  const lngAnchor = effectiveCoords?.lng || DEFAULT_USER_COORDS.lng;
+  const safeAnchor = getSafeOperatingCoords(userCoords);
+  const latAnchor = safeAnchor.lat;
+  const lngAnchor = safeAnchor.lng;
 
   if (!query || query.trim().length === 0) {
     // Return top popular hubs strictly within 100km sorted by proximity
@@ -242,8 +259,9 @@ export function searchLocalLandmarks(query, userCoords = DEFAULT_USER_COORDS, ma
  */
 async function fetchPhotonNearbySuggestions(query, userCoords = DEFAULT_USER_COORDS, maxDistanceKm = 100, limit = 6) {
   try {
-    const latAnchor = userCoords?.lat || DEFAULT_USER_COORDS.lat;
-    const lngAnchor = userCoords?.lng || DEFAULT_USER_COORDS.lng;
+    const safeAnchor = getSafeOperatingCoords(userCoords);
+    const latAnchor = safeAnchor.lat;
+    const lngAnchor = safeAnchor.lng;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2400);
@@ -328,8 +346,9 @@ async function fetchPhotonNearbySuggestions(query, userCoords = DEFAULT_USER_COO
  */
 async function fetchNominatimNearbySuggestions(query, userCoords = DEFAULT_USER_COORDS, maxDistanceKm = 100, limit = 5) {
   try {
-    const latAnchor = userCoords?.lat || DEFAULT_USER_COORDS.lat;
-    const lngAnchor = userCoords?.lng || DEFAULT_USER_COORDS.lng;
+    const safeAnchor = getSafeOperatingCoords(userCoords);
+    const latAnchor = safeAnchor.lat;
+    const lngAnchor = safeAnchor.lng;
 
     // Viewbox for ~100 km (~0.9 degree latitude, ~1.0 degree longitude)
     const latDelta = (maxDistanceKm / 111.0);

@@ -150,21 +150,34 @@ const Home = () => {
     // 1. Proactively purge any poisoned legacy address from localStorage
     try {
       const p = localStorage.getItem('smartride_user_pickup');
-      if (p && (p.includes('Ekambareswara') || p.includes('Agraharam') || p.includes('Sowcarpet'))) {
+      if (p && (
+        p.includes('Ekambareswara') || p.includes('Agraharam') || p.includes('Sowcarpet') ||
+        p.includes('Amphitheatre') || p.includes('Mountain View') || p.includes('California')
+      )) {
         localStorage.removeItem('smartride_user_pickup');
       }
     } catch {}
 
     // 2. Check if user has a previously confirmed pickup
     const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('smartride_user_pickup') : null;
-    if (saved && !saved.includes('Ekambareswara') && !saved.includes('Agraharam') && !saved.includes('Sowcarpet')) {
+    if (saved && (
+      saved.includes('Ekambareswara') || saved.includes('Agraharam') || saved.includes('Sowcarpet') ||
+      saved.includes('Amphitheatre') || saved.includes('Mountain View') || saved.includes('California')
+    )) {
+      setPickupText('Current Location');
+      return;
+    }
+    if (saved) {
       setPickupText(saved);
       return;
     }
 
-    // 3. Reject ISP Sowcarpet address; default to Current Location or real GPS street
+    // 3. Reject ISP Sowcarpet & Emulator mock address; default to Current Location or real GPS street
     if (location.address && location.address !== 'Detecting location...' && location.address !== 'Detecting GPS location...') {
-      if (location.address.includes('Ekambareswara') || location.address.includes('Agraharam') || location.address.includes('Sowcarpet')) {
+      if (
+        location.address.includes('Ekambareswara') || location.address.includes('Agraharam') || location.address.includes('Sowcarpet') ||
+        location.address.includes('Amphitheatre') || location.address.includes('Mountain View') || location.address.includes('California')
+      ) {
         setPickupText('Current Location');
       } else if (!pickupText || pickupText === 'Current Location') {
         setPickupText(location.address);
@@ -317,6 +330,12 @@ const Home = () => {
   // Clean short address formatter for the header badge
   const formatShortAddress = (addr) => {
     if (!addr) return 'Current Area';
+    if (
+      addr.includes('Amphitheatre') || addr.includes('Mountain View') || addr.includes('California') ||
+      addr.includes('Ekambareswara') || addr.includes('Sowcarpet')
+    ) {
+      return 'Current Location';
+    }
     const parts = addr.split(',').map(p => p.trim()).filter(Boolean);
     if (parts.length >= 2) {
       return `${parts[0]}, ${parts[1]}`;
