@@ -83,8 +83,7 @@ const InteractiveMap = ({
   showMarkerPin = false,
   showControls = false,
   theme = 'dark',
-  offsetY = 0,
-  recenterTrigger = 0
+  offsetY = 0
 }) => {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -156,9 +155,15 @@ const InteractiveMap = ({
   useEffect(() => {
     if (center && mapInstanceRef.current) {
       mapInstanceRef.current.panTo(center);
-      if (offsetY) mapInstanceRef.current.panBy(0, offsetY);
+      if (offsetY) {
+        setTimeout(() => {
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.panBy(0, offsetY);
+          }
+        }, 80);
+      }
     }
-  }, [center, offsetY]);
+  }, [center, offsetY, isMapReady]);
 
 
   // 2. Initialize real Google Map
@@ -189,10 +194,9 @@ const InteractiveMap = ({
           if (offsetY) {
             setTimeout(() => {
               if (mapInstanceRef.current) {
-                mapInstanceRef.current.panTo(activeCoords);
                 mapInstanceRef.current.panBy(0, offsetY);
               }
-            }, 250);
+            }, 150);
           }
 
           // Listen to user map interactions
@@ -212,37 +216,6 @@ const InteractiveMap = ({
       isCancelled = true;
     };
   }, []);
-
-  // Handle external Recenter GPS triggers
-  useEffect(() => {
-    if (recenterTrigger > 0 && mapInstanceRef.current) {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const fresh = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            setActiveCoords(fresh);
-            if (mapInstanceRef.current) {
-              mapInstanceRef.current.panTo(fresh);
-              if (offsetY) mapInstanceRef.current.panBy(0, offsetY);
-              mapInstanceRef.current.setZoom(16);
-            }
-          },
-          () => {
-            if (mapInstanceRef.current) {
-              mapInstanceRef.current.panTo(activeCoords);
-              if (offsetY) mapInstanceRef.current.panBy(0, offsetY);
-              mapInstanceRef.current.setZoom(16);
-            }
-          },
-          { enableHighAccuracy: true, timeout: 6000 }
-        );
-      } else if (mapInstanceRef.current) {
-        mapInstanceRef.current.panTo(activeCoords);
-        if (offsetY) mapInstanceRef.current.panBy(0, offsetY);
-        mapInstanceRef.current.setZoom(16);
-      }
-    }
-  }, [recenterTrigger, offsetY]);
 
 
   // Update map style / theme when user toggles or theme changes
@@ -278,34 +251,44 @@ const InteractiveMap = ({
       strokeOpacity: 0.7,
       strokeWeight: 1.5,
       fillColor: '#00D8FF',
-      fillOpacity: 0.16,
+      fillOpacity: 0.14,
       map,
       center: activeCoords,
-      radius: Math.max(45, Math.min(120, locationAccuracy || 50)),
-      zIndex: 10
+      radius: Math.max(30, Math.min(80, locationAccuracy || 45)),
+      zIndex: 1
     });
 
-    // High-visibility Official Google/Uber Blue Dot with white border & glowing halo
-    const blueDotSvg = {
-      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-        <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60">
-          <circle cx="30" cy="30" r="26" fill="rgba(0, 216, 255, 0.22)" stroke="#00D8FF" stroke-width="2"/>
-          <circle cx="30" cy="30" r="17" fill="rgba(2, 132, 199, 0.35)"/>
-          <circle cx="30" cy="30" r="11" fill="#007AFF" stroke="#FFFFFF" stroke-width="3.5" filter="drop-shadow(0 3px 6px rgba(0,0,0,0.5))"/>
-          <circle cx="30" cy="30" r="4" fill="#FFFFFF"/>
-        </svg>
-      `),
-      scaledSize: new maps.Size(60, 60),
-      anchor: new maps.Point(30, 30)
-    };
+    // High-visibility Official Blue Dot with multi-tier glowing pulse halo & drop shadow
+    const blueDotSvg = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56">
+        <defs>
+          <filter id="shadowGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000000" flood-opacity="0.5"/>
+          </filter>
+        </defs>
+        <!-- Outer Glowing Pulse Radar Halo -->
+        <circle cx="28" cy="28" r="26" fill="#00D8FF" fill-opacity="0.25"/>
+        <circle cx="28" cy="28" r="19" fill="#007AFF" fill-opacity="0.30"/>
+        <!-- Crisp White Outer Rim with Drop Shadow -->
+        <circle cx="28" cy="28" r="13" fill="#FFFFFF" filter="url(#shadowGlow)"/>
+        <!-- Vibrant Electric Azure Blue Core Dot -->
+        <circle cx="28" cy="28" r="9" fill="#007AFF"/>
+        <!-- Radiant Inner Specular Light Point -->
+        <circle cx="25.5" cy="25.5" r="3" fill="#67E8F9"/>
+      </svg>
+    `)}`;
 
     userMarkerRef.current = new maps.Marker({
       position: activeCoords,
       map,
-      title: "Your Present Location (GPS Blue Dot)",
-      zIndex: 999999,
-      icon: blueDotSvg,
-      optimized: false
+      title: "Your Present Location",
+      zIndex: 99999,
+      optimized: false,
+      icon: {
+        url: blueDotSvg,
+        scaledSize: new maps.Size(56, 56),
+        anchor: new maps.Point(28, 28)
+      }
     });
   }, [activeCoords, locationAccuracy, isMapReady]);
 

@@ -331,20 +331,6 @@ const Home = () => {
     return 310; // Standard peek: generous live map view with cruising cabs
   };
 
-  // Center the GPS Blue Dot dead-center in the open visible map area (above bottom sheet)
-  const getMapOffsetY = () => {
-    if (sheetMode === 'fullmap') return 10;
-    if (sheetMode === 'expanded') return 160;
-    return 110; // Standard peek: shifts center downward so Blue Dot is in the center of the visible frame
-  };
-
-  const [recenterCount, setRecenterCount] = useState(0);
-
-  const handleRecenterGPS = () => {
-    setRecenterCount(c => c + 1);
-    location.refresh();
-  };
-
   return (
     <View style={[styles.container, isBright && styles.containerLight]}>
       {/* Background Interactive Live Wallpaper Google Map */}
@@ -354,8 +340,7 @@ const Home = () => {
           userLocation={location.coords}
           showControls={false}
           theme={isBright ? 'light' : 'dark'}
-          offsetY={getMapOffsetY()}
-          recenterTrigger={recenterCount}
+          offsetY={sheetMode === 'peek' ? 140 : 0}
           onSelectCab={(cab) => navigate('/user/ride-comparison', { state: { selectedProvider: cab.type } })}
         />
       </View>
@@ -418,10 +403,10 @@ const Home = () => {
             <View style={styles.mapControlsCol}>
               {/* Recenter GPS Button */}
               <Pressable 
-                onPress={handleRecenterGPS} 
+                onPress={handleDetectGPS} 
                 style={[styles.mapFloatingBtn, isBright && styles.mapFloatingBtnLight]}
-                accessibilityLabel="Recenter GPS Blue Dot"
-                title="Recenter GPS Blue Dot"
+                accessibilityLabel="Recenter GPS"
+                title="Recenter GPS"
               >
                 <Navigation size={17} color={isBright ? '#0284C7' : '#00D8FF'} />
               </Pressable>
