@@ -83,7 +83,8 @@ const InteractiveMap = ({
   showMarkerPin = false,
   showControls = false,
   theme = 'dark',
-  offsetY = 0
+  offsetY = 0,
+  recenterTrigger = 0
 }) => {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -185,6 +186,15 @@ const InteractiveMap = ({
           mapInstanceRef.current = map;
           setIsMapReady(true);
 
+          if (offsetY) {
+            setTimeout(() => {
+              if (mapInstanceRef.current) {
+                mapInstanceRef.current.panTo(activeCoords);
+                mapInstanceRef.current.panBy(0, offsetY);
+              }
+            }, 250);
+          }
+
           // Listen to user map interactions
           if (onLocationChange) {
             map.addListener('idle', () => {
@@ -202,6 +212,37 @@ const InteractiveMap = ({
       isCancelled = true;
     };
   }, []);
+
+  // Handle external Recenter GPS triggers
+  useEffect(() => {
+    if (recenterTrigger > 0 && mapInstanceRef.current) {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const fresh = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            setActiveCoords(fresh);
+            if (mapInstanceRef.current) {
+              mapInstanceRef.current.panTo(fresh);
+              if (offsetY) mapInstanceRef.current.panBy(0, offsetY);
+              mapInstanceRef.current.setZoom(16);
+            }
+          },
+          () => {
+            if (mapInstanceRef.current) {
+              mapInstanceRef.current.panTo(activeCoords);
+              if (offsetY) mapInstanceRef.current.panBy(0, offsetY);
+              mapInstanceRef.current.setZoom(16);
+            }
+          },
+          { enableHighAccuracy: true, timeout: 6000 }
+        );
+      } else if (mapInstanceRef.current) {
+        mapInstanceRef.current.panTo(activeCoords);
+        if (offsetY) mapInstanceRef.current.panBy(0, offsetY);
+        mapInstanceRef.current.setZoom(16);
+      }
+    }
+  }, [recenterTrigger, offsetY]);
 
 
   // Update map style / theme when user toggles or theme changes
@@ -234,29 +275,37 @@ const InteractiveMap = ({
     // Glowing translucent accuracy radar circle
     userCircleRef.current = new maps.Circle({
       strokeColor: '#007AFF',
-      strokeOpacity: 0.8,
-      strokeWeight: 2,
-      fillColor: '#007AFF',
-      fillOpacity: 0.18,
+      strokeOpacity: 0.7,
+      strokeWeight: 1.5,
+      fillColor: '#00D8FF',
+      fillOpacity: 0.16,
       map,
       center: activeCoords,
-      radius: Math.max(30, Math.min(100, locationAccuracy || 50))
+      radius: Math.max(45, Math.min(120, locationAccuracy || 50)),
+      zIndex: 10
     });
 
-    // High-visibility Official Blue Dot user location beacon
+    // High-visibility Official Google/Uber Blue Dot with white border & glowing halo
+    const blueDotSvg = {
+      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60">
+          <circle cx="30" cy="30" r="26" fill="rgba(0, 216, 255, 0.22)" stroke="#00D8FF" stroke-width="2"/>
+          <circle cx="30" cy="30" r="17" fill="rgba(2, 132, 199, 0.35)"/>
+          <circle cx="30" cy="30" r="11" fill="#007AFF" stroke="#FFFFFF" stroke-width="3.5" filter="drop-shadow(0 3px 6px rgba(0,0,0,0.5))"/>
+          <circle cx="30" cy="30" r="4" fill="#FFFFFF"/>
+        </svg>
+      `),
+      scaledSize: new maps.Size(60, 60),
+      anchor: new maps.Point(30, 30)
+    };
+
     userMarkerRef.current = new maps.Marker({
       position: activeCoords,
       map,
-      title: "Your Present Location",
-      zIndex: 999,
-      icon: {
-        path: maps.SymbolPath.CIRCLE,
-        scale: 12,
-        fillColor: '#00D8FF',
-        fillOpacity: 1,
-        strokeColor: '#FFFFFF',
-        strokeWeight: 4
-      }
+      title: "Your Present Location (GPS Blue Dot)",
+      zIndex: 999999,
+      icon: blueDotSvg,
+      optimized: false
     });
   }, [activeCoords, locationAccuracy, isMapReady]);
 
