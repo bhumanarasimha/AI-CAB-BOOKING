@@ -163,8 +163,6 @@ export function scoreMatch(item, query) {
  * Filter Curated Landmarks within 100km radius with Relevance-First Scoring
  */
 export function searchLocalLandmarks(query, userCoords = DEFAULT_USER_COORDS, maxDistanceKm = 100, limit = 8) {
-  if (!query || query.trim().length === 0) return [];
-
   // Robust argument resolution if limit was passed as 2nd arg
   let effectiveCoords = userCoords;
   let effectiveLimit = limit;
@@ -176,6 +174,31 @@ export function searchLocalLandmarks(query, userCoords = DEFAULT_USER_COORDS, ma
 
   const latAnchor = effectiveCoords?.lat || DEFAULT_USER_COORDS.lat;
   const lngAnchor = effectiveCoords?.lng || DEFAULT_USER_COORDS.lng;
+
+  if (!query || query.trim().length === 0) {
+    // Return top popular hubs strictly within 100km sorted by proximity
+    const popular = [];
+    for (const item of COMPREHENSIVE_LANDMARKS) {
+      const distance = haversineDistance(latAnchor, lngAnchor, item.lat, item.lng);
+      if (distance <= effectiveMaxDist) {
+        popular.push({
+          id: `local_${item.name}`,
+          name: item.name,
+          address: item.address,
+          fullText: `${item.name}, ${item.address}`,
+          category: item.category,
+          icon: item.icon || '📍',
+          lat: item.lat,
+          lng: item.lng,
+          distanceKm: Math.round(distance * 10) / 10,
+          score: 80,
+          isOnline: false
+        });
+      }
+    }
+    popular.sort((a, b) => a.distanceKm - b.distanceKm);
+    return popular.slice(0, effectiveLimit);
+  }
 
   const matches = [];
 

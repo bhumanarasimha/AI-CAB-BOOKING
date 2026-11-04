@@ -204,8 +204,12 @@ const Home = () => {
     }
 
     if (!txt || txt.trim().length === 0) {
-      setMatchingSuggestions([]);
-      setShowSuggestions(false);
+      const userCoords = location?.coords?.lat 
+        ? { lat: location.coords.lat, lng: location.coords.lng } 
+        : { lat: 13.0878, lng: 80.2785 };
+      const popular = searchLocalLandmarks('', userCoords, 100, 6);
+      setMatchingSuggestions(popular);
+      setShowSuggestions(true);
       setIsSearchingPlaces(false);
       return;
     }
@@ -219,9 +223,7 @@ const Home = () => {
 
     // Instant local matches strictly within 100km radius
     const localMatches = searchLocalLandmarks(txt, userCoords, 100, 7);
-    if (localMatches.length > 0) {
-      setMatchingSuggestions(localMatches);
-    }
+    setMatchingSuggestions(localMatches);
 
     clearTimeout(searchDebounceRef.current);
     searchDebounceRef.current = setTimeout(async () => {
@@ -545,9 +547,7 @@ const Home = () => {
                       value={destinationText}
                       onChangeText={handleDestinationChange}
                       onFocus={() => {
-                        if (destinationText.trim().length > 0) {
-                          handleDestinationChange(destinationText);
-                        }
+                        handleDestinationChange(destinationText || '');
                       }}
                       placeholder="Where do you want to go?"
                       placeholderTextColor={isBright ? '#94A3B8' : '#64748B'}

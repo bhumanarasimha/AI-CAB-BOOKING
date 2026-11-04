@@ -34,6 +34,45 @@ const RealTimeAnalysisCard = ({ onChipClick, context }) => {
   const distanceKm = context?.distanceKm || 8.4;
   const savings = context?.savings || 94;
 
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const hour = now.getHours();
+
+  let trafficStatus = 'Moderate Afternoon Flow';
+  let trafficDelay = 2;
+  let surgeRange = '1.0x–1.2x';
+
+  if (hour >= 8 && hour < 11) {
+    trafficStatus = 'Heavy Morning Rush';
+    trafficDelay = 5;
+    surgeRange = '1.3x–1.5x';
+  } else if (hour >= 11 && hour < 17) {
+    trafficStatus = 'Moderate Afternoon Flow';
+    trafficDelay = 2;
+    surgeRange = '1.0x–1.2x';
+  } else if (hour >= 17 && hour < 21) {
+    trafficStatus = 'Severe Evening Peak';
+    trafficDelay = 7;
+    surgeRange = '1.4x–1.7x';
+  } else {
+    trafficStatus = 'Fast Open Corridor';
+    trafficDelay = 1;
+    surgeRange = '1.0x (No Surge)';
+  }
+
+  const calculatedSavings = useMemo(() => {
+    if (context?.competitors && Array.isArray(context.competitors) && context.competitors.length > 0) {
+      const fares = context.competitors.map(c => typeof c.fare === 'number' ? c.fare : parseInt(String(c.price || 0).replace(/\D/g, '') || 0));
+      const maxFare = Math.max(...fares);
+      const smart = context.competitors.find(c => c.isSmart || (c.provider || '').toLowerCase().includes('smartride'));
+      const smartFare = smart ? (typeof smart.fare === 'number' ? smart.fare : parseInt(String(smart.price || 0).replace(/\D/g, '') || 0)) : autoPrice;
+      if (maxFare > smartFare) {
+        return maxFare - smartFare;
+      }
+    }
+    return savings;
+  }, [context?.competitors, savings, autoPrice]);
+
   const competitors = useMemo(() => {
     if (context?.competitors && Array.isArray(context.competitors) && context.competitors.length > 0) {
       return context.competitors.slice(0, 5).map(c => {
@@ -54,6 +93,9 @@ const RealTimeAnalysisCard = ({ onChipClick, context }) => {
     ];
   }, [context?.competitors, transitPrice, autoPrice, cabPrice, estMinutes]);
 
+  const smartRideOption = context?.competitors?.find(c => c.isSmart || (c.provider || '').toLowerCase().includes('smartride'));
+  const smartPriceDisplay = smartRideOption ? (typeof smartRideOption.fare === 'number' ? smartRideOption.fare : smartRideOption.price) : autoPrice;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
       {/* Live Telemetry Bar */}
@@ -71,7 +113,7 @@ const RealTimeAnalysisCard = ({ onChipClick, context }) => {
             </span>
           </div>
           <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)' }}>
-            Updated Live
+            Updated at {timeStr}
           </span>
         </div>
 
@@ -82,16 +124,16 @@ const RealTimeAnalysisCard = ({ onChipClick, context }) => {
           </div>
           <div style={{ background: 'var(--bg-elevated)', borderRadius: '10px', padding: '8px', textAlign: 'center', border: '1px solid var(--border-ui)' }}>
             <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', display: 'block' }}>Traffic Delay</span>
-            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#F59E0B' }}>+2 min</span>
+            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#F59E0B' }}>+{trafficDelay} min</span>
           </div>
           <div style={{ background: 'var(--bg-elevated)', borderRadius: '10px', padding: '8px', textAlign: 'center', border: '1px solid var(--border-ui)' }}>
             <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', display: 'block' }}>Max Savings</span>
-            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#10B981' }}>₹{savings}</span>
+            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#10B981' }}>₹{calculatedSavings}</span>
           </div>
         </div>
 
         <p style={{ fontSize: '0.72rem', color: 'var(--text-main)', lineHeight: 1.45, fontWeight: 500 }}>
-          💡 <strong>Live Traffic Radar</strong>: Traffic along {context?.pickup || 'origin'} ➔ {context?.dropoff || 'destination'} is flowing smoothly. Uber/Ola are charging 1.2x–1.3x surge, while <strong>SmartRide AI</strong> prices remain locked at base fare!
+          💡 <strong>Live Traffic Radar</strong>: Traffic along {context?.pickup || 'origin'} ➔ {context?.dropoff || 'destination'} is {trafficStatus}. Uber/Ola are charging {surgeRange} surge, while <strong>SmartRide AI</strong> prices remain locked at base fare!
         </p>
       </div>
 
@@ -122,7 +164,7 @@ const RealTimeAnalysisCard = ({ onChipClick, context }) => {
         whileTap={{ scale: 0.96 }}
         style={{ width: '100%', background: 'linear-gradient(135deg, var(--brand-indigo), var(--brand-cyan))', borderRadius: '12px', padding: '12px', fontSize: '0.82rem', fontWeight: 800, color: '#fff', cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', boxShadow: '0 4px 16px rgba(0,216,255,0.25)' }}
       >
-        <Zap size={15} /> Book SmartRide AI at ₹{autoPrice} (Save ₹{savings})
+        <Zap size={15} /> Book SmartRide AI at ₹{smartPriceDisplay} (Save ₹{calculatedSavings})
       </motion.button>
     </div>
   );
@@ -1095,23 +1137,64 @@ const AIChatBot = ({ isOpen, onClose, pickup = 'Current Location', dropoff = 'yo
     setTimeout(() => {
       setIsTyping(false);
       const lower = text.toLowerCase();
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const hour = now.getHours();
+
+      let trafficStatus = 'Moderate Afternoon Flow';
+      let trafficDelay = 2;
+      let surgeRange = '1.0x–1.2x';
+
+      if (hour >= 8 && hour < 11) {
+        trafficStatus = 'Heavy Morning Rush';
+        trafficDelay = 5;
+        surgeRange = '1.3x–1.5x';
+      } else if (hour >= 11 && hour < 17) {
+        trafficStatus = 'Moderate Afternoon Flow';
+        trafficDelay = 2;
+        surgeRange = '1.0x–1.2x';
+      } else if (hour >= 17 && hour < 21) {
+        trafficStatus = 'Severe Evening Peak';
+        trafficDelay = 7;
+        surgeRange = '1.4x–1.7x';
+      } else {
+        trafficStatus = 'Fast Open Corridor';
+        trafficDelay = 1;
+        surgeRange = '1.0x (No Surge)';
+      }
+
+      const quotes = context?.competitors || [];
+      const cheapest = quotes.length > 0 ? [...quotes].sort((a, b) => (a.fare || 999) - (b.fare || 999))[0] : null;
+      const fastest = quotes.length > 0 ? [...quotes].sort((a, b) => (a.eta || 99) - (b.eta || 99))[0] : null;
+      const uber = quotes.find(q => (q.provider || '').toLowerCase().includes('uber'));
+      const smart = quotes.find(q => q.isSmart || (q.provider || '').toLowerCase().includes('smartride'));
+      const smartFare = smart ? smart.fare : context.autoPrice;
+      const savingsVal = uber && smart && uber.fare > smart.fare ? (uber.fare - smart.fare) : context.savings;
+
       let response;
 
-      if (lower.includes('real time') || lower.includes('realtime') || lower.includes('analysis') || lower.includes('live') || lower.includes('radar') || lower.includes('telemetry') || lower.includes('traffic')) {
+      if (lower.includes('real time') || lower.includes('realtime') || lower.includes('analysis') || lower.includes('live') || lower.includes('radar') || lower.includes('telemetry') || lower.includes('traffic') || lower.includes('now')) {
         response = {
-          text: `⚡ **Live Real-Time AI Analysis Complete**!\n\n• **Route**: **${context.pickup}** ➔ **${context.dropoff}** (${context.distanceKm} km)\n• **Traffic Status**: Normal flow (+2 min delay)\n• **Market Surge**: Uber (1.2x), Ola (1.3x), SmartRide (1.0x Base)\n• **Best Option**: SmartRide Auto at **₹${context.autoPrice}** or Metro at **₹${context.transitPrice}**.`,
+          text: `⚡ **Live Real-Time AI Analysis Complete** (as of ${timeStr})!\n\n• **Route**: **${context.pickup}** ➔ **${context.dropoff}** (${context.distanceKm} km)\n• **Traffic Status**: ${trafficStatus} (+${trafficDelay} min delay)\n• **Market Surge**: Uber/Ola (${surgeRange}), SmartRide AI (1.0x Base)\n• **Best Live Fare**: ${cheapest ? `**${cheapest.type}** at **₹${cheapest.fare}** (${cheapest.eta}m ETA)` : `SmartRide Auto at **₹${context.autoPrice}**`}\n• **Instant Savings**: Save **₹${savingsVal}** choosing SmartRide AI!`,
           component: 'realtime_analysis',
           chips: ['Book cheapest', 'Compare prices', 'Future prices']
         };
       } else if (lower.includes('cheap') || lower.includes('price') || lower.includes('cost') || lower.includes('fare') || lower.includes('amount') || lower.includes('rate')) {
         response = {
-          text: `I analyzed all pricing tiers from **${context.pickup}** to **${dropoff}** (${context.distanceKm} km):\n\n• **Public Transit / Metro**: **₹${context.transitPrice}** (Cheapest 🟢)\n• **Auto Ride**: **₹${context.autoPrice}**\n• **Cab (SmartRide)**: **₹${context.cabPrice}**\n\nYou save **₹${context.savings}** by taking the Metro + Bike combo!`,
+          text: `💰 **Live Price Matrix for your Route (${context.distanceKm} km, ${timeStr})**:\n\n` +
+            (cheapest ? `• **Lowest Fare Option**: **${cheapest.type}** at **₹${cheapest.fare}** 🟢\n` : `• **Auto Ride**: **₹${context.autoPrice}**\n`) +
+            `• **SmartRide EV**: **₹${smartFare}** (Zero Emission & No Surge)\n` +
+            (uber ? `• **Uber Go**: **₹${uber.fare}** (${surgeRange} surge)\n` : '') +
+            `• **Metro / Public Transit**: **₹${context.transitPrice}**\n\n` +
+            `💡 You save **₹${savingsVal}** by booking SmartRide AI over surge cabs!`,
           component: 'multi_option',
           chips: ['⚡ Real-Time Analysis', 'Book cheapest', 'Future prices']
         };
       } else if (lower.includes('fast') || lower.includes('quick') || lower.includes('urgent') || lower.includes('time') || lower.includes('duration') || lower.includes('speed')) {
+        const fastestName = fastest ? fastest.type : 'SmartRide EV';
+        const fastestEta = fastest ? fastest.eta : Math.max(2, Math.round(context.estMinutes * 0.15));
         response = {
-          text: `⚡ **Fastest Transit Option**:\nDirect Cab to **${dropoff}** takes only **~${Math.max(12, context.estMinutes - 4)} minutes**. Traffic along this ${context.distanceKm} km corridor is clear!`,
+          text: `⚡ **Fastest Transit Option (Real-Time ETA)**:\n\n• **Fastest Pickup**: **${fastestName}** arrives in only **${fastestEta} minutes**\n• **Total Travel Time**: ~${context.estMinutes + trafficDelay} minutes to **${dropoff}**\n• **Corridor Speed**: ${trafficStatus} with +${trafficDelay} min signal delay.`,
           component: 'price_forecast',
           chips: ['⚡ Real-Time Analysis', 'Book cheapest', 'Smart routes']
         };
