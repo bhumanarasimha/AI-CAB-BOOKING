@@ -50,7 +50,7 @@ const CommuteMatchResults = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <button 
-            onClick={() => navigate(-1)}
+            onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/user/home'))}
             style={{ background: 'var(--bg-surface, #0F1623)', border: '1px solid var(--border-ui, rgba(255,255,255,0.1))', borderRadius: '14px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-main, #F1F5F9)', cursor: 'pointer' }}
             aria-label="Back"
           >

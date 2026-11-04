@@ -165,7 +165,7 @@ const CreateCommuteProfile = () => {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '28px' }}>
         <button 
-          onClick={() => navigate(-1)}
+          onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/user/home'))}
           style={{ background: 'var(--bg-surface, #0F1623)', border: '1px solid var(--border-ui, rgba(255,255,255,0.1))', borderRadius: '12px', padding: '10px', color: 'var(--text-main, #F1F5F9)', cursor: 'pointer' }}
           aria-label="Back"
         >

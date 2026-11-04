@@ -155,7 +155,7 @@ const ExplainableAI = () => {
         padding: '56px 24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button onClick={() => navigate(-1)} className="btn-icon" style={{ width: '42px', height: '42px', borderRadius: '14px' }}>
+          <button onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/user/home'))} className="btn-icon" style={{ width: '42px', height: '42px', borderRadius: '14px' }}>
             <ArrowLeft size={20} color="var(--text-main)" />
           </button>
           <div>

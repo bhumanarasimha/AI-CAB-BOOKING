@@ -2432,3 +2432,115 @@ button, input, select, textarea {
 }
 
 
+
+
+/* ==========================================================================
+   GLOBAL BACK BUTTON & SECTION HEADER NAVIGATION
+   ========================================================================== */
+.section-top-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 10px 16px;
+  background: var(--bg-surface, #0F1623);
+  border: 1px solid var(--border-ui, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-md, 16px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm, 12px);
+  background: var(--bg-elevated, #1A2340);
+  border: 1px solid var(--border-ui, rgba(255, 255, 255, 0.12));
+  color: var(--text-main, #F1F5F9);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  user-select: none;
+  text-decoration: none;
+}
+
+.back-btn:hover {
+  background: rgba(0, 216, 255, 0.14);
+  border-color: var(--brand-cyan, #00D8FF);
+  color: var(--brand-cyan, #00D8FF);
+  transform: translateX(-3px);
+  box-shadow: 0 4px 16px rgba(0, 216, 255, 0.28);
+}
+
+.back-btn:active {
+  transform: scale(0.96) translateX(-2px);
+}
+
+.back-btn .back-arrow-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.back-btn:hover .back-arrow-icon {
+  transform: translateX(-2px);
+}
+
+.section-top-nav-crumb {
+  font-size: 12px;
+  color: var(--text-muted, #94A3B8);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.section-top-nav-crumb .crumb-active {
+  color: var(--brand-cyan, #00D8FF);
+  font-weight: 800;
+}
+
+/* Modal Back Button */
+.modal-top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-ui, rgba(255, 255, 255, 0.08));
+  width: 100%;
+}
+
+.modal-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm, 10px);
+  background: var(--bg-surface, #0F1623);
+  border: 1px solid var(--border-ui, rgba(255, 255, 255, 0.1));
+  color: var(--text-muted, #94A3B8);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-back-btn:hover {
+  color: var(--brand-cyan, #00D8FF);
+  border-color: var(--brand-cyan, #00D8FF);
+  background: rgba(0, 216, 255, 0.08);
+  transform: translateX(-2px);
+}

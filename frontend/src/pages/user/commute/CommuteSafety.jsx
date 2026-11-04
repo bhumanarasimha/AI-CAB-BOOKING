@@ -21,7 +21,7 @@ const CommuteSafety = () => {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
         <button 
-          onClick={() => navigate(-1)}
+          onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/user/home'))}
           style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '12px', padding: '10px', color: 'var(--text-main)' }}
         >
           <ArrowLeft size={20} />

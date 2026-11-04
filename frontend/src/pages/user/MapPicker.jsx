@@ -201,7 +201,7 @@ const MapPicker = () => {
       {/* Header Overlay */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 20, padding: '48px 20px 20px', background: 'linear-gradient(to bottom, var(--bg-surface), transparent)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button onClick={() => navigate(-1)} className="btn-icon" style={{ width: '40px', height: '40px' }}>
+          <button onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/user/home'))} className="btn-icon" style={{ width: '40px', height: '40px' }}>
             <ArrowLeft size={18} color="var(--text-main)" />
           </button>
           <div style={{ flex: 1, position: 'relative' }}>

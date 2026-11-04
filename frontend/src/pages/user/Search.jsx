@@ -136,7 +136,7 @@ const Search = () => {
       {/* Search Header */}
       <div style={{ padding: '48px 20px 20px', background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-ui)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button onClick={() => navigate(-1)} className="btn-icon" style={{ width: '40px', height: '40px' }}>
+          <button onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/user/home'))} className="btn-icon" style={{ width: '40px', height: '40px' }}>
             <ArrowLeft size={18} color="var(--text-muted)" />
           </button>
           <div style={{ flex: 1, position: 'relative' }}>

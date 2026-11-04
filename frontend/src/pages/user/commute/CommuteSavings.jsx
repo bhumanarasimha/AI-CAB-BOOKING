@@ -20,7 +20,7 @@ const CommuteSavings = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button 
-            onClick={() => navigate(-1)}
+            onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/user/home'))}
             style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', borderRadius: '12px', padding: '10px', color: 'var(--text-main)', cursor: 'pointer' }}
             aria-label="Back"
           >

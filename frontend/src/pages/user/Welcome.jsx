@@ -26,7 +26,7 @@ const Welcome = () => {
       {/* Top Header with Back & Skip */}
       <View style={styles.topHeader}>
         <Pressable 
-          onPress={() => navigate('/login')} 
+          onPress={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/login'))} 
           style={styles.backBtn}
           accessibilityLabel="Back to Login"
         >

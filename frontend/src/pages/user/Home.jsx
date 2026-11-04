@@ -346,9 +346,10 @@ const Home = () => {
       {/* Floating Glassmorphic Top Header */}
       <View style={[styles.topBar, isBright && styles.topBarLight]}>
         <Pressable 
-          onPress={() => navigate('/user/welcome')} 
+          onPress={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/user/welcome'))} 
           style={[styles.backBtn, isBright && styles.backBtnLight]}
-          accessibilityLabel="Back to Welcome"
+          accessibilityLabel="Back to Welcome or Previous"
+          title="Back"
         >
           <ArrowLeft size={16} color={isBright ? '#0284C7' : '#00D8FF'} />
         </Pressable>

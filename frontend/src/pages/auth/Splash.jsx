@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { View, Text, Image, StyleSheet, ActivityIndicator, Pressable } from 'react-native';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react-native';
 const appIcon = './app-icon.png';
 
 const Splash = () => {
@@ -16,6 +17,18 @@ const Splash = () => {
       {/* Background glow circle */}
       <View style={styles.glowTop} />
       <View style={styles.glowBottom} />
+
+      {/* Top Header with Back Button */}
+      <View style={styles.topHeader}>
+        <Pressable 
+          onPress={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/login'))} 
+          style={styles.backBtn}
+          accessibilityLabel="Back"
+        >
+          <ArrowLeft size={18} color="#9CA3AF" />
+          <Text style={styles.backBtnText}>Back</Text>
+        </Pressable>
+      </View>
 
       {/* Logo & Title */}
       <View style={styles.logoContainer}>
@@ -56,6 +69,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
     overflow: 'hidden',
+  },
+  topHeader: {
+    position: 'absolute',
+    top: 48,
+    left: 20,
+    zIndex: 20,
+  },
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    cursor: 'pointer',
+  },
+  backBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#9CA3AF',
   },
   glowTop: {
     position: 'absolute',

@@ -87,7 +87,7 @@ const CommuteChat = () => {
       <div style={{ padding: '60px 20px 20px', background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-ui)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button 
-            onClick={() => navigate(-1)}
+            onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/user/home'))}
             style={{ color: 'var(--text-main)', background: 'transparent', border: 'none', cursor: 'pointer' }}
           >
             <ArrowLeft size={24} />

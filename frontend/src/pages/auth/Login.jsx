@@ -117,7 +117,7 @@ const Login = () => {
       {/* Top Navigation Bar */}
       <View style={styles.topNav}>
         <Pressable 
-          onPress={() => navigate('/onboarding')} 
+          onPress={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/onboarding'))} 
           style={styles.backBtn}
           accessibilityLabel="Back to Onboarding"
         >

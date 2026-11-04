@@ -166,6 +166,42 @@ export async function detectCurrentLocation(silent = false) {
   if (btn) btn.classList.add('is-locating');
   if (btnLabel) btnLabel.textContent = 'Locating...';
 
+  // Wire all section back buttons
+  document.querySelectorAll('.back-to-prev-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      goBackTab();
+    });
+  });
+
+  // Wire all modal back buttons
+  document.querySelectorAll('[data-modal-close], .modal-back-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      btn.closest('.modal-overlay')?.classList.remove('active');
+    });
+  });
+
+  // Native browser back button (popstate)
+  window.addEventListener('popstate', (e) => {
+    if (e.state && e.state.tab) {
+      switchTab(e.state.tab, false);
+    } else {
+      const hash = window.location.hash.replace('#', '');
+      if (hash && document.getElementById('section-' + hash)) {
+        switchTab(hash, false);
+      } else {
+        switchTab('rides', false);
+      }
+    }
+  });
+
+  // Check URL hash on initial load
+  const initialHash = window.location.hash.replace('#', '');
+  if (initialHash && document.getElementById('section-' + initialHash)) {
+    switchTab(initialHash, false);
+  }
+
   // 1. Check user-saved custom pickup from localStorage
   try {
     const rawSaved = localStorage.getItem('smartride_user_pickup');
@@ -376,8 +412,17 @@ function initMap() {
   });
 }
 
+// Tab history stack for seamless back button support
+export const tabHistory = [];
+
 // Tab navigation handler
-export function switchTab(tabId) {
+export function switchTab(tabId, pushHistory = true) {
+  if (pushHistory && state.activeTab && state.activeTab !== tabId) {
+    tabHistory.push(state.activeTab);
+    try {
+      window.history.pushState({ tab: tabId }, '', '#' + tabId);
+    } catch {}
+  }
   state.activeTab = tabId;
 
   // Update nav buttons
@@ -387,8 +432,11 @@ export function switchTab(tabId) {
 
   // Update visible sections
   document.querySelectorAll('.app-section').forEach((sec) => {
-    sec.classList.toggle('active', sec.id === `section-${tabId}`);
+    sec.classList.toggle('active', sec.id === 'section-' + tabId);
   });
+
+  // Smooth scroll to top of section
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 
   // Section specific triggers
   if (tabId === 'rides' && mapInstance) {
@@ -399,6 +447,35 @@ export function switchTab(tabId) {
     loadParcels();
   } else if (tabId === 'xai') {
     renderXaiInspector();
+  }
+}
+
+// Global Back Button Handler for all sections
+export function goBackTab() {
+  if (tabHistory.length > 0) {
+    const prevTab = tabHistory.pop();
+    switchTab(prevTab, false);
+    try {
+      window.history.replaceState({ tab: prevTab }, '', '#' + prevTab);
+    } catch {}
+  } else {
+    // If already on rides or history empty, go to rides
+    if (state.activeTab !== 'rides') {
+      switchTab('rides', false);
+    } else {
+      // If on rides and user had entered a destination or quote, clear it
+      const dInput = document.getElementById('dropoff-input');
+      if (dInput && dInput.value) {
+        dInput.value = '';
+        state.dropoff = '';
+        showToast('Returned to Search', 'info');
+      } else {
+        showToast('At Home Screen', 'info');
+      }
+    }
+    try {
+      window.history.replaceState({ tab: 'rides' }, '', '#rides');
+    } catch {}
   }
 }
 

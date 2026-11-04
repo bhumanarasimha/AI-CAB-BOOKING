@@ -146,7 +146,7 @@ const Profile = () => {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                    <button 
-                     onClick={() => navigate(-1)} 
+                     onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/user/home'))} 
                      className="btn-icon" 
                      style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'var(--bg-surface)', border: '1px solid var(--border-ui)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                      aria-label="Go Back"

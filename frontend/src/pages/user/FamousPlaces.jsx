@@ -169,7 +169,7 @@ const FamousPlaces = () => {
         padding: '48px 20px 16px', display: 'flex', flexDirection: 'column', gap: '16px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button onClick={() => navigate(-1)} className="btn-icon" style={{ width: '38px', height: '38px' }}>
+          <button onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/user/home'))} className="btn-icon" style={{ width: '38px', height: '38px' }}>
             <ArrowLeft size={18} color="var(--text-muted)" />
           </button>
           <div>

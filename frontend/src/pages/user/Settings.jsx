@@ -96,7 +96,7 @@ const Settings = () => {
   return (
     <div style={{ height: '100%', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <div style={{ padding: '48px 20px 20px', background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-ui)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <button onClick={() => navigate(-1)} className="btn-icon" style={{ width: '38px', height: '38px' }}>
+        <button onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/user/home'))} className="btn-icon" style={{ width: '38px', height: '38px' }}>
           <ArrowLeft size={18} color="var(--text-muted)" />
         </button>
         <h1 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>{t('app_settings')}</h1>

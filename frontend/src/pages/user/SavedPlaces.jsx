@@ -142,7 +142,7 @@ const SavedPlaces = () => {
       {/* Header */}
       <div style={{ padding: '52px 20px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button onClick={() => navigate(-1)} className="btn-icon" style={{ width: '38px', height: '38px' }}>
+          <button onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/user/home'))} className="btn-icon" style={{ width: '38px', height: '38px' }}>
             <ArrowLeft size={18} color="var(--text-muted)" />
           </button>
           <div>

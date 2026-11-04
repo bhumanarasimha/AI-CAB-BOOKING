@@ -235,7 +235,7 @@ const CommuteDashboard = () => {
       <div style={{ padding: '44px 16px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10, gap: '10px', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
           <button 
-            onClick={() => navigate(-1)}
+            onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/user/home'))}
             style={{ width: '40px', height: '40px', borderRadius: '14px', background: 'var(--bg-surface, #0F1623)', border: '1px solid var(--border-ui, rgba(255,255,255,0.1))', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
             aria-label="Go Back"
           >
