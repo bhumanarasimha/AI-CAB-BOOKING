@@ -265,32 +265,27 @@ async function runHumanLikeAudit() {
       await page.waitForTimeout(300);
       logStep('Chubby AI Sub-Tab: Target Price Sniper', 'PASS');
 
+      // Sub-Tab 7: AI Chat (Verify unified chatbot window & mic inside input bar)
+      await page.click('#chubby-tab-chat');
+      await page.waitForTimeout(400);
+      const chatVisible = await page.isVisible('#chatbot-window');
+      logStep('Chubby AI Chat Window Toggle', chatVisible ? 'PASS' : 'FAIL');
+
+      const chatMic = await page.$('#chatbot-voice-mic-btn');
+      logStep('Chubby AI Chatbot Mic Button Inside Input Bar', chatMic ? 'PASS' : 'FAIL', 'Directly in chat input bar');
+
+      // Type a query in chatbot
+      await page.fill('#chatbot-input', 'Which ride is cheapest?');
+      await page.click('#chatbot-send-btn');
+      await page.waitForTimeout(800);
+      const botMessages = await page.$$('#chatbot-messages .chat-msg');
+      logStep('Chubby AI Chatbot Interaction', botMessages.length >= 2 ? 'PASS' : 'FAIL', `Messages: ${botMessages.length}`);
+      await page.screenshot({ path: path.join(SCREENSHOT_DIR, '07_chatbot.png') });
+
       // Close modal
       await page.click('#chubby-modal-close');
       await page.waitForTimeout(300);
     }
-
-    // ══════════════════════════════════════════════════════════════════
-    // STEP 9: TEST CHUBBY AI CHATBOT WINDOW & BUILT-IN MIC
-    // ══════════════════════════════════════════════════════════════════
-    await page.click('#chatbot-toggle-btn');
-    await page.waitForTimeout(400);
-    const chatVisible = await page.isVisible('#chatbot-window');
-    logStep('Chubby AI Chatbot Window Toggle', chatVisible ? 'PASS' : 'FAIL');
-
-    const chatMic = await page.$('#chatbot-voice-mic-btn');
-    logStep('Chubby AI Chatbot Mic Button Inside Input Bar', chatMic ? 'PASS' : 'FAIL', 'Directly in chat input bar');
-
-    // Type a query in chatbot
-    await page.fill('#chatbot-input', 'Which ride is cheapest?');
-    await page.click('#chatbot-send-btn');
-    await page.waitForTimeout(800);
-    const botMessages = await page.$$('#chatbot-messages .chat-msg');
-    logStep('Chubby AI Chatbot Interaction', botMessages.length >= 2 ? 'PASS' : 'FAIL', `Messages: ${botMessages.length}`);
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, '07_chatbot.png') });
-
-    await page.click('#chatbot-close-btn');
-    await page.waitForTimeout(300);
 
     // ══════════════════════════════════════════════════════════════════
     // STEP 10: TEST PARCEL EXPRESS LOGISTICS PAGE (#tab-parcel)
