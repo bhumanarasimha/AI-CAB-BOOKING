@@ -295,19 +295,36 @@ const MapPicker = () => {
         <button
           onClick={handleConfirm}
           disabled={isConfirming || !pickerCoords}
-          className="btn-primary w-full h-14"
-          style={{ gap: '10px', fontSize: '1rem', fontWeight: 700 }}
+          className="btn-primary"
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            width: '100%',
+            height: '52px',
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, var(--brand-indigo, #6366F1), var(--brand-cyan, #00D8FF))',
+            color: '#080C14',
+            fontSize: '1rem',
+            fontWeight: 800,
+            border: 'none',
+            boxShadow: '0 6px 20px rgba(0, 216, 255, 0.35)',
+            cursor: 'pointer',
+            flexShrink: 0
+          }}
         >
           {isConfirming ? (
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-              style={{ width: '20px', height: '20px', border: '2.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%' }}
+              style={{ width: '20px', height: '20px', border: '2.5px solid rgba(0,0,0,0.3)', borderTopColor: '#080C14', borderRadius: '50%' }}
             />
           ) : (
             <>
-              {isPickupMode ? 'Set as Current Location' : 'Confirm Destination'}
-              <Navigation size={18} />
+              <span>{isPickupMode ? 'Set as Current Location' : 'Confirm Destination'}</span>
+              <Navigation size={18} color="#080C14" />
             </>
           )}
         </button>

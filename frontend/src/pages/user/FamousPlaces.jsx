@@ -197,7 +197,7 @@ const FamousPlaces = () => {
       </div>
 
       {/* List */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }} className="no-scrollbar">
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px 95px', display: 'flex', flexDirection: 'column', gap: '16px' }} className="no-scrollbar">
         <AnimatePresence>
           {filteredPlaces.map((place, idx) => (
             <motion.div 

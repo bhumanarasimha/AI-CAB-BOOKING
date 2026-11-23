@@ -351,20 +351,20 @@ const Parcel = () => {
 
           <div style={{ padding: '12px 16px 85px', background: 'var(--bg-surface)', borderTop: '1px solid var(--border-ui)', zIndex: 40 }}>
             {step === 1 && (
-              <button className={canProceedStep1 ? "btn-primary w-full" : "w-full"} onClick={() => canProceedStep1 && setStep(2)} style={{ height: '52px', fontSize: '0.97rem', gap: '8px', background: canProceedStep1 ? 'var(--brand-indigo)' : 'var(--bg-elevated)', color: canProceedStep1 ? 'white' : 'var(--text-muted)', border: canProceedStep1 ? 'none' : '1px solid var(--border-ui)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, transition: 'all 0.2s', boxShadow: canProceedStep1 ? '0 6px 20px rgba(99,102,241,0.3)' : 'none' }}>
+              <button className={canProceedStep1 ? "btn-primary" : ""} onClick={() => canProceedStep1 && setStep(2)} style={{ width: '100%', height: '52px', fontSize: '0.97rem', gap: '8px', background: canProceedStep1 ? 'linear-gradient(135deg, var(--brand-indigo), var(--brand-cyan))' : 'var(--bg-elevated)', color: canProceedStep1 ? '#080C14' : 'var(--text-muted)', border: canProceedStep1 ? 'none' : '1px solid var(--border-ui)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, transition: 'all 0.2s', boxShadow: canProceedStep1 ? '0 6px 20px rgba(0,216,255,0.35)' : 'none', cursor: canProceedStep1 ? 'pointer' : 'default' }}>
                 {canProceedStep1 ? "Continue to Parcel Type" : "Enter details to proceed"} <ChevronRight size={18} opacity={canProceedStep1 ? 1 : 0.5} />
               </button>
             )}
             {step === 2 && (
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button onClick={() => setStep(1)} style={{ width: '52px', height: '52px', borderRadius: '14px', background: 'var(--bg-card)', border: '1px solid var(--border-ui)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-main)' }}><ArrowLeft size={20} /></button>
-                <button className="btn-primary" onClick={() => setStep(3)} style={{ flex: 1, height: '52px', fontSize: '0.97rem', gap: '8px' }}>Continue with {sel?.name} <ChevronRight size={18} /></button>
+              <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                <button onClick={() => setStep(1)} style={{ width: '52px', height: '52px', borderRadius: '14px', background: 'var(--bg-card)', border: '1px solid var(--border-ui)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-main)', cursor: 'pointer' }}><ArrowLeft size={20} /></button>
+                <button className="btn-primary" onClick={() => setStep(3)} style={{ flex: 1, height: '52px', fontSize: '0.97rem', gap: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, var(--brand-indigo), var(--brand-cyan))', color: '#080C14', fontWeight: 800, borderRadius: '14px', border: 'none', cursor: 'pointer' }}>Continue with {sel?.name} <ChevronRight size={18} /></button>
               </div>
             )}
             {step === 3 && (
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button onClick={() => setStep(2)} style={{ width: '52px', height: '52px', borderRadius: '14px', background: 'var(--bg-card)', border: '1px solid var(--border-ui)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-main)' }}><ArrowLeft size={20} /></button>
-                <button onClick={() => canProceedStep3 && handleSchedule()} style={{ flex: 1, height: '52px', fontSize: '0.97rem', gap: '8px', background: canProceedStep3 ? 'var(--brand-cyan)' : 'var(--bg-elevated)', color: canProceedStep3 ? 'var(--bg-base)' : 'var(--text-muted)', border: canProceedStep3 ? 'none' : '1px solid var(--border-ui)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, transition: 'all 0.2s' }}>
+              <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                <button onClick={() => setStep(2)} style={{ width: '52px', height: '52px', borderRadius: '14px', background: 'var(--bg-card)', border: '1px solid var(--border-ui)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-main)', cursor: 'pointer' }}><ArrowLeft size={20} /></button>
+                <button onClick={() => canProceedStep3 && handleSchedule()} style={{ flex: 1, height: '52px', fontSize: '0.97rem', gap: '8px', background: canProceedStep3 ? 'linear-gradient(135deg, var(--brand-indigo), var(--brand-cyan))' : 'var(--bg-elevated)', color: canProceedStep3 ? '#080C14' : 'var(--text-muted)', border: canProceedStep3 ? 'none' : '1px solid var(--border-ui)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, transition: 'all 0.2s', cursor: canProceedStep3 ? 'pointer' : 'default' }}>
                   {canProceedStep3 ? "Schedule Pickup" : "Missing Details"} <ChevronRight size={18} opacity={canProceedStep3 ? 1 : 0.5} />
                 </button>
               </div>
