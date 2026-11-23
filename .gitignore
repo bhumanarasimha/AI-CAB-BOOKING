@@ -38,13 +38,8 @@ __pycache__/
 .expo/
 scratch/
 testing/
-tests/
 
 # Automated Test Artifacts & Hidden Test Files
-*.test.js
-*.test.jsx
-*.spec.js
-*.spec.jsx
 web-api-results.json
 mobile-results.json
 Report.xlsx

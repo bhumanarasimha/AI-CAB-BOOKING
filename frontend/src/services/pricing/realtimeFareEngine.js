@@ -1,49 +1,14 @@
+import { resolveRouteDistanceKm } from '../ai/SmartMobilityAIEngine';
+
 /**
  * Real-Time Location-Based Multi-Provider Pricing Engine
  * Computes live driving route distance ($D$ km), live traffic duration,
  * and exact real-time prices for Uber, Ola, Rapido, Namma Yatri, and SmartRide AI.
  */
 
-// Calculate live route distance (in km) between user origin & destination
+// Calculate live route distance (in km) dynamically between user origin & destination
 export const calculateRouteDistanceKm = (origin, destination) => {
-  let distance = 36.5; // Default distance for Avadi/Chembarambakkam to City Center (~36.5 km)
-
-  if (origin && typeof origin === 'object' && typeof origin.lat === 'number' && typeof origin.lng === 'number') {
-    const refLat = 13.114;
-    const refLng = 80.097;
-    const rad = Math.PI / 180;
-    const dLat = (origin.lat - refLat) * rad;
-    const dLng = (origin.lng - refLng) * rad;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(refLat * rad) * Math.cos(origin.lat * rad) *
-              Math.sin(dLng / 2) * Math.sin(dLng / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const earthRadiusKm = 6371;
-    const calcDist = earthRadiusKm * c;
-    if (calcDist > 1) {
-      distance = Math.round(calcDist * 1.35 * 10) / 10;
-    }
-  }
-
-  // Adjust distance dynamically based on user-provided destination text
-  if (typeof destination === 'string') {
-    const destLower = destination.toLowerCase();
-    if (destLower.includes('avadi') || destLower.includes('kg') || destLower.includes('block-j')) {
-      distance = 36.5;
-    } else if (destLower.includes('marina') || destLower.includes('beach')) {
-      distance = 34.0;
-    } else if (destLower.includes('airport')) {
-      distance = 28.0;
-    } else if (destLower.includes('phoenix') || destLower.includes('mall')) {
-      distance = 25.2;
-    } else if (destLower.includes('central') || destLower.includes('station')) {
-      distance = 31.8;
-    } else if (destLower.includes('t. nagar') || destLower.includes('teynampet')) {
-      distance = 29.5;
-    }
-  }
-
-  return distance;
+  return resolveRouteDistanceKm(origin, destination);
 };
 
 // Compute dynamic live fare for provider option based on actual distance & real-world pricing

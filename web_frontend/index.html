@@ -10,9 +10,169 @@
   <link rel="icon" type="image/svg+xml" href="assets/smartride-icon.svg" />
 
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="css/style.css?v=2.5" />
+  <link rel="stylesheet" href="css/style.css?v=3.8" />
 </head>
 <body>
+
+  <!-- ==========================================================================
+       Full-Page Web Authentication Interface (Sign In & Register)
+       Shown automatically after Logout or when unauthenticated
+       ========================================================================== -->
+  <section id="web-auth-screen" class="web-auth-screen" style="display: none;" aria-label="Sign In and Register">
+    <div class="web-auth-shell">
+      <!-- Left Brand & Feature Showcase -->
+      <div class="web-auth-hero">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+          <img src="assets/smartride-icon.svg" alt="SmartRide AI" style="width: 48px; height: 48px; border-radius: 14px;" />
+          <div>
+            <div style="font-size: 24px; font-weight: 900; color: #FFFFFF; letter-spacing: -0.02em;">
+              SmartRide<span style="color: var(--brand-cyan);">AI</span>
+            </div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--brand-cyan); text-transform: uppercase; letter-spacing: 0.1em;">
+              Next-Gen Mobility Hub
+            </div>
+          </div>
+        </div>
+
+        <h1 style="font-size: 32px; font-weight: 900; color: #FFFFFF; line-height: 1.2; margin-bottom: 14px;">
+          Compare Cabs, Beat Surge &amp; Save up to <span style="color: #10B981;">80%</span> with Chubby AI
+        </h1>
+        <p style="font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 26px;">
+          Sign in or register to sync your live fares across Uber, Ola, Rapido &amp; Namma Yatri, unlock Walk-2-Mins Surge Escape, Voice AI, and Community Carpool requests.
+        </p>
+
+        <div class="web-auth-highlights">
+          <div class="web-auth-highlight-item">
+            <span style="font-size: 20px;">🚕</span>
+            <div>
+              <strong>Real-Time Cross-App Comparison</strong>
+              <p>Instant live fares from Uber, Ola, Rapido, Namma Yatri &amp; SmartRide EV.</p>
+            </div>
+          </div>
+          <div class="web-auth-highlight-item">
+            <span style="font-size: 20px;">✨</span>
+            <div>
+              <strong>Next-Level Chubby AI Intelligence</strong>
+              <p>Multimodal Bus+Metro combos, Surge Escape Radar, Multilingual Voice &amp; Price Sniper.</p>
+            </div>
+          </div>
+          <div class="web-auth-highlight-item">
+            <span style="font-size: 20px;">👥</span>
+            <div>
+              <strong>Verified Community Carpooling</strong>
+              <p>Post and match daily office commutes with live community ride requests.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Auth Card: Sign In & Register Sections -->
+      <div class="web-auth-card">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 id="page-auth-heading" style="font-size: 22px; font-weight: 900; color: #FFFFFF; margin: 0;">Welcome Back</h2>
+          <p id="page-auth-sub" style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Sign in to your SmartRide AI account</p>
+        </div>
+
+        <!-- Sign In / Register Switch Tabs -->
+        <div class="web-auth-tabs">
+          <button type="button" id="page-auth-tab-login" class="web-auth-tab active">Sign In</button>
+          <button type="button" id="page-auth-tab-register" class="web-auth-tab">Register</button>
+        </div>
+
+        <!-- Interactive Error & Troubleshooting Diagnostic Banner -->
+        <div id="page-auth-alert" class="auth-alert-banner" style="display: none;" role="alert"></div>
+
+        <!-- Quick Demo Account Autofill Chip -->
+        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,216,255,0.06); border: 1px dashed rgba(0,216,255,0.3); border-radius: 12px; padding: 7px 12px; margin-bottom: 16px;">
+          <span style="font-size: 11px; color: var(--brand-cyan); font-weight: 700;">💡 Demo Rider Account</span>
+          <button type="button" id="page-auth-demo-autofill" style="background: rgba(0,216,255,0.18); border: 1px solid rgba(0,216,255,0.4); color: var(--brand-cyan); border-radius: 8px; padding: 3px 8px; font-size: 10px; font-weight: 800; cursor: pointer;">
+            Auto-fill Credentials
+          </button>
+        </div>
+
+        <!-- SIGN IN SECTION -->
+        <form id="page-login-form" class="web-auth-form" autocomplete="on">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label" for="page-login-email">Email Address</label>
+            <input type="email" id="page-login-email" class="form-control" placeholder="rider@smartride.ai" value="rider@smartride.ai" required autocomplete="username" />
+          </div>
+          <div class="form-group" style="margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label class="form-label" for="page-login-password">Password</label>
+              <button type="button" id="toggle-login-pwd" style="background: none; border: none; color: var(--brand-cyan); font-size: 11px; cursor: pointer; padding: 0;">👁️ Show</button>
+            </div>
+            <input type="password" id="page-login-password" class="form-control" placeholder="••••••••" value="password123" required autocomplete="current-password" />
+          </div>
+
+          <!-- Session Preservation / Cookie Loop Prevention -->
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; font-size: 12px;">
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-muted); font-size: 12px;">
+              <input type="checkbox" id="page-login-remember" checked style="accent-color: var(--brand-cyan);" />
+              Keep me signed in
+            </label>
+            <a href="javascript:void(0)" id="page-forgot-pwd" style="color: var(--brand-cyan); text-decoration: none; font-weight: 700;">Forgot Password?</a>
+          </div>
+
+          <button type="submit" id="page-login-submit-btn" class="btn-primary" style="width: 100%; padding: 13px; font-size: 14px; font-weight: 800; border-radius: 14px;">
+            <span>⚡</span> Sign In &amp; Open Web Application
+          </button>
+        </form>
+
+        <!-- REGISTER SECTION -->
+        <form id="page-register-form" class="web-auth-form" style="display: none;" autocomplete="on">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label class="form-label" for="page-reg-name">Full Name</label>
+            <input type="text" id="page-reg-name" class="form-control" placeholder="e.g. John Doe" required autocomplete="name" />
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label class="form-label" for="page-reg-email">Email Address</label>
+            <input type="email" id="page-reg-email" class="form-control" placeholder="you@example.com" required autocomplete="email" />
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label class="form-label" for="page-reg-phone">Phone Number</label>
+            <input type="tel" id="page-reg-phone" class="form-control" placeholder="+91 98765 43210" required autocomplete="tel" />
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label class="form-label" for="page-reg-password">Create Password</label>
+              <button type="button" id="toggle-reg-pwd" style="background: none; border: none; color: var(--brand-cyan); font-size: 11px; cursor: pointer; padding: 0;">👁️ Show</button>
+            </div>
+            <input type="password" id="page-reg-password" class="form-control" placeholder="Minimum 6 characters" minlength="6" required autocomplete="new-password" />
+          </div>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label" for="page-reg-password-confirm">Confirm Password</label>
+            <input type="password" id="page-reg-password-confirm" class="form-control" placeholder="Re-enter password" minlength="6" required autocomplete="new-password" />
+          </div>
+          <button type="submit" id="page-reg-submit-btn" class="btn-primary" style="width: 100%; padding: 13px; font-size: 14px; font-weight: 800; background: linear-gradient(135deg, #10B981, #00D8FF); color: #080C14; border-radius: 14px;">
+            <span>🚀</span> Register &amp; Open Web Application
+          </button>
+        </form>
+
+        <!-- Divider & 1-Tap Social / Guest Login -->
+        <div style="margin-top: 20px;">
+          <div style="position: relative; text-align: center; margin-bottom: 14px;">
+            <div style="position: absolute; inset: 0; display: flex; align-items: center;">
+              <div style="width: 100%; border-top: 1px solid var(--border-ui);"></div>
+            </div>
+            <span style="position: relative; background: var(--bg-surface, #0F1623); padding: 0 10px; font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Or Continue With</span>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <button type="button" class="btn-secondary" id="page-social-google-btn" style="flex: 1; justify-content: center; font-size: 13px;">
+              <span>🌐</span> Google
+            </button>
+            <button type="button" class="btn-secondary" id="page-social-facebook-btn" style="flex: 1; justify-content: center; font-size: 13px;">
+              <span>📘</span> Facebook
+            </button>
+          </div>
+
+          <button type="button" id="page-guest-btn" style="width: 100%; padding: 10px; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px dashed var(--border-ui); color: var(--text-muted); font-size: 12px; font-weight: 700; cursor: pointer;">
+            Continue as Guest Rider ➔
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- ==========================================================================
        Site Header
@@ -25,18 +185,6 @@
         <span class="brand-badge">Mobility Hub</span>
       </div>
     </a>
-
-    <!-- Live Telemetry & Backend Status -->
-    <div class="status-pill-group">
-      <div class="status-pill" id="backend-status-pill" title="Shared Backend Connection">
-        <span class="status-dot online" id="backend-status-dot"></span>
-        <span id="backend-status-text">Connecting...</span>
-      </div>
-      <div class="status-pill" title="GPS High Precision Radar">
-        <span>📡</span>
-        <span>GPS Beacon Active</span>
-      </div>
-    </div>
 
     <!-- Header Actions -->
     <div class="header-actions">
@@ -64,11 +212,14 @@
   </header>
 
   <!-- ==========================================================================
-       Navigation Bar Tabs
+       Navigation Bar Tabs (Core Primary Services)
        ========================================================================== -->
   <nav class="nav-tabs" role="navigation" aria-label="Main Application Sections">
     <button class="nav-tab-btn active" data-tab="rides" id="tab-rides">
-      <span>🚖</span> Rides & Compare
+      <span>🚖</span> Rides &amp; Compare
+    </button>
+    <button class="nav-tab-btn" data-tab="forecast" id="tab-forecast">
+      <span>📈</span> Future Price
     </button>
     <button class="nav-tab-btn" data-tab="radar" id="tab-radar">
       <span>🗺️</span> Fleet Radar
@@ -78,33 +229,6 @@
     </button>
     <button class="nav-tab-btn" data-tab="commute" id="tab-commute">
       <span>👥</span> Smart Commute
-    </button>
-    <button class="nav-tab-btn" data-tab="activity" id="tab-activity">
-      <span>📊</span> My Rides & Activity
-    </button>
-    <button class="nav-tab-btn" data-tab="xai" id="tab-xai">
-      <span>🧠</span> Explainable AI
-    </button>
-    <button class="nav-tab-btn" data-tab="places" id="tab-places">
-      <span>📍</span> Saved Places
-    </button>
-    <button class="nav-tab-btn" data-tab="famous" id="tab-famous">
-      <span>🏛️</span> Famous Places
-    </button>
-    <button class="nav-tab-btn" data-tab="safety" id="tab-safety">
-      <span>🆘</span> Emergency & SOS
-    </button>
-    <button class="nav-tab-btn" data-tab="invite" id="tab-invite">
-      <span>🎁</span> Refer & Earn
-    </button>
-    <button class="nav-tab-btn" data-tab="reviews" id="tab-reviews">
-      <span>⭐</span> Ratings & Reviews
-    </button>
-    <button class="nav-tab-btn" data-tab="settings" id="tab-settings">
-      <span>⚙️</span> Settings
-    </button>
-    <button class="nav-tab-btn" data-tab="help" id="tab-help">
-      <span>🛟</span> Help Center
     </button>
     <button class="nav-tab-btn" data-tab="profile" id="tab-profile">
       <span>👤</span> Profile
@@ -120,14 +244,10 @@
          SECTION 1: Rides & Multi-Provider Comparison (Core Feature)
          ======================================================================== -->
     <section class="app-section active" id="section-rides" aria-labelledby="heading-rides">
-      <!-- Top Navigation & Back Button -->
+      <!-- Top Navigation Crumb (Clean Entrance without Back Button) -->
       <div class="section-top-nav-bar" style="margin-bottom: 18px;">
-        <button type="button" class="back-btn back-to-prev-btn" data-action="back" aria-label="Go Back" title="Go back to previous screen">
-          <span class="back-arrow-icon">←</span>
-          <span>Back</span>
-        </button>
-        <div class="section-top-nav-crumb">
-          <span>SmartRide AI</span> <span>/</span> <span class="crumb-active">Book & Compare Fares</span>
+        <div class="section-top-nav-crumb" style="font-weight: 700; color: var(--text-muted);">
+          <span>SmartRide AI</span> <span>/</span> <span class="crumb-active" style="color: var(--brand-cyan);">Book & Compare Fares</span>
         </div>
       </div>
       <div class="app-grid">
@@ -147,9 +267,14 @@
             </div>
 
             <!-- Ask Chubby AI Header Badges (Matching Android App) -->
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 14px; margin-bottom: 12px;">
-              <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(0, 216, 255, 0.12); border: 1px solid rgba(0, 216, 255, 0.3); padding: 5px 12px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 700; color: var(--brand-cyan);">
-                <span>✨</span> Ask Chubby AI
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 14px; margin-bottom: 12px;">
+              <div style="display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <div id="home-ask-ai-badge" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(0, 216, 255, 0.12); border: 1px solid rgba(0, 216, 255, 0.3); padding: 5px 12px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 700; color: var(--brand-cyan); cursor: pointer;">
+                  <span>✨</span> Ask Chubby AI
+                </div>
+                <button type="button" id="open-future-price-shortcut" style="display: inline-flex; align-items: center; gap: 5px; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.45); padding: 5px 12px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 800; color: #A5B4FC; cursor: pointer;">
+                  <span>📈</span> Future Price Prediction ➔
+                </button>
               </div>
               <div style="display: inline-flex; align-items: center; gap: 4px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); padding: 5px 12px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 700; color: #10B981;">
                 Save up to 42%
@@ -169,7 +294,7 @@
                 </div>
                 <div class="input-row">
                   <span class="input-marker" title="Pickup Location"></span>
-                  <input type="text" id="pickup-input" class="route-input" value="" placeholder="Enter pickup location or detect GPS..." aria-label="Pickup location" autocomplete="off" />
+                  <input type="search" id="pickup-input" name="smartride_route_pickup" class="route-input" value="" placeholder="Enter pickup location or detect GPS..." aria-label="Pickup location" autocomplete="nope" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly');" />
                   <button class="quick-swap-btn" id="swap-locations-btn" title="Swap locations" aria-label="Swap pickup and destination">⇄</button>
                 </div>
               </div>
@@ -180,7 +305,7 @@
                 </div>
                 <div class="input-row">
                   <span class="input-marker dropoff" title="Dropoff Destination"></span>
-                  <input type="text" id="dropoff-input" class="route-input" value="" placeholder="Where do you want to go?" aria-label="Destination location" autocomplete="off" />
+                  <input type="search" id="dropoff-input" name="smartride_route_dropoff" class="route-input" value="" placeholder="Where do you want to go?" aria-label="Destination location" autocomplete="nope" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly');" />
                   <button class="route-send-btn" id="search-route-btn" title="Send & Find Fares" aria-label="Send Route Search">
                     <span class="send-arrow">➔</span>
                   </button>
@@ -237,6 +362,9 @@
               <button class="strategy-chip" data-strategy="reliable">🛡️ Reliable</button>
               <button class="strategy-chip" data-strategy="effort">🚶‍♂️ Lowest Effort</button>
             </div>
+
+            <!-- Compact Weather Comfort & Surge Escape Status Strip -->
+            <div id="nextgen-status-strip" style="display: none; gap: 8px; flex-wrap: wrap; margin: 8px 0;"></div>
 
             <!-- Live Quote Cards Container -->
             <div class="quotes-container" id="quotes-container" role="region" aria-live="polite">
@@ -338,6 +466,68 @@
           </div>
         </div>
 
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SECTION 1B: Dedicated AI Future Price Prediction Dashboard
+         ======================================================================== -->
+    <section class="app-section" id="section-forecast" aria-labelledby="heading-forecast">
+      <div class="section-top-nav-bar" style="margin-bottom: 18px;">
+        <button type="button" class="back-btn back-to-prev-btn" data-action="back" aria-label="Go Back" title="Go back to previous screen">
+          <span class="back-arrow-icon">←</span>
+          <span>Back</span>
+        </button>
+        <div class="section-top-nav-crumb">
+          <span>SmartRide AI</span> <span>/</span> <span class="crumb-active">Future Price Prediction</span>
+        </div>
+      </div>
+
+      <div class="card" style="max-width: 1080px; margin: 0 auto 18px auto;">
+        <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
+          <div>
+            <h2 class="card-title" id="heading-forecast"><span>📈</span> AI Future Price Prediction Engine</h2>
+            <p class="card-subtitle">Real-time 6-hour &amp; custom-time fare forecasting synchronized with your SmartRide EV, Namma Yatri, Rapido, Uber &amp; Ola quotes</p>
+          </div>
+          <span id="forecast-live-badge" style="font-size: 11px; font-weight: 800; color: #10B981; background: rgba(16,185,129,0.14); border: 1px solid rgba(16,185,129,0.4); padding: 5px 12px; border-radius: 99px;">
+            🟢 Synced to Project Live Fares
+          </span>
+        </div>
+
+        <!-- Route, Category & Custom Time Controls -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-top: 16px; padding: 14px; background: var(--bg-surface); border: 1px solid var(--border-ui); border-radius: 14px;">
+          <div>
+            <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Pickup Location</label>
+            <input type="search" id="forecast-pickup-input" class="form-control" placeholder="e.g. KG Apartments, Chennai" autocomplete="nope" style="margin-top: 4px;" />
+          </div>
+          <div>
+            <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Destination</label>
+            <input type="search" id="forecast-dropoff-input" class="form-control" placeholder="e.g. Marina Beach, Chennai" autocomplete="nope" style="margin-top: 4px;" />
+          </div>
+          <div>
+            <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Vehicle Type</label>
+            <select id="forecast-category-select" class="form-control" style="margin-top: 4px;">
+              <option value="cab4">🚗 4-Seater Cab (Mini / Sedan)</option>
+              <option value="auto">🛺 Auto Rickshaw</option>
+              <option value="bike">🏍️ Bike Taxi</option>
+              <option value="cab7">🚐 7-Seater SUV</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Custom Future Time (Optional)</label>
+            <input type="time" id="forecast-custom-time" class="form-control" style="margin-top: 4px;" />
+          </div>
+          <div style="display: flex; align-items: flex-end;">
+            <button type="button" id="forecast-predict-btn" class="btn-primary" style="width: 100%; padding: 11px 14px; font-size: 13px; font-weight: 900;">
+              ⚡ Predict Future Price
+            </button>
+          </div>
+        </div>
+
+        <!-- Dynamic Forecast Output Container -->
+        <div id="forecast-dashboard-container" style="margin-top: 18px;">
+          <!-- Rendered dynamically by renderDedicatedFuturePriceSection() -->
+        </div>
       </div>
     </section>
 
@@ -576,13 +766,27 @@
             </div>
           </div>
 
-          <div style="margin-top: 16px; display: flex; gap: 12px;">
-            <button class="btn-cyan" id="find-commute-matches-btn" style="padding: 10px 24px; font-weight: 800;">
+          <div style="margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" class="btn-cyan" id="post-commute-request-btn" style="padding: 10px 22px; font-weight: 800; background: linear-gradient(135deg, #10B981, #00D8FF); color: #080C14;">
+              <span>📢</span> Post Community Request
+            </button>
+            <button type="button" class="btn-cyan" id="find-commute-matches-btn" style="padding: 10px 20px; font-weight: 800;">
               <span>🚀</span> Search AI Matches
             </button>
-            <button class="btn-secondary" id="save-commute-profile-btn" style="padding: 10px 18px;">
+            <button type="button" class="btn-secondary" id="save-commute-profile-btn" style="padding: 10px 18px;">
               <span>💾</span> Save Profile
             </button>
+          </div>
+        </div>
+
+        <!-- User-Created Active Community Requests Feed -->
+        <div class="card" style="margin-top: 20px;">
+          <div class="card-header">
+            <h3 class="card-title"><span>📋</span> Active Community Requests</h3>
+            <span id="community-request-count" style="font-size: 12px; color: #10B981; font-weight: 800;">0 Active</span>
+          </div>
+          <div id="community-requests-container" style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- Dynamically populated with user-posted commute & pool requests -->
           </div>
         </div>
 
@@ -1027,6 +1231,111 @@
             </button>
             <button type="button" class="btn-primary" id="save-profile-btn" style="flex: 1.6; padding: 12px; font-size: 14px;">
               <span>💾</span> Save Profile Changes
+            </button>
+          </div>
+        </div>
+
+        <!-- 🌟 Rider Services & Platform Hub (Arranged Options) -->
+        <div class="card profile-hub-card">
+          <div class="card-header">
+            <h3 class="card-title"><span>⚡</span> Rider Services &amp; Platform Options</h3>
+            <span style="font-size: 11px; padding: 2px 8px; border-radius: var(--radius-pill); background: rgba(0,216,255,0.15); color: var(--brand-cyan); font-weight: 700;">
+              9 SERVICES
+            </span>
+          </div>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+            Quickly access your past trips, explainable AI diagnostics, saved spots, safety SOS, rewards, and application preferences.
+          </p>
+
+          <div class="profile-options-grid">
+            <!-- 1. My Rides & Activity -->
+            <button type="button" class="profile-option-item" data-target="activity">
+              <div class="profile-option-icon" style="background: rgba(16, 185, 129, 0.15); color: #10B981;">📊</div>
+              <div class="profile-option-content">
+                <div class="profile-option-title">My Rides &amp; Activity</div>
+                <div class="profile-option-desc">Trip history, live tracking &amp; receipts</div>
+              </div>
+              <span class="profile-option-arrow">➔</span>
+            </button>
+
+            <!-- 2. Explainable AI -->
+            <button type="button" class="profile-option-item" data-target="xai">
+              <div class="profile-option-icon" style="background: rgba(236, 72, 153, 0.15); color: #EC4899;">🧠</div>
+              <div class="profile-option-content">
+                <div class="profile-option-title">Explainable AI</div>
+                <div class="profile-option-desc">SHAP waterfall &amp; multi-agent scorecards</div>
+              </div>
+              <span class="profile-option-arrow">➔</span>
+            </button>
+
+            <!-- 3. Saved Places -->
+            <button type="button" class="profile-option-item" data-target="places">
+              <div class="profile-option-icon" style="background: rgba(0, 216, 255, 0.15); color: #00D8FF;">📍</div>
+              <div class="profile-option-content">
+                <div class="profile-option-title">Saved Places</div>
+                <div class="profile-option-desc">Home, Work &amp; favorite destinations</div>
+              </div>
+              <span class="profile-option-arrow">➔</span>
+            </button>
+
+            <!-- 4. Famous Places -->
+            <button type="button" class="profile-option-item" data-target="famous">
+              <div class="profile-option-icon" style="background: rgba(245, 158, 11, 0.15); color: #F59E0B;">🏛️</div>
+              <div class="profile-option-content">
+                <div class="profile-option-title">Famous Places</div>
+                <div class="profile-option-desc">Top Chennai spots &amp; 1-tap route presets</div>
+              </div>
+              <span class="profile-option-arrow">➔</span>
+            </button>
+
+            <!-- 5. Emergency & SOS -->
+            <button type="button" class="profile-option-item" data-target="safety" style="border-color: rgba(239, 68, 68, 0.35);">
+              <div class="profile-option-icon" style="background: rgba(239, 68, 68, 0.15); color: #EF4444;">🆘</div>
+              <div class="profile-option-content">
+                <div class="profile-option-title" style="color: #EF4444;">Emergency &amp; SOS</div>
+                <div class="profile-option-desc">Live safety beacon, police &amp; SOS contacts</div>
+              </div>
+              <span class="profile-option-arrow">➔</span>
+            </button>
+
+            <!-- 6. Refer & Earn -->
+            <button type="button" class="profile-option-item" data-target="invite">
+              <div class="profile-option-icon" style="background: rgba(168, 85, 247, 0.15); color: #A855F7;">🎁</div>
+              <div class="profile-option-content">
+                <div class="profile-option-title">Refer &amp; Earn</div>
+                <div class="profile-option-desc">Invite friends and earn ride rewards</div>
+              </div>
+              <span class="profile-option-arrow">➔</span>
+            </button>
+
+            <!-- 7. Ratings & Reviews -->
+            <button type="button" class="profile-option-item" data-target="reviews">
+              <div class="profile-option-icon" style="background: rgba(234, 179, 8, 0.15); color: #EAB308;">⭐</div>
+              <div class="profile-option-content">
+                <div class="profile-option-title">Ratings &amp; Reviews</div>
+                <div class="profile-option-desc">Driver feedback, badges &amp; community score</div>
+              </div>
+              <span class="profile-option-arrow">➔</span>
+            </button>
+
+            <!-- 8. Settings -->
+            <button type="button" class="profile-option-item" data-target="settings">
+              <div class="profile-option-icon" style="background: rgba(99, 102, 241, 0.15); color: #6366F1;">⚙️</div>
+              <div class="profile-option-content">
+                <div class="profile-option-title">Settings</div>
+                <div class="profile-option-desc">Theme, notifications &amp; sound controls</div>
+              </div>
+              <span class="profile-option-arrow">➔</span>
+            </button>
+
+            <!-- 9. Help Center -->
+            <button type="button" class="profile-option-item" data-target="help">
+              <div class="profile-option-icon" style="background: rgba(14, 165, 233, 0.15); color: #0EA5E9;">🛟</div>
+              <div class="profile-option-content">
+                <div class="profile-option-title">Help Center</div>
+                <div class="profile-option-desc">24/7 Support, FAQs &amp; grievance redressal</div>
+              </div>
+              <span class="profile-option-arrow">➔</span>
             </button>
           </div>
         </div>
@@ -2004,27 +2313,30 @@
         <p style="font-size: 13px; color: var(--text-muted);">A secure password reset link can also be emailed to you</p>
       </div>
 
-      <div class="form-group" style="margin-bottom: 12px;">
-        <label class="form-label" for="current-pwd-input">Current Password</label>
-        <input type="password" id="current-pwd-input" class="form-control" placeholder="••••••••" />
-      </div>
-      <div class="form-group" style="margin-bottom: 12px;">
-        <label class="form-label" for="new-pwd-input">New Password</label>
-        <input type="password" id="new-pwd-input" class="form-control" placeholder="Minimum 8 characters" />
-      </div>
-      <div class="form-group" style="margin-bottom: 18px;">
-        <label class="form-label" for="confirm-pwd-input">Confirm New Password</label>
-        <input type="password" id="confirm-pwd-input" class="form-control" placeholder="Repeat new password" />
-      </div>
+      <form id="change-password-form" autocomplete="off" onsubmit="return false;">
+        <input type="text" name="username" autocomplete="username" style="display: none;" tabindex="-1" aria-hidden="true" />
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="current-pwd-input">Current Password</label>
+          <input type="password" id="current-pwd-input" class="form-control" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" for="new-pwd-input">New Password</label>
+          <input type="password" id="new-pwd-input" class="form-control" placeholder="Minimum 8 characters" autocomplete="new-password" />
+        </div>
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label class="form-label" for="confirm-pwd-input">Confirm New Password</label>
+          <input type="password" id="confirm-pwd-input" class="form-control" placeholder="Repeat new password" autocomplete="new-password" />
+        </div>
 
-      <div style="display: flex; gap: 10px;">
-        <button class="btn-secondary" id="send-pwd-link-btn" style="flex: 1; font-size: 13px;">
-          📧 Send Email Link
-        </button>
-        <button class="btn-primary" id="save-new-pwd-btn" style="flex: 1; font-size: 13px;">
-          💾 Update Password
-        </button>
-      </div>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn-secondary" id="send-pwd-link-btn" style="flex: 1; font-size: 13px;">
+            📧 Send Email Link
+          </button>
+          <button type="button" class="btn-primary" id="save-new-pwd-btn" style="flex: 1; font-size: 13px;">
+            💾 Update Password
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -2165,61 +2477,70 @@
     </div>
   </div>
 
-  <!-- ==========================================================================
-       Floating AI Assistant Chatbot Widget (Chubby AI)
-       ========================================================================== -->
-  <div class="floating-chatbot">
-    <div class="chat-window" id="chatbot-window" role="region" aria-label="Chubby AI Assistant Window">
-      <div class="chat-header">
+  <!-- 🌟 Single Unified Floating Chubby AI Pill (Chat, Voice & Mobility Intelligence Combined) -->
+  <div class="chubby-fab-cluster">
+    <button id="chubby-ai-fab" class="chubby-ai-fab-btn" title="Open Chubby AI Assistant &amp; Intelligence" aria-label="Open Chubby AI">
+      <span style="font-size: 18px;">✨</span>
+      <span style="font-weight: 900; font-size: 13px; color: #080C14; letter-spacing: 0.02em;">Chubby AI</span>
+      <span id="chubby-fab-badge" style="background: #080C14; color: #00D8FF; font-size: 9px; font-weight: 900; padding: 2px 7px; border-radius: 99px;">⚡ CHAT &amp; INSIGHTS</span>
+    </button>
+  </div>
+
+  <!-- 🎯 Target Price Sniper Hit Sticky Banner -->
+  <div id="web-sniper-hit-banner" class="sniper-hit-banner" style="display: none;"></div>
+
+  <!-- 🌟 Chubby AI Full Intelligence Modal (Next-Level AI + Target Price Sniper) -->
+  <div id="chubby-ai-modal" class="chubby-modal-overlay" style="display: none;">
+    <div class="chubby-modal-card">
+      <div class="chubby-modal-header">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <div style="width: 36px; height: 36px; border-radius: 12px; background: linear-gradient(135deg, var(--brand-indigo), var(--brand-cyan)); display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 0 15px rgba(0, 216, 255, 0.4); position: relative;">
-            <span>⚡</span>
-            <span style="position: absolute; bottom: -2px; right: -2px; width: 10px; height: 10px; border-radius: 50%; background: #10B981; border: 2px solid var(--bg-surface);"></span>
+          <div style="width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, #00D8FF, #6366F1); display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 0 15px rgba(0, 216, 255, 0.4);">
+            ✨
           </div>
           <div>
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <strong style="font-size: 14px; color: #FFFFFF; font-weight: 800;">Chubby AI</strong>
-              <span style="font-size: 9px; font-weight: 800; color: var(--brand-cyan); background: rgba(0, 216, 255, 0.12); border: 1px solid rgba(0, 216, 255, 0.3); padding: 1px 5px; border-radius: 4px;">REAL-TIME</span>
-            </div>
-            <p style="font-size: 11px; color: var(--text-muted); margin-top: 1px;">Live Traffic Radar & Fare Intelligence</p>
+            <h3 style="margin: 0; font-size: 15px; font-weight: 800; color: var(--text-main);">Chubby AI Intelligence</h3>
+            <p id="chubby-modal-subtitle" style="margin: 2px 0 0; font-size: 11px; color: var(--text-muted);">Next-Level Mobility & Savings</p>
           </div>
         </div>
-        <button id="chatbot-close-btn" style="width: 30px; height: 30px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-ui); font-size: 14px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;" aria-label="Close Chubby AI">✕</button>
+        <button id="chubby-modal-close" class="chubby-modal-close-btn" aria-label="Close Chubby AI Modal">✕</button>
       </div>
 
-      <!-- Quick Action Suggestion Chips Bar -->
-      <div class="chat-quick-chips" style="padding: 8px 12px; border-bottom: 1px solid var(--border-ui); display: flex; gap: 6px; overflow-x: auto; background: rgba(255,255,255,0.02); scrollbar-width: none;">
-        <button type="button" class="chat-chip" data-query="⚡ Real-Time Route Analysis">⚡ Radar</button>
-        <button type="button" class="chat-chip" data-query="Which ride is cheapest right now?">💰 Cheapest</button>
-        <button type="button" class="chat-chip" data-query="What is the fastest pickup ETA?">⏱️ Fastest</button>
-        <button type="button" class="chat-chip" data-query="Show me public transit and metro routes">🚇 Metro</button>
-        <button type="button" class="chat-chip" data-query="Tell me about SmartRide carpool commute">👥 Carpool</button>
-        <button type="button" class="chat-chip" data-query="What are the parcel express rates?">📦 Parcel</button>
-        <button type="button" class="chat-chip" data-query="What safety features and emergency SOS exist?">🛡️ Safety</button>
-        <button type="button" class="chat-chip" data-query="Are there any active promo discount coupons?">🎟️ Promo</button>
+      <!-- 7 Unified AI Sub-Tabs (Live Chat + Mobility Intelligence) -->
+      <div class="chubby-modal-tabs chubby-modal-tabs-scroll no-scrollbar">
+        <button id="chubby-tab-chat" class="chubby-tab-btn active" data-chubby-tab="chat">
+          <span>💬</span> AI Chat
+        </button>
+        <button id="chubby-tab-voice" class="chubby-tab-btn" data-chubby-tab="voice">
+          <span>🎙️</span> Voice AI
+        </button>
+        <button id="chubby-tab-future" class="chubby-tab-btn" data-chubby-tab="future">
+          <span>📈</span> Future Prices
+        </button>
+        <button id="chubby-tab-escape" class="chubby-tab-btn" data-chubby-tab="escape">
+          <span>🚶</span> Surge Escape
+        </button>
+        <button id="chubby-tab-multimodal" class="chubby-tab-btn" data-chubby-tab="multimodal">
+          <span>🚇</span> Smart Routes
+        </button>
+        <button id="chubby-tab-weather" class="chubby-tab-btn" data-chubby-tab="weather">
+          <span>🌤️</span> Weather AI
+        </button>
+        <button id="chubby-tab-sniper" class="chubby-tab-btn" data-chubby-tab="sniper">
+          <span>🎯</span> Price Sniper
+        </button>
       </div>
 
-      <div class="chat-messages" id="chatbot-messages">
-        <div class="chat-msg bot">
-          👋 Hello! I'm <strong>Chubby AI</strong>, your real-time travel assistant. I can analyze live traffic telemetry, compare fares across Uber, Ola, Rapido, and SmartRide EV, forecast demand surges, or help you book!
-        </div>
-      </div>
-
-      <div class="chat-input-bar">
-        <input type="text" id="chatbot-input" class="chat-input" placeholder="Ask Chubby AI about fares, traffic, routes..." aria-label="Ask Chubby AI" />
-        <button id="chatbot-send-btn" class="chat-send-btn" aria-label="Send message" style="background: linear-gradient(135deg, var(--brand-indigo), var(--brand-cyan)); border: none; color: #080C14; font-weight: 800; border-radius: 10px; width: 34px; height: 34px; cursor: pointer; display: flex; align-items: center; justify-content: center;">➤</button>
+      <!-- Modal Body Container -->
+      <div id="chubby-modal-body" class="chubby-modal-body no-scrollbar">
+        <!-- Populated dynamically with Next-Level Chubby AI Intelligence modules -->
       </div>
     </div>
-
-    <button class="chat-trigger-btn" id="chatbot-toggle-btn" aria-label="Toggle Chubby AI Assistant" title="Ask Chubby AI">
-      ⚡
-    </button>
   </div>
 
   <!-- Toast Notification Container -->
   <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
   <!-- JavaScript Module -->
-  <script type="module" src="js/app.js?v=2.5"></script>
+  <script type="module" src="js/app.js?v=3.8"></script>
 </body>
 </html>

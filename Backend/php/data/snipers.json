@@ -1,0 +1,21 @@
+[
+    {
+        "id": "sniper_1794992379_939",
+        "userId": "demo-user",
+        "pickup": "KG Apartments",
+        "dropoff": "Marina Beach",
+        "targetPrice": 47,
+        "provider": "all",
+        "category": "cab4",
+        "status": "armed",
+        "armedAt": "2026-11-18T14:29:39+05:30",
+        "evaluation": {
+            "isHit": false,
+            "currentBestFare": 320,
+            "gapAmount": 273,
+            "probabilityPercent": 28,
+            "estimatedDropMins": 45,
+            "statusText": "Ambitious target (\u20b9273 below live fare). Consider Bike\/Auto or Smart Multimodal routes!"
+        }
+    }
+]

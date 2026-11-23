@@ -7,9 +7,12 @@ import {
   Home, Building, Loader2, Crosshair, Check
 } from 'lucide-react';
 import { POPULAR_COMMUTE_HUBS } from './matches';
+import { addCommuteRequest } from './commuteRequestsStore';
+import { useAuth } from '../../../lib/AuthContext';
 
 const CreateCommuteProfile = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [transport, setTransport] = useState('car');
   const [workMode, setWorkMode] = useState('office');
 
@@ -134,12 +137,14 @@ const CreateCommuteProfile = () => {
   };
 
   const handleSaveAndGenerate = () => {
+    const resolvedSource = (source || '').trim() || 'Poonamallee High Road, Chennai';
+    const resolvedDest = (destination || '').trim() || 'Tidel Park, OMR Tech Corridor, Chennai';
     try {
       const existing = JSON.parse(localStorage.getItem('smartride_commute_profile') || '{}');
       const updated = {
         ...existing,
-        source: source || 'Indiranagar 100ft Road, Bangalore',
-        destination: destination || 'Electronic City Phase 1, Bangalore',
+        source: resolvedSource,
+        destination: resolvedDest,
         departureTime,
         returnTime: returnStart,
         transport,
@@ -150,8 +155,23 @@ const CreateCommuteProfile = () => {
         updatedAt: new Date().toISOString()
       };
       localStorage.setItem('smartride_commute_profile', JSON.stringify(updated));
+
+      // Publish live community commute request so it immediately displays on the Commute/Community page
+      addCommuteRequest({
+        type: 'posted',
+        userName: user?.name || (user?.email ? user.email.split('@')[0] : 'You'),
+        role: existing.role || (vehicleNumber ? 'driver' : 'rider'),
+        source: resolvedSource,
+        destination: resolvedDest,
+        departureTime,
+        returnTime: returnStart,
+        transport,
+        workMode,
+        vehicleNumber,
+        status: 'Live in Community',
+      });
     } catch (e) {}
-    navigate('/user/commute/results');
+    navigate('/user/commute', { state: { requestCreated: true } });
   };
 
   const transportTypes = [

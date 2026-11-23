@@ -7,9 +7,12 @@ import {
   Star, Briefcase, Car, Check, Users, Navigation, Sparkles
 } from 'lucide-react';
 import { matches } from './matches';
+import { addCommuteRequest } from './commuteRequestsStore';
+import { useAuth } from '../../../lib/AuthContext';
 
 const CommuteMatchResults = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [profile, setProfile] = useState(null);
   const [sortBy, setSortBy] = useState('overlap'); // 'overlap' | 'savings' | 'rating'
   const [showFilterMenu, setShowFilterMenu] = useState(false);
@@ -225,7 +228,23 @@ const CommuteMatchResults = () => {
                 <MessageCircle size={15} color="var(--brand-cyan, #00D8FF)" /> Chat
               </button>
               <button 
-                onClick={() => setConnectedModal({ open: true, partner: match })}
+                onClick={() => {
+                  const otp = String(Math.floor(1000 + Math.random() * 9000));
+                  addCommuteRequest({
+                    type: 'pool_booking',
+                    userName: user?.name || (user?.email ? user.email.split('@')[0] : 'You'),
+                    role: profile?.role || 'rider',
+                    source: profile?.source || 'Poonamallee High Road, Chennai',
+                    destination: profile?.destination || 'Tidel Park, OMR Tech Corridor, Chennai',
+                    departureTime: match.startTime || profile?.departureTime || '08:30 AM',
+                    returnTime: profile?.returnTime || '18:00',
+                    partnerName: match.name,
+                    partnerCar: match.car || 'Sedan',
+                    otp,
+                    status: 'Pool Confirmed',
+                  });
+                  setConnectedModal({ open: true, partner: match });
+                }}
                 style={{ flex: 1.6, padding: '12px', background: 'linear-gradient(135deg, #00D8FF, #0284C7)', color: '#080C14', border: 'none', borderRadius: '14px', fontSize: '0.85rem', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: 'pointer', boxShadow: '0 4px 14px rgba(0,216,255,0.3)' }}
               >
                 <Car size={15} /> Instant Pool

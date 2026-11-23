@@ -11,6 +11,7 @@ import android.util.Log;
 import android.webkit.ConsoleMessage;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
+import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -51,16 +52,47 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @JavascriptInterface
+        public String getDeviceLocation() {
+            try {
+                android.location.LocationManager lm = (android.location.LocationManager) activity.getSystemService(android.content.Context.LOCATION_SERVICE);
+                if (lm != null && (
+                        androidx.core.content.ContextCompat.checkSelfPermission(activity, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
+                        androidx.core.content.ContextCompat.checkSelfPermission(activity, android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED)) {
+                    android.location.Location bestLoc = null;
+                    for (String provider : lm.getProviders(true)) {
+                        android.location.Location l = lm.getLastKnownLocation(provider);
+                        if (l != null && (bestLoc == null || l.getAccuracy() < bestLoc.getAccuracy())) {
+                            bestLoc = l;
+                        }
+                    }
+                    if (bestLoc != null) {
+                        org.json.JSONObject json = new org.json.JSONObject();
+                        json.put("lat", bestLoc.getLatitude());
+                        json.put("lng", bestLoc.getLongitude());
+                        json.put("accuracy", (double) bestLoc.getAccuracy());
+                        return json.toString();
+                    }
+                }
+            } catch (Exception e) {
+                android.util.Log.e(TAG, "Error getting native device location", e);
+            }
+            return null;
+        }
+
+        @JavascriptInterface
         public void openExternalApp(String appUrl, String fallbackWebUrl) {
             activity.runOnUiThread(() -> {
                 if (appUrl != null && !appUrl.trim().isEmpty()) {
                     try {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(appUrl.trim()));
+                        String trimmed = appUrl.trim();
+                        Intent intent = trimmed.startsWith("intent:")
+                                ? Intent.parseUri(trimmed, Intent.URI_INTENT_SCHEME)
+                                : new Intent(Intent.ACTION_VIEW, Uri.parse(trimmed));
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         activity.startActivity(intent);
                         return;
                     } catch (Exception e) {
-                        Log.e(TAG, "Error launching appUrl: " + appUrl, e);
+                        Log.w(TAG, "Native app not installed or failed for appUrl: " + appUrl + " — falling back to web booking page");
                     }
                 }
                 if (fallbackWebUrl != null && !fallbackWebUrl.trim().isEmpty()) {
@@ -198,6 +230,20 @@ public class MainActivity extends AppCompatActivity {
                         + consoleMessage.lineNumber() + " of "
                         + consoleMessage.sourceId());
                 return true;
+            }
+
+            @Override
+            public void onPermissionRequest(final PermissionRequest request) {
+                runOnUiThread(() -> {
+                    if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                        request.grant(request.getResources());
+                    } else {
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{
+                                Manifest.permission.RECORD_AUDIO
+                        }, LOCATION_PERMISSION_REQUEST_CODE + 1);
+                        request.grant(request.getResources());
+                    }
+                });
             }
 
             @Override

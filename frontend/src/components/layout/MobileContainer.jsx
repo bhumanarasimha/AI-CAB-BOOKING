@@ -8,15 +8,7 @@ const desktopNavSections = [
   { path: '/user/home', label: 'Rides & Fares', icon: '🚖' },
   { path: '/user/commute', label: 'Smart Commute', icon: '👥' },
   { path: '/user/parcel', label: 'Parcel Express', icon: '📦' },
-  { path: '/user/activity', label: 'My Activity', icon: '📊' },
-  { path: '/user/ai-insights', label: 'Explainable AI', icon: '🧠' },
-  { path: '/user/saved-places', label: 'Saved Places', icon: '📍' },
-  { path: '/user/famous-places', label: 'Famous Places', icon: '🏛️' },
-  { path: '/user/emergency', label: 'Emergency & SOS', icon: '🆘' },
-  { path: '/user/invite', label: 'Refer & Earn', icon: '🎁' },
-  { path: '/user/reviews', label: 'Reviews', icon: '⭐' },
-  { path: '/user/settings', label: 'Settings', icon: '⚙️' },
-  { path: '/user/profile', label: 'Profile', icon: '👤' },
+  { path: '/user/profile', label: 'Profile & Services', icon: '👤' },
 ];
 
 const MobileContainer = () => {
@@ -121,7 +113,7 @@ const MobileContainer = () => {
 
   // Show Bottom Navigation on mobile device layouts only; on desktop, the top navigation bar is used
   const isUserRoute = pathname.startsWith('/user/');
-  const hideBottomNavRoutes = ['/user/welcome'];
+  const hideBottomNavRoutes = ['/user/welcome', '/user/ride-comparison', '/user/map-picker'];
   const showBottomNav = isUserRoute && !hideBottomNavRoutes.includes(pathname) && !hideBottomNavFromChild && !isDesktopLayout;
 
   return (

@@ -4,11 +4,45 @@
     <!-- Internet Permission -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
-    <!-- Location Permissions -->
+    <!-- Location & Voice AI Permissions -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
+
+    <!-- Android 11+ Package Visibility for External Cab Provider Redirects (Ola, Uber, Rapido, Namma Yatri, InDrive) -->
+    <queries>
+        <package android:name="com.olacabs.customer" />
+        <package android:name="com.ubercab" />
+        <package android:name="com.rapido.passenger" />
+        <package android:name="in.juspay.nammayatri" />
+        <package android:name="sinet.startup.inDriver" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="olacabs" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="uber" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="rapido" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="nammayatri" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="indrive" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
 
     <application
         android:allowBackup="true"

@@ -364,17 +364,8 @@ const Home = () => {
         />
       </View>
 
-      {/* Floating Glassmorphic Top Header */}
-      <View style={[styles.topBar, isBright && styles.topBarLight]}>
-        <Pressable 
-          onPress={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/user/welcome'))} 
-          style={[styles.backBtn, isBright && styles.backBtnLight]}
-          accessibilityLabel="Back to Welcome or Previous"
-          title="Back"
-        >
-          <ArrowLeft size={16} color={isBright ? '#0284C7' : '#00D8FF'} />
-        </Pressable>
-
+      {/* Floating Glassmorphic Top Header (Clean Entrance without Back Button) */}
+      <View style={[styles.topBar, isBright && styles.topBarLight, { paddingHorizontal: 14 }]}>
         <View style={styles.greetingCol}>
           <View style={styles.greetingBadgeRow}>
             <View style={styles.pulseDot} />
@@ -386,7 +377,7 @@ const Home = () => {
         </View>
         
         {/* Compact Location Badge (Tap to pick area) */}
-        <Pressable onPress={() => navigate('/user/map-picker')} style={[styles.locationBadge, isBright && styles.locationBadgeLight]}>
+        <Pressable onPress={() => navigate('/user/map-picker', { state: { mode: 'pickup' } })} style={[styles.locationBadge, isBright && styles.locationBadgeLight]}>
           <MapPin size={12} color={isBright ? '#0284C7' : '#00D8FF'} />
           <Text numberOfLines={1} style={[styles.locationAddressText, isBright && styles.locationAddressTextLight]}>{formatShortAddress(location.address)}</Text>
           <ChevronRight size={12} color={isBright ? '#64748B' : '#94A3B8'} />
@@ -513,13 +504,36 @@ const Home = () => {
             {/* AI Recommendation Card */}
             <View style={[styles.aiCard, isBright && styles.aiCardLight]}>
               <View style={styles.aiHeader}>
-                <Pressable 
-                  onPress={() => setChatOpen(true)}
-                  style={[styles.aiBadge, isBright && styles.aiBadgeLight, { cursor: 'pointer' }]}
-                  aria-label="Ask Chubby AI"
-                >
-                  <Text style={[styles.aiBadgeText, isBright && styles.aiBadgeTextLight]}>⚡ Ask Chubby AI</Text>
-                </Pressable>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <Pressable 
+                    onPress={() => setChatOpen(true)}
+                    style={[styles.aiBadge, isBright && styles.aiBadgeLight, { cursor: 'pointer' }]}
+                    aria-label="Ask Chubby AI"
+                  >
+                    <Text style={[styles.aiBadgeText, isBright && styles.aiBadgeTextLight]}>⚡ Ask Chubby AI</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => navigate('/user/ride-comparison', {
+                      state: {
+                        pickup: pickupText || location.address || 'KG Apartments',
+                        dropoff: destinationText || 'Marina Beach',
+                        openFuturePrice: true
+                      }
+                    })}
+                    style={{
+                      backgroundColor: 'rgba(99, 102, 241, 0.18)',
+                      borderWidth: 1,
+                      borderColor: 'rgba(99, 102, 241, 0.45)',
+                      paddingHorizontal: 9,
+                      paddingVertical: 4,
+                      borderRadius: 99,
+                      cursor: 'pointer'
+                    }}
+                    aria-label="Future Price Prediction"
+                  >
+                    <Text style={{ fontSize: 10, fontWeight: '800', color: isBright ? '#4F46E5' : '#A5B4FC' }}>📈 Future Price</Text>
+                  </Pressable>
+                </View>
                 <View style={[styles.savingsTag, isBright && styles.savingsTagLight]}>
                   <Text style={styles.savingsText}>Save up to 42%</Text>
                 </View>
@@ -538,12 +552,14 @@ const Home = () => {
                       <Text style={[styles.routeLabel, isBright && styles.routeLabelLight]}>PICKUP</Text>
                       <TextInput
                         value={pickupText}
-                        onChangeText={handlePickupChange}
+                        onChangeText={(txt) => handlePickupChange(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(txt.trim()) ? '' : txt)}
                         onFocus={() => {
                           if (pickupText.trim().length > 0) {
                             handlePickupChange(pickupText);
                           }
                         }}
+                        autoComplete="off"
+                        autoCorrect={false}
                         placeholder={location.loading ? "Detecting GPS..." : "Enter pickup location"}
                         placeholderTextColor={isBright ? '#94A3B8' : '#64748B'}
                         style={[styles.routeInputText, isBright && styles.routeInputTextLight]}
@@ -564,7 +580,9 @@ const Home = () => {
                     <Text style={[styles.routeLabel, isBright && styles.routeLabelLight]}>DESTINATION</Text>
                     <TextInput
                       value={destinationText}
-                      onChangeText={handleDestinationChange}
+                      onChangeText={(txt) => handleDestinationChange(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(txt.trim()) ? '' : txt)}
+                      autoComplete="off"
+                      autoCorrect={false}
                       onFocus={() => {
                         handleDestinationChange(destinationText || '');
                       }}

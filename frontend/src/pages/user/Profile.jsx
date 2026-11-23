@@ -51,39 +51,33 @@ const Profile = () => {
 
   const menuSections = [
     {
-      title: t('rides_wallet'),
+      title: 'Trips & Activity',
       items: [
+        { icon: '📊', label: 'My Rides & Activity', sub: 'Trip history, live tracking & receipts', path: '/user/activity' },
+        { icon: '🧠', label: 'Explainable AI', sub: 'SHAP waterfall & multi-agent scorecards', path: '/user/ai-insights' },
         { icon: '👥', label: 'Smart Commute', sub: 'AI matching & shared rides', path: '/user/commute' },
-        { icon: '💳', label: t('wallet_payments'), sub: '₹450 balance', path: '/user/rides' },
-        { icon: '📍', label: t('saved_places'), sub: 'Home, Work & more', path: '/user/saved-places' },
       ]
     },
     {
-      title: t('ai_personalization'),
+      title: 'Places & Safety',
       items: [
-        { icon: '🧠', label: 'AI Preferences', sub: 'Customize recommendations', path: '/user/ai-insights' },
-        { icon: '🎨', label: 'Theme & App Mood', sub: 'Dark AI · Energetic', path: '/user/theme' },
+        { icon: '📍', label: 'Saved Places', sub: 'Home, Work & favorite spots', path: '/user/saved-places' },
+        { icon: '🏛️', label: 'Famous Places', sub: 'Top landmarks & 1-tap route presets', path: '/user/famous-places' },
+        { icon: '🆘', label: 'Emergency & SOS', sub: 'Live safety beacon & SOS contacts', path: '/user/emergency', accent: '#EF4444' },
       ]
     },
     {
-      title: t('safety'),
+      title: 'Rewards & Feedback',
       items: [
-        { icon: '🛡️', label: 'Safety & Privacy', sub: 'Biometric on · Location shared', path: '/user/safety' },
-        { icon: '🆘', label: 'Emergency Contacts', sub: '2 contacts added', path: '/user/emergency', accent: '#EF4444' },
+        { icon: '🎁', label: 'Refer & Earn', sub: 'Earn rewards per referral', path: '/user/invite', accent: '#A855F7' },
+        { icon: '⭐', label: 'Ratings & Reviews', sub: 'Driver feedback & reviews', path: '/user/reviews' },
       ]
     },
     {
-      title: t('social'),
+      title: 'Settings & Support',
       items: [
-        { icon: '🎁', label: 'Invite a Friend', sub: 'Earn ₹150 per referral', path: '/user/invite', accent: '#A855F7' },
-        { icon: '⭐', label: 'Ratings & Reviews', sub: '4.92 average', path: '/user/reviews' },
-      ]
-    },
-    {
-      title: t('support'),
-      items: [
-        { icon: '🛟', label: 'FAQs & Help Center', sub: 'Got questions? We have answers.', path: '/user/help' },
-        { icon: '⚙️', label: t('app_settings'), sub: 'Notifications, Language', path: '/user/settings' },
+        { icon: '⚙️', label: 'Settings', sub: 'Theme, notifications & language', path: '/user/settings' },
+        { icon: '🛟', label: 'Help Center', sub: 'FAQs & 24/7 customer support', path: '/user/help' },
       ]
     },
   ];

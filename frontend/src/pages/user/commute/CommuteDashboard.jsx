@@ -1,18 +1,29 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MapPin, Clock, ChevronRight,
   TrendingUp, Plus,
   ArrowRightLeft, Loader2, ArrowLeft,
   Sparkles, ShieldCheck, MessageSquare, Navigation,
-  Crosshair, Check, Car, User, Users, Leaf, VolumeX, Shield, PhoneCall
+  Crosshair, Check, Car, User, Users, Leaf, VolumeX, Shield, PhoneCall,
+  Trash2, Send
 } from 'lucide-react';
 import { matches, POPULAR_COMMUTE_HUBS } from './matches';
 import { searchAllPlaces, searchLocalLandmarks } from '../../../services/placesService';
+import { useAuth } from '../../../lib/AuthContext';
+import {
+  loadLocalCommuteRequests,
+  fetchSyncedCommuteRequests,
+  addCommuteRequest,
+  deleteCommuteRequest,
+  subscribeCommuteRequests,
+} from './commuteRequestsStore';
 
 const CommuteDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
 
   // Commute State
   const [role, setRole] = useState('rider'); // 'rider' | 'driver'
@@ -34,6 +45,29 @@ const CommuteDashboard = () => {
   const [loading, setLoading] = useState({ source: false, dest: false });
   const [activeInput, setActiveInput] = useState(null); // 'source' or 'dest'
   const [requestModal, setRequestModal] = useState({ open: false, partner: null, status: 'idle' });
+  const [communityRequests, setCommunityRequests] = useState(() => loadLocalCommuteRequests());
+  const [justPostedToast, setJustPostedToast] = useState(Boolean(location.state?.requestCreated));
+
+  useEffect(() => {
+    let mounted = true;
+    fetchSyncedCommuteRequests().then((list) => {
+      if (mounted) setCommunityRequests(list);
+    });
+    const unsub = subscribeCommuteRequests((list) => {
+      if (mounted) setCommunityRequests(list);
+    });
+    return () => {
+      mounted = false;
+      unsub();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (justPostedToast) {
+      const t = setTimeout(() => setJustPostedToast(false), 3800);
+      return () => clearTimeout(t);
+    }
+  }, [justPostedToast]);
 
   // Load saved profile on mount
   useEffect(() => {
@@ -220,12 +254,53 @@ const CommuteDashboard = () => {
     return true;
   });
 
-  // Handle Instant Pool Request
+  // Publish a Live Community Commute Request directly from the Commute Dashboard
+  const handlePublishCommunityRequest = () => {
+    const resolvedSource = (source || '').trim() || 'Poonamallee High Road, Chennai';
+    const resolvedDest = (destination || '').trim() || 'Tidel Park, OMR Tech Corridor, Chennai';
+    saveCommuteState({ source: resolvedSource, destination: resolvedDest });
+    const created = addCommuteRequest({
+      type: 'posted',
+      userName: user?.name || (user?.email ? user.email.split('@')[0] : 'You'),
+      role,
+      source: resolvedSource,
+      destination: resolvedDest,
+      departureTime,
+      returnTime,
+      transport: role === 'driver' ? 'car' : 'shared',
+      workMode: recurrence,
+      status: 'Live in Community',
+    });
+    setCommunityRequests((prev) => [created, ...prev.filter((r) => r.id !== created.id)]);
+    setJustPostedToast(true);
+  };
+
+  // Handle Instant Pool Request (and save it to Community Requests feed!)
   const handleRequestPool = (partner) => {
     setRequestModal({ open: true, partner, status: 'requesting' });
     setTimeout(() => {
-      setRequestModal({ open: true, partner, status: 'confirmed' });
-    }, 1500);
+      const otp = String(Math.floor(1000 + Math.random() * 9000));
+      const booked = addCommuteRequest({
+        type: 'pool_booking',
+        userName: user?.name || (user?.email ? user.email.split('@')[0] : 'You'),
+        role,
+        source: (source || '').trim() || 'Current Location',
+        destination: (destination || '').trim() || 'Tidel Park, OMR',
+        departureTime: partner?.startTime || departureTime,
+        returnTime,
+        partnerName: partner?.name || 'Commute Partner',
+        partnerCar: partner?.car || 'Sedan',
+        otp,
+        status: 'Pool Confirmed',
+      });
+      setCommunityRequests((prev) => [booked, ...prev.filter((r) => r.id !== booked.id)]);
+      setRequestModal({ open: true, partner: { ...partner, otp }, status: 'confirmed' });
+    }, 1000);
+  };
+
+  const handleRemoveCommunityRequest = (id) => {
+    const updated = deleteCommuteRequest(id);
+    setCommunityRequests(updated);
   };
 
   return (
@@ -683,26 +758,160 @@ const CommuteDashboard = () => {
               </button>
             </div>
 
-            {/* AI Search Action Button */}
-            <button
-              onClick={() => {
-                saveCommuteState();
-                navigate('/user/commute/results');
-              }}
-              style={{ 
-                width: '100%', height: '50px', background: 'linear-gradient(90deg, #6366F1, #00D8FF)',
-                color: '#080C14', borderRadius: '16px', fontWeight: 900,
-                fontSize: '0.98rem', border: 'none', cursor: 'pointer',
-                boxShadow: '0 8px 25px rgba(0,216,255,0.3)',
-                display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px',
-                transition: 'all 0.2s'
-              }}
-            >
-              <span>Explore All {displayMatches.length} AI Matches</span> <ArrowRightLeft size={16} color="#080C14" />
-            </button>
+            {/* Action Buttons: Post Community Request + Explore AI Matches */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <button
+                onClick={handlePublishCommunityRequest}
+                style={{ 
+                  width: '100%', height: '48px', background: 'linear-gradient(90deg, #10B981, #00D8FF)',
+                  color: '#080C14', borderRadius: '16px', fontWeight: 900,
+                  fontSize: '0.92rem', border: 'none', cursor: 'pointer',
+                  boxShadow: '0 8px 22px rgba(16,185,129,0.32)',
+                  display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <Send size={15} color="#080C14" /> <span>Post Community Ride Request</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  saveCommuteState();
+                  navigate('/user/commute/results');
+                }}
+                style={{ 
+                  width: '100%', height: '46px', background: 'linear-gradient(90deg, #6366F1, #00D8FF)',
+                  color: '#080C14', borderRadius: '16px', fontWeight: 900,
+                  fontSize: '0.9rem', border: 'none', cursor: 'pointer',
+                  boxShadow: '0 6px 18px rgba(0,216,255,0.22)',
+                  display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <span>Explore All {displayMatches.length} AI Matches</span> <ArrowRightLeft size={15} color="#080C14" />
+              </button>
+            </div>
 
           </div>
         </div>
+      </div>
+
+      {/* Toast Confirmation When User Posts a Request */}
+      <AnimatePresence>
+        {justPostedToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            style={{
+              margin: '0 16px 14px', padding: '11px 14px', borderRadius: '14px',
+              background: 'rgba(16, 185, 129, 0.16)', border: '1px solid rgba(16, 185, 129, 0.5)',
+              color: '#10B981', fontSize: '0.78rem', fontWeight: 800,
+              display: 'flex', alignItems: 'center', gap: '8px'
+            }}
+          >
+            <Check size={16} />
+            <span>Your commute request is live and visible in the Community feed below!</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 🌟 USER-CREATED ACTIVE COMMUNITY REQUESTS SECTION */}
+      <div style={{ padding: '0 16px', marginBottom: '22px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Sparkles size={17} color="#10B981" />
+            <h2 style={{ fontSize: '1.02rem', fontWeight: 900, color: 'var(--text-main, #F1F5F9)' }}>
+              Active Community Requests ({communityRequests.length})
+            </h2>
+          </div>
+          <button
+            onClick={() => navigate('/user/commute/create-profile')}
+            style={{
+              fontSize: '0.72rem', fontWeight: 800, color: '#00D8FF',
+              background: 'rgba(0,216,255,0.1)', border: '1px solid rgba(0,216,255,0.3)',
+              borderRadius: '8px', padding: '4px 9px', cursor: 'pointer'
+            }}
+          >
+            + New Request
+          </button>
+        </div>
+
+        {communityRequests.length === 0 ? (
+          <div style={{
+            background: 'var(--bg-surface, #0F1623)', borderRadius: '18px', padding: '16px',
+            border: '1px dashed var(--border-ui, rgba(255,255,255,0.12))', textAlign: 'center'
+          }}>
+            <p style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted, #9CA3AF)' }}>
+              No active community requests yet.
+            </p>
+            <p style={{ fontSize: '0.7rem', color: 'var(--text-muted, #9CA3AF)', marginTop: '3px' }}>
+              Tap <strong>Post Community Ride Request</strong> above or <strong>+</strong> to publish your route live!
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {communityRequests.map((req) => {
+              const isPool = req.type === 'pool_booking';
+              return (
+                <motion.div
+                  key={req.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  style={{
+                    background: isPool ? 'rgba(0, 216, 255, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+                    border: `1.5px solid ${isPool ? 'rgba(0, 216, 255, 0.45)' : 'rgba(16, 185, 129, 0.45)'}`,
+                    borderRadius: '18px', padding: '14px',
+                    boxShadow: '0 6px 18px rgba(0,0,0,0.18)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        <span style={{
+                          fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em',
+                          padding: '2px 7px', borderRadius: '6px',
+                          background: isPool ? 'rgba(0, 216, 255, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                          color: isPool ? '#00D8FF' : '#10B981'
+                        }}>
+                          {isPool ? '🚗 POOL CONFIRMED' : '🟢 LIVE COMMUNITY REQUEST'}
+                        </span>
+                        <span style={{ fontSize: '0.64rem', fontWeight: 700, color: 'var(--text-muted, #9CA3AF)' }}>
+                          {req.role === 'driver' ? 'Car Owner' : 'Rider'} · {req.userName || 'You'}
+                        </span>
+                      </div>
+
+                      <p style={{ fontSize: '0.86rem', fontWeight: 900, color: 'var(--text-main, #F1F5F9)', marginTop: '6px', lineHeight: 1.35 }}>
+                        {req.source} ➔ {req.destination}
+                      </p>
+
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '6px', fontSize: '0.7rem', color: 'var(--text-muted, #9CA3AF)', fontWeight: 700 }}>
+                        <span>⏰ Departs: <strong style={{ color: 'var(--text-main, #F1F5F9)' }}>{req.departureTime}</strong></span>
+                        {req.returnTime && <span>🔁 Return: <strong style={{ color: 'var(--text-main, #F1F5F9)' }}>{req.returnTime}</strong></span>}
+                        {req.partnerName && <span>👤 Partner: <strong style={{ color: '#00D8FF' }}>{req.partnerName}</strong></span>}
+                        {req.vehicleNumber && <span>🚘 {req.vehicleNumber}</span>}
+                        {req.otp && <span>🔑 OTP: <strong style={{ color: '#10B981' }}>{req.otp}</strong></span>}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleRemoveCommunityRequest(req.id)}
+                      title="Cancel / Remove Request"
+                      style={{
+                        padding: '6px 8px', borderRadius: '10px', flexShrink: 0,
+                        background: 'rgba(239, 68, 68, 0.14)', border: '1px solid rgba(239, 68, 68, 0.35)',
+                        color: '#EF4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
+                        fontSize: '0.68rem', fontWeight: 800
+                      }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Active Matched Route Partners Section */}

@@ -92,12 +92,39 @@ export const useGPSLocation = () => {
     return rawAddr;
   };
 
+  const getNativeLocation = useCallback(() => {
+    try {
+      if (typeof window !== 'undefined' && window.AndroidApp && typeof window.AndroidApp.getDeviceLocation === 'function') {
+        const raw = window.AndroidApp.getDeviceLocation();
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed.lat === 'number' && typeof parsed.lng === 'number') {
+            return { lat: parsed.lat, lng: parsed.lng };
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Native location bridge check:", e);
+    }
+    return null;
+  }, []);
+
   const reverseGeocode = useCallback(async (lat, lng) => {
-    const cacheKey = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+    let numLat, numLng;
+    if (lat && typeof lat === 'object') {
+      numLat = Number(lat.lat);
+      numLng = Number(lat.lng);
+    } else {
+      numLat = Number(lat);
+      numLng = Number(lng);
+    }
+    if (isNaN(numLat) || isNaN(numLng)) return 'Current Location';
+
+    const cacheKey = `${numLat.toFixed(4)},${numLng.toFixed(4)}`;
     if (geoCache.current[cacheKey]) return geoCache.current[cacheKey];
 
     // If coordinates match known Airtel ISP gateway in Sowcarpet (13.0878, 80.2785), avoid resolving to fake street
-    if (Math.abs(lat - 13.0878) < 0.008 && Math.abs(lng - 80.2785) < 0.008) {
+    if (Math.abs(numLat - 13.0878) < 0.008 && Math.abs(numLng - 80.2785) < 0.008) {
       try {
         localStorage.removeItem('smartride_user_pickup');
       } catch {}
@@ -108,7 +135,7 @@ export const useGPSLocation = () => {
     return new Promise((resolve) => {
       const google = window.google;
       if (!google || !google.maps) {
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${numLat}&lon=${numLng}&zoom=18&addressdetails=1`, {
           headers: { 'Accept-Language': 'en', 'User-Agent': 'SmartRide-AI-Cab/1.0' }
         })
           .then(res => res.json())
@@ -116,7 +143,7 @@ export const useGPSLocation = () => {
             if (data && data.address) {
               const road = data.address.road || data.address.suburb || data.address.neighbourhood || '';
               const city = data.address.city || data.address.town || data.address.village || '';
-              let finalAddr = road ? (city ? `${road}, ${city}` : road) : (data.display_name.split(',')[0] || 'Current Location');
+              let finalAddr = road ? (city ? `${road}, ${city}` : road) : (data.display_name?.split(',')[0] || 'Current Location');
               finalAddr = sanitizeAddress(finalAddr);
               geoCache.current[cacheKey] = finalAddr;
               resolve(finalAddr);
@@ -132,7 +159,7 @@ export const useGPSLocation = () => {
 
       try {
         const geocoder = new google.maps.Geocoder();
-        geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        geocoder.geocode({ location: { lat: numLat, lng: numLng } }, (results, status) => {
           if (status === 'OK' && results && results.length > 0) {
             const result = results[0];
             const display = result.formatted_address.split(',')[0];
@@ -143,7 +170,7 @@ export const useGPSLocation = () => {
             geoCache.current[cacheKey] = finalAddr;
             resolve(finalAddr);
           } else {
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${numLat}&lon=${numLng}&zoom=18&addressdetails=1`, {
               headers: { 'Accept-Language': 'en', 'User-Agent': 'SmartRide-AI-Cab/1.0' }
             })
               .then(res => res.json())
@@ -151,7 +178,7 @@ export const useGPSLocation = () => {
                 if (data && data.address) {
                   const road = data.address.road || data.address.suburb || data.address.neighbourhood || '';
                   const city = data.address.city || data.address.town || data.address.village || '';
-                  let finalAddr = road ? (city ? `${road}, ${city}` : road) : (data.display_name.split(',')[0] || 'Current Location');
+                  let finalAddr = road ? (city ? `${road}, ${city}` : road) : (data.display_name?.split(',')[0] || 'Current Location');
                   finalAddr = sanitizeAddress(finalAddr);
                   geoCache.current[cacheKey] = finalAddr;
                   resolve(finalAddr);
@@ -209,6 +236,20 @@ export const useGPSLocation = () => {
   const fetchLocation = useCallback(async () => {
     await new Promise(resolve => setTimeout(resolve, 0));
 
+    // 0. High priority check: native Android LocationManager bridge
+    const nativeCoords = getNativeLocation();
+    if (nativeCoords && isOperatingCountry(nativeCoords.lat, nativeCoords.lng)) {
+      const rawAddress = await reverseGeocode(nativeCoords.lat, nativeCoords.lng);
+      const cleanAddress = sanitizeAddress(rawAddress);
+      setLocation({
+        coords: nativeCoords,
+        address: cleanAddress,
+        loading: false,
+        error: null
+      });
+      return;
+    }
+
     if (!navigator.geolocation) {
       setLocation(prev => ({ ...prev, loading: false, error: 'Geolocation not supported' }));
       return;
@@ -262,7 +303,7 @@ export const useGPSLocation = () => {
     );
 
     return watchId;
-  }, [currentLocation, reverseGeocode, fetchIPLocation]);
+  }, [currentLocation, reverseGeocode, fetchIPLocation, getNativeLocation]);
 
   useEffect(() => {
     let watchId;
@@ -293,7 +334,27 @@ export const useGPSLocation = () => {
   }, [currentLocation, fetchLocation]);
 
   const detectHighAccuracyGPS = useCallback(() => {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
+      // 0. Check native Android LocationManager bridge first
+      const nativeCoords = getNativeLocation();
+      if (nativeCoords && isOperatingCountry(nativeCoords.lat, nativeCoords.lng)) {
+        setLocation(prev => ({ ...prev, loading: true, address: 'Detecting GPS location...' }));
+        const rawAddress = await reverseGeocode(nativeCoords.lat, nativeCoords.lng);
+        const sanitized = sanitizeAddress(rawAddress);
+        const finalLoc = {
+          coords: nativeCoords,
+          address: sanitized || 'Current Location',
+          loading: false,
+          error: null
+        };
+        if (typeof localStorage !== 'undefined' && sanitized && sanitized !== 'Current Location') {
+          localStorage.setItem('smartride_user_pickup', sanitized);
+        }
+        setLocation(finalLoc);
+        resolve(finalLoc);
+        return;
+      }
+
       if (!navigator.geolocation) {
         setLocation(prev => ({ ...prev, loading: false, error: 'Geolocation not supported' }));
         resolve(null);
@@ -336,7 +397,7 @@ export const useGPSLocation = () => {
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     });
-  }, [reverseGeocode]);
+  }, [reverseGeocode, getNativeLocation]);
 
   return { ...location, refresh, detectHighAccuracyGPS, setLocation };
 };

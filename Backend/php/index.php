@@ -91,6 +91,54 @@ if (isset($parts[0]) && $parts[0] === 'ai') {
         exit();
     }
 
+    if ($action === 'multimodal') {
+        require_once __DIR__ . '/ai.php';
+        handleMultimodalRoute($method);
+        exit();
+    }
+
+    if ($action === 'compare-all') {
+        require_once __DIR__ . '/ai.php';
+        handleCompareAllRoute($method);
+        exit();
+    }
+
+    if ($action === 'future-pricing') {
+        require_once __DIR__ . '/ai.php';
+        handleFuturePricingRoute($method);
+        exit();
+    }
+
+    if ($action === 'sniper') {
+        require_once __DIR__ . '/ai.php';
+        handlePriceSniperRoute($method);
+        exit();
+    }
+
+    if ($action === 'surge-escape') {
+        require_once __DIR__ . '/ai.php';
+        handleSurgeEscapeRoute($method);
+        exit();
+    }
+
+    if ($action === 'weather-comfort') {
+        require_once __DIR__ . '/ai.php';
+        handleWeatherComfortRoute($method);
+        exit();
+    }
+
+    if ($action === 'realtime-analyze') {
+        require_once __DIR__ . '/realtime_ai.php';
+        handleRealTimeAiAnalyzeRoute($method);
+        exit();
+    }
+
+    if ($action === 'future-price') {
+        require_once __DIR__ . '/realtime_ai.php';
+        handleFuturePricePredictRoute($method);
+        exit();
+    }
+
     if ($action === 'explain') {
         $fare = isset($input['fare']) ? floatval($input['fare']) : 145;
         $eta = isset($input['eta']) ? intval($input['eta']) : 3;
@@ -149,6 +197,14 @@ if (isset($parts[0]) && $parts[0] === 'ai') {
         "compositeScore" => 95,
         "reasoning" => "Zero surge protection, 90m curbside pickup, and 99% dispatch reliability make SmartRide EV the dominant mobility equilibrium."
     ]);
+}
+
+// Community / Smart Commute Requests (/commute/*)
+if (isset($parts[0]) && $parts[0] === 'commute') {
+    require_once __DIR__ . '/commute.php';
+    $subAction = isset($parts[1]) ? $parts[1] : 'requests';
+    handleCommuteRoute($method, $subAction);
+    exit();
 }
 
 // Root API Welcome / Health check
