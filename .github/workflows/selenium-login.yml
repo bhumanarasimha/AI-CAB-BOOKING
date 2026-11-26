@@ -275,20 +275,25 @@ jobs:
 
       - name: Publish Consolidated Report Summary
         run: |
-          python3 -c '
+          python3 - << 'EOF'
           import json, os
-          api = json.load(open("ci-results/api-results.json"))["summary"]
-          web = json.load(open("ci-results/web-api-results.json"))["summary"]
-          mob = json.load(open("ci-results/mobile-results.json"))["summary"]
-          summary = os.environ["GITHUB_STEP_SUMMARY"]
-          with open(summary, "a", encoding="utf-8") as fh:
+          api = json.load(open("ci-results/api-results.json", encoding="utf-8"))["summary"]
+          web = json.load(open("ci-results/web-api-results.json", encoding="utf-8"))["summary"]
+          mob = json.load(open("ci-results/mobile-results.json", encoding="utf-8"))["summary"]
+          summary_path = os.environ["GITHUB_STEP_SUMMARY"]
+          rows = [
+              ("Backend PHP & MySQL API", api["total"], api["passed"], api["failed"]),
+              ("Web Application E2E", web["total"], web["passed"], web["failed"]),
+              ("Android Mobile App (34 Routes + 27 Controls)", mob["total"], mob["passed"], mob["failed"]),
+          ]
+          with open(summary_path, "a", encoding="utf-8") as fh:
               fh.write("## SmartRide AI - Consolidated E2E & Mobile Test Report\n\n")
               fh.write("| Suite | Total Checks | Passed | Failed | Status |\n")
               fh.write("|---|---|---|---|---|\n")
-              fh.write(f"| Backend PHP & MySQL API | {api[\"total\"]} | {api[\"passed\"]} | {api[\"failed\"]} | PASS |\n")
-              fh.write(f"| Web Application E2E | {web[\"total\"]} | {web[\"passed\"]} | {web[\"failed\"]} | PASS |\n")
-              fh.write(f"| Android Mobile App (34 Routes + 27 Controls) | {mob[\"total\"]} | {mob[\"passed\"]} | {mob[\"failed\"]} | PASS |\n")
-          '
+              for name, total, passed, failed in rows:
+                  status = "PASS" if failed == 0 else "FAIL"
+                  fh.write(f"| {name} | {total} | {passed} | {failed} | {status} |\n")
+          EOF
 
       - name: Upload Excel Test Report Artifact
         uses: actions/upload-artifact@v4
