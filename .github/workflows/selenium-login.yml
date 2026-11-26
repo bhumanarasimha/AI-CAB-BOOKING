@@ -66,7 +66,7 @@ jobs:
           cd .github/scripts/ci
           npm install --no-audit --no-fund
           if [ ! -x /usr/bin/google-chrome ] && [ ! -x /usr/bin/chromium ] && [ ! -x /usr/bin/chromium-browser ]; then
-            npx playwright install chromium
+            npx playwright install --with-deps chromium
           fi
 
       - name: Start Servers & Run Backend API + Web E2E Audit
@@ -116,18 +116,37 @@ jobs:
     name: Appium Mobile Tests Dry-Run
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_DATABASE: smartride_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
     env:
       CI: 'true'
+      MYSQL_HOST: '127.0.0.1'
+      MYSQL_PORT: '3306'
+      MYSQL_DATABASE: 'smartride_db'
+      MYSQL_USER: 'root'
+      MYSQL_PASSWORD: ''
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup PHP 8.2
+      - name: Setup PHP 8.2 & MySQL PDO
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: curl, json, mbstring
+          extensions: pdo_mysql, curl, json, mbstring
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
@@ -136,8 +155,9 @@ jobs:
 
       - name: Lint & Build Android Mobile WebView Bundle
         run: |
+          php .github/scripts/ci/init_ci_db.php
           cd frontend
-          npm install --no-audit --no-fund
+          npm ci --legacy-peer-deps --no-audit --no-fund || npm install --legacy-peer-deps --no-audit --no-fund
           npx eslint src --quiet
           npm run build
 
@@ -146,7 +166,7 @@ jobs:
           cd .github/scripts/ci
           npm install --no-audit --no-fund
           if [ ! -x /usr/bin/google-chrome ] && [ ! -x /usr/bin/chromium ] && [ ! -x /usr/bin/chromium-browser ]; then
-            npx playwright install chromium
+            npx playwright install --with-deps chromium
           fi
 
       - name: Run 34-Route Pixel 8 Mobile & Button Placement Audit
@@ -208,7 +228,7 @@ jobs:
       - name: Build & Stage Production Pages Bundle
         run: |
           cd frontend
-          npm install --no-audit --no-fund
+          npm ci --legacy-peer-deps --no-audit --no-fund || npm install --legacy-peer-deps --no-audit --no-fund
           npm run build
           cd ..
           mkdir -p _pages_dist/mobile
