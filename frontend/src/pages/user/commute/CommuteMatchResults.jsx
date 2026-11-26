@@ -154,7 +154,18 @@ const CommuteMatchResults = () => {
           >
             <div style={{ display: 'flex', gap: '14px', marginBottom: '16px' }}>
               <div style={{ position: 'relative' }}>
-                <img src={match.image} alt={match.name} style={{ width: '58px', height: '58px', borderRadius: '18px', objectFit: 'cover' }} />
+                <img
+                  src={match.image}
+                  alt={match.name}
+                  style={{ width: '58px', height: '58px', borderRadius: '18px', objectFit: 'cover', background: 'rgba(0,216,255,0.15)' }}
+                  onError={(e) => {
+                    const el = e.currentTarget;
+                    if (el.dataset.fallbackApplied) return;
+                    el.dataset.fallbackApplied = '1';
+                    const ch = (match.name || 'S').charAt(0).toUpperCase();
+                    el.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="96" height="96" fill="#0EA5E9"/><text x="50%" y="54%" font-size="42" font-family="sans-serif" font-weight="bold" fill="#080C14" text-anchor="middle" dominant-baseline="middle">${ch}</text></svg>`)}`;
+                  }}
+                />
                 <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', background: 'var(--brand-cyan, #00D8FF)', borderRadius: '50%', padding: '4px', border: '2px solid #0F1623' }}>
                   <ShieldCheck size={11} color="#080C14" />
                 </div>

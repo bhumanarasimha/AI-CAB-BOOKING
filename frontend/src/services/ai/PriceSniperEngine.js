@@ -92,8 +92,8 @@ export function evaluateSniperAgainstQuotes(sniper, options = [], futurePricing 
     }
   }
 
-  let probabilityPercent = 50;
-  let statusText = '';
+  let probabilityPercent;
+  let statusText;
 
   if (isHit) {
     probabilityPercent = 100;

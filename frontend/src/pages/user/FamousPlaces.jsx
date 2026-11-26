@@ -38,7 +38,7 @@ const ALL_FAMOUS_PLACES = [
     emoji: '🛍️',
     accent: '#F59E0B',
     tag: 'Popular',
-    image: 'https://images.unsplash.com/photo-1567449303078-57ad995bd17f?w=400&q=80',
+    image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&q=80',
   },
   {
     name: 'ISKCON Temple',
@@ -50,7 +50,7 @@ const ALL_FAMOUS_PLACES = [
     emoji: '🛕',
     accent: '#F97316',
     tag: null,
-    image: 'https://images.unsplash.com/photo-1609942072359-e5c6f9aeaed3?w=400&q=80',
+    image: 'https://images.unsplash.com/photo-1548013146-72479768bada?w=400&q=80',
   },
   {
     name: 'Forum Mall',
@@ -110,7 +110,7 @@ const ALL_FAMOUS_PLACES = [
     emoji: '🧘',
     accent: '#8B5CF6',
     tag: 'Peaceful',
-    image: 'https://images.unsplash.com/photo-1593693397690-362bb9a1596b?w=400&q=80',
+    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80',
   },
   {
     name: 'Bannerghatta National Park',
@@ -122,7 +122,7 @@ const ALL_FAMOUS_PLACES = [
     emoji: '🦁',
     accent: '#22C55E',
     tag: 'Adventure',
-    image: 'https://images.unsplash.com/photo-1564500645607-06bdcb9cf413?w=400&q=80',
+    image: 'https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=400&q=80',
   },
   {
     name: 'Innovative Film City',
@@ -146,7 +146,7 @@ const ALL_FAMOUS_PLACES = [
     emoji: '⛰️',
     accent: '#3B82F6',
     tag: 'Sunrise View',
-    image: 'https://images.unsplash.com/photo-1563228394-4d872138b32d?w=400&q=80',
+    image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&q=80',
   }
 ];
 
@@ -211,8 +211,19 @@ const FamousPlaces = () => {
                 display: 'flex', overflow: 'hidden', padding: '12px', gap: '14px', alignItems: 'center', cursor: 'pointer', flexShrink: 0
               }}
             >
-              <div style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '12px', overflow: 'hidden', flexShrink: 0 }}>
-                <img src={place.image} alt={place.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '12px', overflow: 'hidden', flexShrink: 0, background: `linear-gradient(135deg, ${place.accent}44, #0F172A)` }}>
+                <img
+                  src={place.image}
+                  alt={place.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e) => {
+                    const el = e.currentTarget;
+                    if (el.dataset.fallbackApplied) return;
+                    el.dataset.fallbackApplied = '1';
+                    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${place.accent}" stop-opacity="0.7"/><stop offset="100%" stop-color="#0F172A"/></linearGradient></defs><rect width="160" height="160" fill="url(#g)"/><text x="50%" y="54%" font-size="56" text-anchor="middle" dominant-baseline="middle">${place.emoji}</text></svg>`;
+                    el.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+                  }}
+                />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.8))' }} />
                 <div style={{ position: 'absolute', bottom: '6px', left: '6px', display: 'flex', alignItems: 'center', gap: '3px' }}>
                   <Star size={10} color="#F59E0B" fill="#F59E0B" />

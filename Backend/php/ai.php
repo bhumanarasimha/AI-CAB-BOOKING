@@ -178,6 +178,7 @@ function handleCompareAllRoute($method) {
     $rawDist = isset($input['distanceKm']) ? floatval($input['distanceKm']) : 0;
     
     $distanceKm = resolveBackendDistanceKm($pickup, $destination, $rawDist);
+    $scale = $distanceKm / 34.0;
 
     $surgeCtx = getSurgeContext();
     $surge = isset($input['surge']) ? floatval($input['surge']) : $surgeCtx['surgeMultiplier'];
@@ -580,7 +581,7 @@ function handleAiRoute($method) {
     $peakForecast = $surgeCtx['peakForecast'];
 
     $input = getJsonInput();
-    $query = isset($input['query']) ? trim($input['query']) : '';
+    $query = isset($input['query']) ? trim($input['query']) : (isset($input['message']) ? trim($input['message']) : '');
     $pickup = isset($input['pickup']) && trim($input['pickup']) !== '' ? trim($input['pickup']) : 'KG Apartments';
     $destination = isset($input['destination']) && trim($input['destination']) !== '' ? trim($input['destination']) : 'Marina Beach';
     $distanceKm = isset($input['distanceKm']) ? floatval($input['distanceKm']) : 34.0;

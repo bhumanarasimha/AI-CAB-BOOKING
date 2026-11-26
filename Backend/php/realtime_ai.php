@@ -30,8 +30,28 @@ function rtHttpGetJson($url, $timeoutSec = 4) {
 
 function rtGeocode($address) {
     $clean = trim($address);
+    $key = strtolower($clean);
+    $anchors = [
+        'kg apartments' => [13.0425, 80.0820],
+        'poonamallee' => [13.0480, 80.0980],
+        'marina beach' => [13.0500, 80.2824],
+        'guindy' => [13.0067, 80.2206],
+        'tidel park' => [12.9897, 80.2488],
+        'chennai central' => [13.0827, 80.2707],
+        'chennai airport' => [12.9941, 80.1709],
+        'velachery' => [12.9750, 80.2210],
+        'koyambedu' => [13.0674, 80.2057],
+        'koramangala' => [12.9352, 77.6245],
+        'whitefield' => [12.9698, 77.7499],
+        'indiranagar' => [12.9784, 77.6408],
+    ];
+    foreach ($anchors as $needle => $pt) {
+        if (strpos($key, $needle) !== false) {
+            return ['lat' => $pt[0], 'lng' => $pt[1], 'label' => $clean, 'source' => 'Verified Geo Anchor'];
+        }
+    }
     $q = (stripos($clean, 'india') !== false) ? $clean : ($clean . ', India');
-    $json = rtHttpGetJson('https://photon.komoot.io/api/?q=' . urlencode($q) . '&limit=1', 3);
+    $json = rtHttpGetJson('https://photon.komoot.io/api/?q=' . urlencode($q) . '&limit=1', 2);
     if ($json && isset($json['features'][0]['geometry']['coordinates'])) {
         $coords = $json['features'][0]['geometry']['coordinates'];
         return [
@@ -55,7 +75,7 @@ function handleRealTimeAiAnalyzeRoute($method) {
 
     // OSRM Live Road Routing
     $osrmUrl = "https://router.project-osrm.org/route/v1/driving/{$pCoord['lng']},{$pCoord['lat']};{$dCoord['lng']},{$dCoord['lat']}?overview=simplified&alternatives=false";
-    $osrm = rtHttpGetJson($osrmUrl, 4);
+    $osrm = rtHttpGetJson($osrmUrl, 2);
     $hour = intval(date('H'));
     $urbanFactor = (($hour >= 8 && $hour <= 11) || ($hour >= 17 && $hour <= 21)) ? 1.38 : (($hour >= 12 && $hour <= 16) ? 1.18 : 1.05);
 
@@ -75,7 +95,7 @@ function handleRealTimeAiAnalyzeRoute($method) {
 
     // Open-Meteo Live Weather
     $weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude={$pCoord['lat']}&longitude={$pCoord['lng']}&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,wind_speed_10m&timezone=auto";
-    $wJson = rtHttpGetJson($weatherUrl, 3);
+    $wJson = rtHttpGetJson($weatherUrl, 2);
     if ($wJson && isset($wJson['current'])) {
         $c = $wJson['current'];
         $rainMm = floatval($c['rain'] ?? $c['precipitation'] ?? 0);
@@ -283,5 +303,70 @@ function handleFuturePricePredictRoute($method) {
         'timeline' => $timeline,
         'isLive' => ($isOsrmLive || $isWeatherLive),
         'latencyMs' => intval(round((microtime(true) - $started) * 1000))
+    ]);
+}
+
+function handleReverseGeocodeRoute($method) {
+    $input = ($method === 'POST') ? getJsonInput() : $_GET;
+    $lat = floatval($input['lat'] ?? 13.0827);
+    $lng = floatval($input['lng'] ?? 80.2707);
+
+    $nomUrl = "https://nominatim.openstreetmap.org/reverse?format=json&lat={$lat}&lon={$lng}&zoom=18&addressdetails=1";
+    $data = rtHttpGetJson($nomUrl, 3);
+    if ($data && isset($data['address'])) {
+        $addr = $data['address'];
+        $road = $addr['road'] ?? $addr['suburb'] ?? $addr['neighbourhood'] ?? '';
+        $city = $addr['city'] ?? $addr['town'] ?? $addr['village'] ?? $addr['state_district'] ?? '';
+        $label = $road ? ($city ? "{$road}, {$city}" : $road) : (explode(',', $data['display_name'] ?? 'Current Location')[0]);
+        jsonResponse([
+            'success' => true,
+            'address' => trim($label) ?: 'Current Location',
+            'city' => $city,
+            'lat' => $lat,
+            'lng' => $lng,
+            'source' => 'Nominatim Server Proxy'
+        ]);
+    }
+
+    $photonUrl = "https://photon.komoot.io/reverse?lat={$lat}&lon={$lng}";
+    $pData = rtHttpGetJson($photonUrl, 3);
+    if ($pData && isset($pData['features'][0]['properties'])) {
+        $props = $pData['features'][0]['properties'];
+        $name = $props['street'] ?? $props['name'] ?? $props['district'] ?? '';
+        $city = $props['city'] ?? $props['county'] ?? '';
+        $label = $name ? ($city ? "{$name}, {$city}" : $name) : 'Current Location';
+        jsonResponse([
+            'success' => true,
+            'address' => trim($label) ?: 'Current Location',
+            'city' => $city,
+            'lat' => $lat,
+            'lng' => $lng,
+            'source' => 'Photon Reverse Proxy'
+        ]);
+    }
+
+    jsonResponse([
+        'success' => true,
+        'address' => 'Current Location',
+        'city' => 'Chennai',
+        'lat' => $lat,
+        'lng' => $lng,
+        'source' => 'Fallback Anchor'
+    ]);
+}
+
+function handleForwardGeocodeRoute($method) {
+    $input = ($method === 'POST') ? getJsonInput() : $_GET;
+    $query = trim($input['q'] ?? $input['query'] ?? '');
+    if ($query === '') {
+        jsonResponse(['success' => false, 'msg' => 'Missing query'], 400);
+    }
+    $coord = rtGeocode($query);
+    jsonResponse([
+        'success' => true,
+        'lat' => $coord['lat'],
+        'lng' => $coord['lng'],
+        'address' => $coord['label'],
+        'source' => $coord['source']
     ]);
 }

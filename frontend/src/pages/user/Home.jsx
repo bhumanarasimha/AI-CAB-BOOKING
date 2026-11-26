@@ -127,7 +127,7 @@ const nearbyPlaces = [
     emoji: '🛍️',
     accent: '#6366F1',
     tag: 'Popular',
-    image: 'https://images.unsplash.com/photo-1567449303078-57ad995bd17f?w=400&q=80',
+    image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&q=80',
   },
 ];
 
@@ -156,7 +156,9 @@ const Home = () => {
       )) {
         localStorage.removeItem('smartride_user_pickup');
       }
-    } catch {}
+    } catch {
+      // Ignore storage read errors
+    }
 
     // 2. Check if user has a previously confirmed pickup
     const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('smartride_user_pickup') : null;
@@ -490,7 +492,7 @@ const Home = () => {
           /* Full Sheet ScrollView in peek / expanded mode */
           <ScrollView contentContainerStyle={styles.scrollContent} style={{ flex: 1 }}>
             {/* Search Bar - Quick Ride Entry */}
-            <Pressable onPress={() => navigate('/user/search')} style={[styles.searchBar, isBright && styles.searchBarLight]}>
+            <Pressable accessibilityRole="button" onPress={() => navigate('/user/search')} style={[styles.searchBar, isBright && styles.searchBarLight]}>
               <View style={[styles.searchIconBox, isBright && styles.searchIconBoxLight]}>
                 <Search size={16} color={isBright ? '#0284C7' : '#00D8FF'} />
               </View>
@@ -736,30 +738,30 @@ const Home = () => {
       </View>
 
       {/* Floating Chubby AI Trigger */}
-      <Pressable
-        onPress={() => setChatOpen(true)}
+      <button
+        type="button"
+        onClick={() => setChatOpen(true)}
         style={{
           position: 'absolute',
-          bottom: 85,
+          bottom: 18,
           right: 20,
-          backgroundColor: 'linear-gradient(135deg, #00D8FF, #6366F1)',
           background: 'linear-gradient(135deg, #00D8FF, #6366F1)',
-          borderRadius: 24,
-          paddingVertical: 10,
-          paddingHorizontal: 14,
+          borderRadius: '24px',
+          padding: '10px 14px',
+          display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 6,
+          gap: '6px',
+          border: 'none',
           boxShadow: '0 8px 24px rgba(0, 216, 255, 0.4)',
-          elevation: 10,
           zIndex: 90,
           cursor: 'pointer'
         }}
         aria-label="Open Chubby AI Assistant"
       >
         <Sparkles size={16} color="#080C14" />
-        <Text style={{ fontSize: 12, fontWeight: '800', color: '#080C14' }}>Chubby AI</Text>
-      </Pressable>
+        <span style={{ fontSize: '12px', fontWeight: 800, color: '#080C14' }}>Chubby AI</span>
+      </button>
 
       {/* Chubby AI Interactive Assistant */}
       <AIChatBot

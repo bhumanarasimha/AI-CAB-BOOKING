@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../lib/AuthContext';
+import { api } from '../lib/api';
 
 export const useGPSLocation = () => {
   const auth = useAuth();
@@ -23,7 +24,9 @@ export const useGPSLocation = () => {
             return saved;
           }
         }
-      } catch {}
+      } catch {
+        // Ignore storage access errors
+      }
     }
     return currentLocation?.address || 'Current Location';
   };
@@ -73,7 +76,9 @@ export const useGPSLocation = () => {
     if (rawAddr.includes('Ekambareswara') || rawAddr.includes('Agraharam') || rawAddr.includes('Sowcarpet')) {
       try {
         localStorage.removeItem('smartride_user_pickup');
-      } catch {}
+      } catch {
+        // Ignore storage removal errors
+      }
       return 'Current Location';
     }
     // Reject Android Emulator default mock GPS in Mountain View, CA
@@ -86,7 +91,9 @@ export const useGPSLocation = () => {
     ) {
       try {
         localStorage.removeItem('smartride_user_pickup');
-      } catch {}
+      } catch {
+        // Ignore storage removal errors
+      }
       return 'Current Location';
     }
     return rawAddr;
@@ -127,74 +134,21 @@ export const useGPSLocation = () => {
     if (Math.abs(numLat - 13.0878) < 0.008 && Math.abs(numLng - 80.2785) < 0.008) {
       try {
         localStorage.removeItem('smartride_user_pickup');
-      } catch {}
+      } catch {
+        // Ignore storage removal errors
+      }
       geoCache.current[cacheKey] = 'Current Location';
       return 'Current Location';
     }
 
-    return new Promise((resolve) => {
-      const google = window.google;
-      if (!google || !google.maps) {
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${numLat}&lon=${numLng}&zoom=18&addressdetails=1`, {
-          headers: { 'Accept-Language': 'en', 'User-Agent': 'SmartRide-AI-Cab/1.0' }
-        })
-          .then(res => res.json())
-          .then(data => {
-            if (data && data.address) {
-              const road = data.address.road || data.address.suburb || data.address.neighbourhood || '';
-              const city = data.address.city || data.address.town || data.address.village || '';
-              let finalAddr = road ? (city ? `${road}, ${city}` : road) : (data.display_name?.split(',')[0] || 'Current Location');
-              finalAddr = sanitizeAddress(finalAddr);
-              geoCache.current[cacheKey] = finalAddr;
-              resolve(finalAddr);
-            } else {
-              resolve('Current Location');
-            }
-          })
-          .catch(() => {
-            resolve('Current Location');
-          });
-        return;
-      }
-
-      try {
-        const geocoder = new google.maps.Geocoder();
-        geocoder.geocode({ location: { lat: numLat, lng: numLng } }, (results, status) => {
-          if (status === 'OK' && results && results.length > 0) {
-            const result = results[0];
-            const display = result.formatted_address.split(',')[0];
-            const city = result.address_components.find(c => c.types.includes('locality'))?.long_name || '';
-
-            let finalAddr = city ? `${display}, ${city}` : display;
-            finalAddr = sanitizeAddress(finalAddr);
-            geoCache.current[cacheKey] = finalAddr;
-            resolve(finalAddr);
-          } else {
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${numLat}&lon=${numLng}&zoom=18&addressdetails=1`, {
-              headers: { 'Accept-Language': 'en', 'User-Agent': 'SmartRide-AI-Cab/1.0' }
-            })
-              .then(res => res.json())
-              .then(data => {
-                if (data && data.address) {
-                  const road = data.address.road || data.address.suburb || data.address.neighbourhood || '';
-                  const city = data.address.city || data.address.town || data.address.village || '';
-                  let finalAddr = road ? (city ? `${road}, ${city}` : road) : (data.display_name?.split(',')[0] || 'Current Location');
-                  finalAddr = sanitizeAddress(finalAddr);
-                  geoCache.current[cacheKey] = finalAddr;
-                  resolve(finalAddr);
-                } else {
-                  resolve('Current Location');
-                }
-              })
-              .catch(() => {
-                resolve('Current Location');
-              });
-          }
-        });
-      } catch (error) {
-        resolve('Current Location');
-      }
-    });
+    try {
+      const data = await api.geocode.reverse(numLat, numLng);
+      const finalAddr = sanitizeAddress(data?.address || 'Current Location');
+      geoCache.current[cacheKey] = finalAddr;
+      return finalAddr;
+    } catch {
+      return 'Current Location';
+    }
   }, []);
 
   const fetchIPLocation = useCallback(async () => {
@@ -333,36 +287,34 @@ export const useGPSLocation = () => {
     if (!currentLocation) fetchLocation();
   }, [currentLocation, fetchLocation]);
 
-  const detectHighAccuracyGPS = useCallback(() => {
-    return new Promise(async (resolve) => {
-      // 0. Check native Android LocationManager bridge first
-      const nativeCoords = getNativeLocation();
-      if (nativeCoords && isOperatingCountry(nativeCoords.lat, nativeCoords.lng)) {
-        setLocation(prev => ({ ...prev, loading: true, address: 'Detecting GPS location...' }));
-        const rawAddress = await reverseGeocode(nativeCoords.lat, nativeCoords.lng);
-        const sanitized = sanitizeAddress(rawAddress);
-        const finalLoc = {
-          coords: nativeCoords,
-          address: sanitized || 'Current Location',
-          loading: false,
-          error: null
-        };
-        if (typeof localStorage !== 'undefined' && sanitized && sanitized !== 'Current Location') {
-          localStorage.setItem('smartride_user_pickup', sanitized);
-        }
-        setLocation(finalLoc);
-        resolve(finalLoc);
-        return;
-      }
-
-      if (!navigator.geolocation) {
-        setLocation(prev => ({ ...prev, loading: false, error: 'Geolocation not supported' }));
-        resolve(null);
-        return;
-      }
-
+  const detectHighAccuracyGPS = useCallback(async () => {
+    // 0. Check native Android LocationManager bridge first
+    const nativeCoords = getNativeLocation();
+    if (nativeCoords && isOperatingCountry(nativeCoords.lat, nativeCoords.lng)) {
       setLocation(prev => ({ ...prev, loading: true, address: 'Detecting GPS location...' }));
+      const rawAddress = await reverseGeocode(nativeCoords.lat, nativeCoords.lng);
+      const sanitized = sanitizeAddress(rawAddress);
+      const finalLoc = {
+        coords: nativeCoords,
+        address: sanitized || 'Current Location',
+        loading: false,
+        error: null
+      };
+      if (typeof localStorage !== 'undefined' && sanitized && sanitized !== 'Current Location') {
+        localStorage.setItem('smartride_user_pickup', sanitized);
+      }
+      setLocation(finalLoc);
+      return finalLoc;
+    }
 
+    if (!navigator.geolocation) {
+      setLocation(prev => ({ ...prev, loading: false, error: 'Geolocation not supported' }));
+      return null;
+    }
+
+    setLocation(prev => ({ ...prev, loading: true, address: 'Detecting GPS location...' }));
+
+    return new Promise((resolve) => {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;

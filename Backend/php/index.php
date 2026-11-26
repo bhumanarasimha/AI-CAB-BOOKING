@@ -199,6 +199,18 @@ if (isset($parts[0]) && $parts[0] === 'ai') {
     ]);
 }
 
+// Geocoding Proxy Routes (/geocode/reverse, /geocode/search)
+if (isset($parts[0]) && $parts[0] === 'geocode') {
+    require_once __DIR__ . '/realtime_ai.php';
+    $action = isset($parts[1]) ? $parts[1] : 'reverse';
+    if ($action === 'search') {
+        handleForwardGeocodeRoute($method);
+    } else {
+        handleReverseGeocodeRoute($method);
+    }
+    exit();
+}
+
 // Community / Smart Commute Requests (/commute/*)
 if (isset($parts[0]) && $parts[0] === 'commute') {
     require_once __DIR__ . '/commute.php';

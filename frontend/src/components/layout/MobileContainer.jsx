@@ -113,7 +113,7 @@ const MobileContainer = () => {
 
   // Show Bottom Navigation on mobile device layouts only; on desktop, the top navigation bar is used
   const isUserRoute = pathname.startsWith('/user/');
-  const hideBottomNavRoutes = ['/user/welcome', '/user/ride-comparison', '/user/map-picker'];
+  const hideBottomNavRoutes = ['/user/welcome', '/user/ride-comparison', '/user/map-picker', '/user/commute/chat'];
   const showBottomNav = isUserRoute && !hideBottomNavRoutes.includes(pathname) && !hideBottomNavFromChild && !isDesktopLayout;
 
   return (

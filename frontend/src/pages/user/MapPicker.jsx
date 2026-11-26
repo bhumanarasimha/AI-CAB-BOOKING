@@ -5,6 +5,7 @@ import { ArrowLeft, MapPin, Search, Navigation, ExternalLink } from 'lucide-reac
 import { useGPSLocation } from '../../hooks/useLocation';
 import { useAuth } from '../../lib/AuthContext';
 import InteractiveMap from '../../components/ui/InteractiveMap';
+import { api } from '../../lib/api';
 
 const getSafeNumCoords = (c) => {
   if (!c) return { lat: 13.0827, lng: 80.2785 };
@@ -65,57 +66,12 @@ const MapPicker = () => {
     setPickerCoords({ lat, lng });
     setIsResolving(true);
 
-    const google = window.google;
-    if (!google || !google.maps) {
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
-          headers: { 'Accept-Language': 'en', 'User-Agent': 'SmartRide-AI-Cab/1.0' }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.address) {
-            const road = data.address.road || data.address.suburb || data.address.neighbourhood || '';
-            const city = data.address.city || data.address.town || data.address.village || '';
-            setDisplayAddress(road ? (city ? `${road}, ${city}` : road) : (data.display_name?.split(',')[0] || 'Map Location'));
-          }
-        }
-      } catch (err) {
-        console.warn("Direct Nominatim fallback failed:", err);
-      }
-      setIsResolving(false);
-      return;
-    }
-
     try {
-      const geocoder = new google.maps.Geocoder();
-      geocoder.geocode({ location: { lat, lng } }, async (results, status) => {
-        if (status === 'OK' && results && results.length > 0) {
-          const result = results[0];
-          const main = result.formatted_address.split(',')[0];
-          const city = result.address_components.find(c => c.types.includes('locality'))?.long_name || '';
-          setDisplayAddress(city ? `${main}, ${city}` : main);
-          setIsResolving(false);
-        } else {
-          try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
-              headers: { 'Accept-Language': 'en', 'User-Agent': 'SmartRide-AI-Cab/1.0' }
-            });
-            if (res.ok) {
-              const data = await res.json();
-              if (data && data.address) {
-                const road = data.address.road || data.address.suburb || data.address.neighbourhood || '';
-                const city = data.address.city || data.address.town || data.address.village || '';
-                setDisplayAddress(road ? (city ? `${road}, ${city}` : road) : (data.display_name?.split(',')[0] || 'Map Location'));
-              }
-            }
-          } catch (err) {
-            console.error("Map picker Nominatim fallback failed:", err);
-          }
-          setIsResolving(false);
-        }
-      });
+      const res = await api.geocode.reverse(lat, lng);
+      setDisplayAddress(res?.address || 'Map Location');
     } catch (err) {
       console.error("Map picker geocode failed:", err);
+    } finally {
       setIsResolving(false);
     }
   };
@@ -155,64 +111,16 @@ const MapPicker = () => {
       return;
     }
 
-    const google = window.google;
-    if (!google || !google.maps) {
-      setIsResolving(true);
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`, {
-          headers: { 'Accept-Language': 'en', 'User-Agent': 'SmartRide-AI-Cab/1.0' }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.length > 0) {
-            const item = data[0];
-            const lat = parseFloat(item.lat);
-            const lng = parseFloat(item.lon);
-            setPickerCoords({ lat, lng });
-            setDisplayAddress(item.display_name.split(',')[0]);
-          }
-        }
-      } catch (err) {
-        console.warn("Direct Nominatim search fallback failed:", err);
-      }
-      setIsResolving(false);
-      return;
-    }
-
     setIsResolving(true);
     try {
-      const geocoder = new google.maps.Geocoder();
-      geocoder.geocode({ address: query }, async (results, status) => {
-        if (status === 'OK' && results && results[0]) {
-          const result = results[0];
-          const lat = result.geometry.location.lat();
-          const lng = result.geometry.location.lng();
-          setPickerCoords({ lat, lng });
-          setDisplayAddress(result.formatted_address.split(',')[0]);
-          setIsResolving(false);
-        } else {
-          try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`, {
-              headers: { 'Accept-Language': 'en', 'User-Agent': 'SmartRide-AI-Cab/1.0' }
-            });
-            if (res.ok) {
-              const data = await res.json();
-              if (data && data.length > 0) {
-                const item = data[0];
-                const lat = parseFloat(item.lat);
-                const lng = parseFloat(item.lon);
-                setPickerCoords({ lat, lng });
-                setDisplayAddress(item.display_name.split(',')[0]);
-              }
-            }
-          } catch (err) {
-            console.error("Nominatim search fallback failed:", err);
-          }
-          setIsResolving(false);
-        }
-      });
+      const res = await api.geocode.search(query, pickerCoords?.lat || 13.0827, pickerCoords?.lng || 80.2707);
+      if (res && res.success && typeof res.lat === 'number' && typeof res.lng === 'number') {
+        setPickerCoords({ lat: res.lat, lng: res.lng });
+        setDisplayAddress(res.address || query);
+      }
     } catch (err) {
       console.error("Search failed", err);
+    } finally {
       setIsResolving(false);
     }
   };

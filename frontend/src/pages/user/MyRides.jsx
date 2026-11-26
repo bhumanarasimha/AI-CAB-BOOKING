@@ -20,7 +20,10 @@ const MyRides = () => {
 
   useEffect(() => {
     const fetchRides = async () => {
-      if (!user) return;
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
       try {
         const data = await getUserRides(user.uid);
         setRides(data);
@@ -157,15 +160,35 @@ const MyRides = () => {
 
                     {/* Footer Action */}
                     <div style={{ display: 'flex', gap: '10px', paddingTop: '12px', borderTop: '1px solid var(--border-ui)' }}>
-                      <button onClick={() => { if(ride.status === 'completed') setReceiptRide(ride); }} style={{ flex: 1, background: 'var(--bg-base)', border: '1px solid var(--border-ui)', padding: '10px', borderRadius: '10px', color: 'var(--text-main)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
-                        {ride.status === 'upcoming' ? 'Cancel Ride' : ride.status === 'cancelled' ? 'Get Help' : 'Receipt'}
+                      <button
+                        onClick={() => {
+                          if (['searching', 'confirmed', 'ongoing'].includes(ride.status)) {
+                            setRides(prev => prev.map(r => r.id === ride.id ? { ...r, status: 'cancelled' } : r));
+                          } else if (ride.status === 'cancelled') {
+                            navigate('/user/help');
+                          } else if (ride.status === 'completed') {
+                            setReceiptRide(ride);
+                          }
+                        }}
+                        style={{ flex: 1, background: 'var(--bg-base)', border: '1px solid var(--border-ui)', padding: '10px', borderRadius: '10px', color: 'var(--text-main)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        {['searching', 'confirmed', 'ongoing'].includes(ride.status) ? 'Cancel Ride' : ride.status === 'cancelled' ? 'Get Help' : 'Receipt'}
                       </button>
                       {ride.status === 'completed' ? (
                         <button onClick={() => setFeedbackRide(ride)} style={{ flex: 1, background: 'rgba(var(--brand-cyan-rgb), 0.1)', border: '1px solid rgba(var(--brand-cyan-rgb), 0.2)', padding: '10px', borderRadius: '10px', color: 'var(--brand-cyan)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                           <Star size={14} /> Rate Ride
                         </button>
                       ) : (
-                        <button style={{ flex: 1, background: 'rgba(var(--brand-indigo-rgb), 0.1)', border: '1px solid rgba(var(--brand-indigo-rgb), 0.2)', padding: '10px', borderRadius: '10px', color: 'var(--brand-indigo)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
+                        <button
+                          onClick={() => {
+                            if (['searching', 'confirmed', 'ongoing'].includes(ride.status)) {
+                              navigate('/user/activity');
+                            } else {
+                              navigate('/user/ride-comparison', { state: { pickup: ride.pickup, dropoff: ride.dropoff } });
+                            }
+                          }}
+                          style={{ flex: 1, background: 'rgba(var(--brand-indigo-rgb), 0.1)', border: '1px solid rgba(var(--brand-indigo-rgb), 0.2)', padding: '10px', borderRadius: '10px', color: 'var(--brand-indigo)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+                        >
                           {['searching', 'confirmed', 'ongoing'].includes(ride.status) ? 'Track Ride' : 'Rebook'}
                         </button>
                       )}

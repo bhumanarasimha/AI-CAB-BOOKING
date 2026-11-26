@@ -102,7 +102,7 @@ const Settings = () => {
         <h1 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>{t('app_settings')}</h1>
       </div>
       
-      <div style={{ padding: '20px', flex: 1, overflowY: 'auto' }}>
+      <div style={{ padding: '20px 20px 100px', flex: 1, overflowY: 'auto' }} className="no-scrollbar">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {settingsOptions.map((opt) => (
             <div key={opt.id} onClick={opt.action} className="card" style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer' }}>

@@ -82,8 +82,9 @@ const RouteMap = ({
         if (typeof window !== 'undefined' && window.google?.maps) {
           return resolve(window.google.maps);
         }
-        const existing = document.getElementById('google-maps-js-sdk');
+        const existing = document.getElementById('google-maps-js-sdk') || document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]');
         if (existing) {
+          if (window.google?.maps) return resolve(window.google.maps);
           existing.addEventListener('load', () => resolve(window.google?.maps));
           existing.addEventListener('error', reject);
           return;
@@ -268,8 +269,34 @@ const RouteMap = ({
       )}
 
       {/* Aesthetic Vignettes */}
-      <View style={[styles.topVignette, isBright && styles.topVignetteLight]} pointerEvents="none" />
-      <View style={[styles.bottomVignette, isBright && styles.bottomVignetteLight]} pointerEvents="none" />
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '40px',
+          background: isBright
+            ? 'linear-gradient(to bottom, rgba(248, 250, 252, 0.7), transparent)'
+            : 'linear-gradient(to bottom, rgba(8, 12, 20, 0.6), transparent)',
+          zIndex: 2,
+          pointerEvents: 'none',
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '60px',
+          background: isBright
+            ? 'linear-gradient(to top, rgba(248, 250, 252, 0.85), transparent)'
+            : 'linear-gradient(to top, rgba(8, 12, 20, 0.8), transparent)',
+          zIndex: 2,
+          pointerEvents: 'none',
+        }}
+      />
     </View>
   );
 };
@@ -302,30 +329,6 @@ const styles = StyleSheet.create({
   },
   loadingTextLight: {
     color: '#0284C7',
-  },
-  topVignette: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 40,
-    background: 'linear-gradient(to bottom, rgba(8, 12, 20, 0.6), transparent)',
-    zIndex: 2,
-  },
-  topVignetteLight: {
-    background: 'linear-gradient(to bottom, rgba(248, 250, 252, 0.7), transparent)',
-  },
-  bottomVignette: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 60,
-    background: 'linear-gradient(to top, rgba(8, 12, 20, 0.8), transparent)',
-    zIndex: 2,
-  },
-  bottomVignetteLight: {
-    background: 'linear-gradient(to top, rgba(248, 250, 252, 0.85), transparent)',
   },
 });
 

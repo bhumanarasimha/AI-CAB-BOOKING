@@ -19,7 +19,7 @@ const Reviews = () => {
         <h1 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>Ratings & Reviews</h1>
       </div>
       
-      <div style={{ padding: '24px 20px', flex: 1, overflowY: 'auto' }}>
+      <div style={{ padding: '24px 20px 100px', flex: 1, overflowY: 'auto' }} className="no-scrollbar">
         
         {/* Summary Card */}
         <div className="card" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>

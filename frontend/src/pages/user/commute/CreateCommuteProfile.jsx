@@ -53,7 +53,9 @@ const CreateCommuteProfile = () => {
         if (p.vehicleNumber) setVehicleNumber(p.vehicleNumber);
         if (p.licenseNumber) setLicenseNumber(p.licenseNumber);
       }
-    } catch (e) {}
+    } catch {
+      // Ignore malformed stored commute profile
+    }
   }, []);
 
   const handlePhotoUpload = (e) => {
@@ -129,7 +131,9 @@ const CreateCommuteProfile = () => {
           setLoading(prev => ({ ...prev, [type]: false }));
         });
         return;
-      } catch {}
+      } catch {
+        // Fallback to curated local commute hubs
+      }
     }
 
     setSuggestions(prev => ({ ...prev, [type]: localMatches }));
@@ -170,7 +174,9 @@ const CreateCommuteProfile = () => {
         vehicleNumber,
         status: 'Live in Community',
       });
-    } catch (e) {}
+    } catch {
+      // Ignore storage persistence errors when offline
+    }
     navigate('/user/commute', { state: { requestCreated: true } });
   };
 

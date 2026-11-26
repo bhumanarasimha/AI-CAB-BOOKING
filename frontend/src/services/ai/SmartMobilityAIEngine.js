@@ -276,9 +276,9 @@ export function getLiveSurgeContext(now = new Date()) {
   const minute = now.getMinutes();
 
   let isPeakHour = false;
-  let surgeMultiplier = 1.0;
-  let trafficStatus = 'Normal Flow';
-  let congestionLevel = 'Low';
+  let surgeMultiplier;
+  let trafficStatus;
+  let congestionLevel;
 
   if (hour >= 8 && hour < 11) {
     isPeakHour = true;
@@ -919,7 +919,7 @@ export function predictFuturePrices(currentFare = 699, distanceKm = 34.0, date =
 
   const forecast = timelineIntervals.map(offsetMinutes => {
     const futureDate = new Date(date.getTime() + offsetMinutes * 60 * 1000);
-    let futureSurge = 1.0;
+    let futureSurge;
     let label = offsetMinutes === 0 ? 'Now' : `+${offsetMinutes}m`;
     let timeStr = futureDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
 
@@ -965,8 +965,8 @@ export function predictFuturePrices(currentFare = 699, distanceKm = 34.0, date =
   const in30Item = forecast[2];
   const savingsIn15 = nowItem.fare - in15Item.fare;
 
-  let advice = '';
-  let badgeType = 'info';
+  let advice;
+  let badgeType;
 
   if (savingsIn15 >= 20) {
     advice = `⏳ High peak surge active! If you wait 15 minutes, the price is projected to drop from ₹${nowItem.fare} to ₹${in15Item.fare} (Save ₹${savingsIn15}!).`;

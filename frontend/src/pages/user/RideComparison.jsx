@@ -110,8 +110,10 @@ const RideComparison = () => {
   const [customForecastTime, setCustomForecastTime] = useState('');
 
   // Dynamic Route States
-  const [pickup, setPickup] = useState(location.state?.pickup || currentLocation?.address || 'KG Apartments');
-  const [destination, setDestination] = useState(location.state?.dropoff || 'Marina Beach');
+  const savedPickup = typeof localStorage !== 'undefined' ? localStorage.getItem('smartride_user_pickup') : null;
+  const savedDropoff = typeof localStorage !== 'undefined' ? localStorage.getItem('smartride_user_dropoff') : null;
+  const [pickup, setPickup] = useState(location.state?.pickup || currentLocation?.address || savedPickup || 'KG Apartments');
+  const [destination, setDestination] = useState(location.state?.dropoff || savedDropoff || 'Marina Beach');
   const [showRouteEditor, setShowRouteEditor] = useState(false);
   const [inputPickup, setInputPickup] = useState(pickup);
   const [inputDest, setInputDest] = useState(destination);
@@ -487,7 +489,11 @@ const RideComparison = () => {
 
   const toggleVoiceListening = () => {
     if (isListening) {
-      try { recognizerRef.current?.stop(); } catch {}
+      try {
+        recognizerRef.current?.stop();
+      } catch {
+        // Ignore stop errors when speech recognizer is inactive
+      }
       setIsListening(false);
       return;
     }
@@ -654,10 +660,22 @@ const RideComparison = () => {
           <button 
             onClick={() => setShowChubbyAIModal(true)} 
             className="btn-icon" 
-            style={{ height: '40px', padding: '0 14px', borderRadius: '12px', background: 'var(--bg-surface)', backdropFilter: 'blur(20px)', border: '1px solid var(--border-ui)', display: 'flex', alignItems: 'center', gap: '6px', color: '#00D8FF', fontWeight: 800, fontSize: '0.78rem', cursor: 'pointer' }} 
-            aria-label="Open Chubby AI"
+            style={{
+              height: '40px', padding: '0 14px', borderRadius: '999px',
+              background: 'linear-gradient(135deg, #00D8FF 0%, #6366F1 60%, #EC4899 100%)',
+              border: '1.5px solid rgba(255, 255, 255, 0.5)',
+              display: 'flex', alignItems: 'center', gap: '6px',
+              color: '#080C14', fontWeight: 900, fontSize: '0.78rem', cursor: 'pointer',
+              boxShadow: '0 6px 20px rgba(0, 216, 255, 0.35)'
+            }} 
+            aria-label="Open Chubby AI Assistant"
           >
-            <Sparkles size={15} color="#00D8FF" /> Chubby AI
+            <Sparkles size={14} color="#080C14" /> Chubby AI
+            {activeSniper && (
+              <span style={{ background: '#080C14', color: '#10B981', fontSize: '0.6rem', fontWeight: 900, padding: '1px 6px', borderRadius: '99px' }}>
+                🎯 ₹{activeSniper.targetPrice}
+              </span>
+            )}
           </button>
         </div>
 
@@ -798,8 +816,8 @@ const RideComparison = () => {
         </div>
 
         {/* Status & Preference Chips */}
-        <div style={{ padding: '4px 16px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', gap: '6px', overflowX: 'auto' }} className="no-scrollbar">
+        <div style={{ padding: '4px 16px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', gap: '6px', overflowX: 'auto' }} className="no-scrollbar">
                 {PREFERENCE_FILTERS.map(pref => {
                   const isActive = userPreferences === pref.id;
                   return (
@@ -1118,7 +1136,8 @@ const RideComparison = () => {
             className="btn-primary" 
             style={{ 
               width: '100%', height: '50px', fontSize: '0.96rem', fontWeight: 900, 
-              borderRadius: '16px', gap: '8px', 
+              borderRadius: '16px', gap: '8px', display: 'flex', flexDirection: 'row',
+              alignItems: 'center', justifyContent: 'center', flexWrap: 'nowrap', whiteSpace: 'nowrap',
               opacity: (isBooking || isLoading || !selectedOption) ? 0.7 : 1,
               background: selectedOption?.isSmart
                 ? 'linear-gradient(135deg, #00D8FF, #6366F1)'
@@ -1196,50 +1215,7 @@ const RideComparison = () => {
         )}
       </AnimatePresence>
 
-      {/* 🌟 FLOATING CHUBBY AI PILL (Mic is housed cleanly inside Chubby AI Voice Assistant) */}
-      <div style={{ position: 'absolute', bottom: '86px', right: '14px', zIndex: 75, display: 'flex', alignItems: 'center' }}>
-        {/* Primary Floating Chubby AI Pill */}
-        <motion.button
-          whileHover={{ scale: 1.06 }}
-          whileTap={{ scale: 0.94 }}
-          onClick={() => setShowChubbyAIModal(true)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '9px 14px',
-            borderRadius: '999px',
-            background: 'linear-gradient(135deg, #00D8FF 0%, #6366F1 50%, #EC4899 100%)',
-            color: '#080C14',
-            border: '1.5px solid rgba(255, 255, 255, 0.55)',
-            boxShadow: '0 8px 25px rgba(0, 216, 255, 0.45)',
-            cursor: 'pointer',
-            fontWeight: 900,
-            fontSize: '0.82rem',
-            letterSpacing: '0.01em',
-          }}
-        >
-          <motion.span 
-            animate={{ rotate: [0, 15, -15, 0], scale: [1, 1.25, 1] }} 
-            transition={{ repeat: Infinity, duration: 2.2 }}
-            style={{ fontSize: '1rem', display: 'inline-block' }}
-          >
-            ✨
-          </motion.span>
-          <span style={{ fontWeight: 900, color: '#080C14' }}>Chubby AI</span>
-          <span style={{ 
-            background: '#080C14', 
-            color: activeSniper ? '#10B981' : '#00D8FF', 
-            fontSize: '0.58rem', 
-            fontWeight: 900, 
-            padding: '2px 6px', 
-            borderRadius: '99px',
-            boxShadow: '0 0 8px rgba(0, 216, 255, 0.4)'
-          }}>
-            {activeSniper ? `🎯 ₹${activeSniper.targetPrice}` : '⚡ CHAT & INSIGHTS'}
-          </span>
-        </motion.button>
-      </div>
+      {/* Chubby AI entry lives cleanly in the top header without overlapping bottom quote cards */}
 
       {/* 🌟 CHUBBY AI FULL MODAL / BOTTOM SHEET (Contained Inside Viewport/Frame) */}
       <AnimatePresence>

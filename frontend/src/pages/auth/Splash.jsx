@@ -54,7 +54,7 @@ const Splash = () => {
           style={styles.continueBtn}
           accessibilityLabel="Continue to Onboarding"
         >
-          <Text style={styles.continueText}>Continue â†’</Text>
+          <Text style={styles.continueText}>Continue →</Text>
         </Pressable>
       </View>
     </View>

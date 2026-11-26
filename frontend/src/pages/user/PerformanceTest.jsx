@@ -15,7 +15,7 @@ const PerformanceTest = () => {
   const [concurrency, setConcurrency] = useState(100);
   const [duration, setDuration] = useState(60); // in seconds
   const [testType, setTestType] = useState('simulated'); // 'simulated' | 'firestore' | 'custom'
-  const [customUrl, setCustomUrl] = useState('http://localhost:3000/api/ride-estimate');
+  const [customUrl, setCustomUrl] = useState('http://localhost:5000/api/ai/decide');
   
   // Test execution state
   const [isRunning, setIsRunning] = useState(false);

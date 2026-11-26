@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MapPin, Clock, ChevronRight,
-  TrendingUp, Plus,
+  TrendingUp,
   ArrowRightLeft, Loader2, ArrowLeft,
   Sparkles, ShieldCheck, MessageSquare, Navigation,
   Crosshair, Check, Car, User, Users, Leaf, VolumeX, Shield, PhoneCall,
@@ -846,7 +846,7 @@ const CommuteDashboard = () => {
               No active community requests yet.
             </p>
             <p style={{ fontSize: '0.7rem', color: 'var(--text-muted, #9CA3AF)', marginTop: '3px' }}>
-              Tap <strong>Post Community Ride Request</strong> above or <strong>+</strong> to publish your route live!
+              Tap <strong>Post Community Ride Request</strong> above or <strong>+ New Request</strong> to publish your route live!
             </p>
           </div>
         ) : (
@@ -951,8 +951,15 @@ const CommuteDashboard = () => {
                   <div style={{ position: 'relative' }}>
                     <img 
                       src={match.image} 
-                      style={{ width: '46px', height: '46px', borderRadius: '15px', objectFit: 'cover' }} 
+                      style={{ width: '46px', height: '46px', borderRadius: '15px', objectFit: 'cover', background: 'rgba(0,216,255,0.15)' }} 
                       alt={match.name} 
+                      onError={(e) => {
+                        const el = e.currentTarget;
+                        if (el.dataset.fallbackApplied) return;
+                        el.dataset.fallbackApplied = '1';
+                        const ch = (match.name || 'S').charAt(0).toUpperCase();
+                        el.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="96" height="96" fill="#0EA5E9"/><text x="50%" y="54%" font-size="42" font-family="sans-serif" font-weight="bold" fill="#080C14" text-anchor="middle" dominant-baseline="middle">${ch}</text></svg>`)}`;
+                      }}
                     />
                     <div style={{ position: 'absolute', bottom: '-2px', right: '-2px', background: '#00D8FF', borderRadius: '50%', width: '15px', height: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <ShieldCheck size={9} color="#080C14" />
@@ -1035,23 +1042,6 @@ const CommuteDashboard = () => {
           ))}
         </div>
       </div>
-
-      {/* Floating Action Button: Create / Edit Custom Profile */}
-      <motion.button
-        whileTap={{ scale: 0.9 }}
-        onClick={() => navigate('/user/commute/create-profile')}
-        style={{
-          position: 'fixed', bottom: '85px', right: '20px',
-          width: '54px', height: '54px', borderRadius: '18px',
-          background: 'linear-gradient(135deg, #6366F1, #00D8FF)', border: 'none',
-          color: '#080C14', display: 'flex', justifyContent: 'center', alignItems: 'center',
-          boxShadow: '0 8px 25px rgba(0,216,255,0.4)', zIndex: 50, cursor: 'pointer'
-        }}
-        aria-label="Create Commute Profile"
-        title="Create & Customize Commute Profile"
-      >
-        <Plus size={24} color="#080C14" />
-      </motion.button>
 
       {/* Instant Pool Request Modal */}
       <AnimatePresence>

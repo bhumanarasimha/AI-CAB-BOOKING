@@ -168,40 +168,44 @@ export async function detectCurrentLocation(silent = false) {
   if (btn) btn.classList.add('is-locating');
   if (btnLabel) btnLabel.textContent = 'Locating...';
 
-  // Wire all section back buttons
-  document.querySelectorAll('.back-to-prev-btn').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      goBackTab();
-    });
-  });
+  if (!window._smartRideNavWired) {
+    window._smartRideNavWired = true;
 
-  // Wire all modal back buttons
-  document.querySelectorAll('[data-modal-close], .modal-back-btn').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      btn.closest('.modal-overlay')?.classList.remove('active');
+    // Wire all section back buttons
+    document.querySelectorAll('.back-to-prev-btn').forEach((backBtn) => {
+      backBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        goBackTab();
+      });
     });
-  });
 
-  // Native browser back button (popstate)
-  window.addEventListener('popstate', (e) => {
-    if (e.state && e.state.tab) {
-      switchTab(e.state.tab, false);
-    } else {
-      const hash = window.location.hash.replace('#', '');
-      if (hash && document.getElementById('section-' + hash)) {
-        switchTab(hash, false);
+    // Wire all modal back buttons
+    document.querySelectorAll('[data-modal-close], .modal-back-btn').forEach((closeBtn) => {
+      closeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeBtn.closest('.modal-overlay')?.classList.remove('active');
+      });
+    });
+
+    // Native browser back button (popstate)
+    window.addEventListener('popstate', (e) => {
+      if (e.state && e.state.tab) {
+        switchTab(e.state.tab, false);
       } else {
-        switchTab('rides', false);
+        const hash = window.location.hash.replace('#', '');
+        if (hash && document.getElementById('section-' + hash)) {
+          switchTab(hash, false);
+        } else {
+          switchTab('rides', false);
+        }
       }
-    }
-  });
+    });
 
-  // Check URL hash on initial load
-  const initialHash = window.location.hash.replace('#', '');
-  if (initialHash && document.getElementById('section-' + initialHash)) {
-    switchTab(initialHash, false);
+    // Check URL hash on initial load
+    const initialHash = window.location.hash.replace('#', '');
+    if (initialHash && document.getElementById('section-' + initialHash)) {
+      switchTab(initialHash, false);
+    }
   }
 
   // 1. Check user-saved custom pickup from localStorage
@@ -238,16 +242,9 @@ export async function detectCurrentLocation(silent = false) {
           state.userLng = lng;
         } else {
           try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
-              headers: { 'Accept-Language': 'en', 'User-Agent': 'SmartRide-AI-Cab/1.0' }
-            });
-            if (res.ok) {
-              const data = await res.json();
-              if (data && data.address) {
-                const road = data.address.road || data.address.suburb || data.address.neighbourhood || '';
-                const city = data.address.city || data.address.town || data.address.village || '';
-                address = road ? (city ? `${road}, ${city}` : road) : (data.display_name?.split(',')[0] || '');
-              }
+            const geoData = await api.geocode.reverse(lat, lng);
+            if (geoData && geoData.address && geoData.address !== 'Current Location') {
+              address = geoData.address;
             }
           } catch (e) {
             console.warn("Reverse geocode failed", e);
@@ -376,7 +373,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     el.addEventListener('touchstart', unlock, { passive: true });
   });
   setupEventListeners();
-  initUser();
+  const isLoggedOut = localStorage.getItem('smartride_web_logged_out') === 'true';
+  const jwtToken = localStorage.getItem('smartride_jwt');
+  const hasJwt = Boolean(jwtToken);
+  if (hasJwt && !isLoggedOut && !jwtToken.startsWith('demo_') && !jwtToken.startsWith('user_') && !jwtToken.startsWith('social_')) {
+    initUser();
+  } else if (hasJwt && !isLoggedOut) {
+    try {
+      const cachedUser = localStorage.getItem('smartride_user');
+      if (cachedUser) {
+        state.user = JSON.parse(cachedUser);
+        updateUserUI();
+      }
+    } catch {}
+  }
   initMap();
   refreshQuotes();
   startAutoRefreshTimer();
@@ -401,8 +411,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Show full-page Sign In / Register screen if user not logged in or previously logged out or visited #signin/#register
-  const isLoggedOut = localStorage.getItem('smartride_web_logged_out') === 'true';
-  const hasJwt = Boolean(localStorage.getItem('smartride_jwt'));
   if (!hasJwt || isLoggedOut || window.location.hash === '#signin' || window.location.hash === '#register') {
     window.showWebAuthScreen?.(window.location.hash === '#register' ? 'register' : 'login');
   }
@@ -776,43 +784,67 @@ async function webFetchJson(url, timeoutMs = 4000) {
   }
 }
 
+const WEB_FAST_ANCHORS = {
+  'kg apartments': { lat: 13.0425, lng: 80.0820, label: 'KG Apartments, Poonamallee' },
+  'poonamallee': { lat: 13.0480, lng: 80.0980, label: 'Poonamallee, Chennai' },
+  'marina beach': { lat: 13.0500, lng: 80.2824, label: 'Marina Beach, Chennai' },
+  'guindy': { lat: 13.0067, lng: 80.2206, label: 'Guindy, Chennai' },
+  'tidel park': { lat: 12.9897, lng: 80.2488, label: 'Tidel Park, OMR' },
+  'chennai central': { lat: 13.0827, lng: 80.2707, label: 'Chennai Central' },
+  'chennai airport': { lat: 12.9941, lng: 80.1709, label: 'Chennai Airport' },
+  'velachery': { lat: 12.9750, lng: 80.2210, label: 'Velachery, Chennai' },
+  'koyambedu': { lat: 13.0674, lng: 80.2057, label: 'Koyambedu, Chennai' },
+  'koramangala': { lat: 12.9352, lng: 77.6245, label: 'Koramangala, Bangalore' },
+  'whitefield': { lat: 12.9698, lng: 77.7499, label: 'Whitefield, Bangalore' },
+  'indiranagar': { lat: 12.9784, lng: 77.6408, label: 'Indiranagar, Bangalore' },
+};
+
+const WEB_LOCAL_POIS = {
+  'bus stop': [
+    { name: 'Poonamallee Bus Terminus', lat: 13.0485, lng: 80.0992 },
+    { name: 'Guindy Bus Depot', lat: 13.0079, lng: 80.2191 },
+    { name: 'Anna Square / Marina Bus Stand', lat: 13.0535, lng: 80.2812 },
+    { name: 'Koyambedu CMBT Bus Stand', lat: 13.0674, lng: 80.2057 },
+    { name: 'Koramangala BMTC TTMC', lat: 12.9348, lng: 77.6261 },
+  ],
+  'metro station': [
+    { name: 'Koyambedu CMBT Metro', lat: 13.0674, lng: 80.2057 },
+    { name: 'Guindy Metro Station', lat: 13.0092, lng: 80.2131 },
+    { name: 'Government Estate / LIC Metro', lat: 13.0695, lng: 80.2735 },
+    { name: 'Chennai Central Metro', lat: 13.0819, lng: 80.2731 },
+    { name: 'Indiranagar Namma Metro', lat: 12.9784, lng: 77.6387 },
+  ],
+};
+
 async function webGeocodeLive(addr) {
   const raw = String(addr || '').trim();
   if (!raw) return { lat: 13.0827, lng: 80.2707, label: 'Chennai', source: 'Default' };
-  const q = raw.toLowerCase().includes('india') ? raw : `${raw}, India`;
-  const data = await webFetchJson(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=1`, 3000);
-  const feat = data?.features?.[0];
-  if (feat?.geometry?.coordinates) {
-    return {
-      lat: Number(feat.geometry.coordinates[1]),
-      lng: Number(feat.geometry.coordinates[0]),
-      label: feat.properties?.name || raw,
-      source: 'OSM Photon Live',
-    };
+  const key = raw.toLowerCase();
+  for (const [k, v] of Object.entries(WEB_FAST_ANCHORS)) {
+    if (key.includes(k)) {
+      return { lat: v.lat, lng: v.lng, label: raw, source: 'Verified Geo Anchor' };
+    }
+  }
+  const proxy = await webFetchJson(`http://localhost:5000/api/geocode/search?q=${encodeURIComponent(raw)}`, 2500);
+  if (proxy && typeof proxy.lat === 'number' && typeof proxy.lng === 'number') {
+    return { lat: proxy.lat, lng: proxy.lng, label: proxy.address || raw, source: proxy.source || 'Backend Geocode Proxy' };
   }
   return { lat: 13.0827, lng: 80.2707, label: raw, source: 'Anchor Fallback' };
 }
 
 async function webFindNearestPoi(coord, queryTerm, maxKm = 6.0) {
-  const data = await webFetchJson(
-    `https://photon.komoot.io/api/?q=${encodeURIComponent(queryTerm)}&lat=${coord.lat}&lon=${coord.lng}&limit=4`,
-    2500
-  );
-  const feats = Array.isArray(data?.features) ? data.features : [];
+  const bucket = WEB_LOCAL_POIS[String(queryTerm || '').toLowerCase()] || [];
   let best = null;
   let bestD = Infinity;
-  for (const f of feats) {
-    const [lng, lat] = f?.geometry?.coordinates || [];
-    const name = f?.properties?.name;
-    if (!name || typeof lat !== 'number') continue;
+  for (const poi of bucket) {
     const R = 6371;
-    const dLat = ((lat - coord.lat) * Math.PI) / 180;
-    const dLon = ((lng - coord.lng) * Math.PI) / 180;
-    const a = Math.sin(dLat / 2) ** 2 + Math.cos((coord.lat * Math.PI) / 180) * Math.cos((lat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+    const dLat = ((poi.lat - coord.lat) * Math.PI) / 180;
+    const dLon = ((poi.lng - coord.lng) * Math.PI) / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos((coord.lat * Math.PI) / 180) * Math.cos((poi.lat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
     const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     if (d <= maxKm && d < bestD) {
       bestD = d;
-      best = { name, distanceKm: Number(d.toFixed(2)) };
+      best = { name: poi.name, distanceKm: Number(d.toFixed(2)) };
     }
   }
   return best;

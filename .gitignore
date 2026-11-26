@@ -37,6 +37,8 @@ __pycache__/
 # Expo, Scratch, and Hidden Testing Folders
 .expo/
 scratch/
+tests/
+tests/**
 testing/
 
 # Automated Test Artifacts & Hidden Test Files

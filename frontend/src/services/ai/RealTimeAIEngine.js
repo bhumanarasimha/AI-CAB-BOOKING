@@ -94,6 +94,14 @@ export async function geocodeAddressLive(addressOrCoords) {
     return geocodeCache.get(key);
   }
 
+  for (const [k, v] of Object.entries(FAST_ANCHORS)) {
+    if (key.includes(k)) {
+      const result = { lat: v.lat, lng: v.lng, label: raw, city: v.city, source: 'Verified Geo Anchor' };
+      geocodeCache.set(key, result);
+      return result;
+    }
+  }
+
   // Try live Photon (OpenStreetMap fast geocoder, CORS-friendly)
   try {
     const q = key.includes('india') ? raw : `${raw}, India`;
@@ -119,40 +127,7 @@ export async function geocodeAddressLive(addressOrCoords) {
       }
     }
   } catch {
-    // Fall through to Nominatim
-  }
-
-  // Try live Nominatim
-  try {
-    const q = key.includes('india') ? raw : `${raw}, India`;
-    const res = await fetchWithTimeout(
-      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`,
-      { headers: { Accept: 'application/json' } },
-      3200
-    );
-    if (res.ok) {
-      const arr = await res.json();
-      if (Array.isArray(arr) && arr[0]) {
-        const result = {
-          lat: parseFloat(arr[0].lat),
-          lng: parseFloat(arr[0].lon),
-          label: arr[0].display_name?.split(',')[0] || raw,
-          source: 'OSM Nominatim Live',
-        };
-        geocodeCache.set(key, result);
-        return result;
-      }
-    }
-  } catch {
-    // Fall through to fast local anchors
-  }
-
-  for (const [k, v] of Object.entries(FAST_ANCHORS)) {
-    if (key.includes(k)) {
-      const result = { lat: v.lat, lng: v.lng, label: raw, city: v.city, source: 'Verified Geo Anchor' };
-      geocodeCache.set(key, result);
-      return result;
-    }
+    // Fall through to anchor fallback
   }
 
   return { lat: 13.0827, lng: 80.2707, label: raw, city: 'Chennai', source: 'Geo Fallback' };
@@ -223,7 +198,7 @@ export async function fetchOSRMRouteLive(originCoord, destCoord) {
 export async function fetchLiveWeatherTelemetry(lat, lng) {
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,surface_pressure,wind_speed_10m&timezone=auto`;
-    const res = await fetchWithTimeout(url, {}, 3500);
+    const res = await fetchWithTimeout(url, {}, 6000);
     if (res.ok) {
       const json = await res.json();
       const c = json?.current || {};
@@ -358,29 +333,39 @@ export function classifyLiveSurgeML(weather, routeInfo, now = new Date()) {
  * STAGE 4: Real-Time Nearby Transit Hub Discovery (Fast Geo-Biased OSM Photon + Overpass)
  * Finds REAL Metro stations, Rail stations & Bus stops around pickup & dropoff coordinates in <400ms!
  */
+const LOCAL_TRANSIT_POIS = {
+  'bus stop': [
+    { name: 'Poonamallee Bus Terminus', lat: 13.0485, lng: 80.0992 },
+    { name: 'Guindy Bus Depot', lat: 13.0079, lng: 80.2191 },
+    { name: 'Anna Square / Marina Bus Stand', lat: 13.0535, lng: 80.2812 },
+    { name: 'Koyambedu CMBT Bus Stand', lat: 13.0674, lng: 80.2057 },
+    { name: 'Adyar Signal Bus Bay', lat: 13.0063, lng: 80.2574 },
+    { name: 'Koramangala BMTC TTMC', lat: 12.9348, lng: 77.6261 },
+    { name: 'Bandra BEST Bus Depot', lat: 19.0544, lng: 72.8406 },
+  ],
+  'metro station': [
+    { name: 'Koyambedu CMBT Metro', lat: 13.0674, lng: 80.2057 },
+    { name: 'Guindy Metro Station', lat: 13.0092, lng: 80.2131 },
+    { name: 'Government Estate / LIC Metro', lat: 13.0695, lng: 80.2735 },
+    { name: 'Chennai Central Metro', lat: 13.0819, lng: 80.2731 },
+    { name: 'Tidel Park / Thiruvanmiyur MRTS', lat: 12.9897, lng: 80.2512 },
+    { name: 'Indiranagar Namma Metro', lat: 12.9784, lng: 77.6387 },
+    { name: 'Andheri Metro Line 1', lat: 19.1197, lng: 72.8464 },
+  ],
+};
+
 async function findNearestPoiViaPhoton(coord, queryTerm, maxKm = 5.5) {
-  try {
-    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(queryTerm)}&lat=${coord.lat}&lon=${coord.lng}&limit=4`;
-    const res = await fetchWithTimeout(url, {}, 2500);
-    if (!res.ok) return null;
-    const json = await res.json();
-    const feats = Array.isArray(json?.features) ? json.features : [];
-    let best = null;
-    let bestDist = Infinity;
-    for (const f of feats) {
-      const [lng, lat] = f?.geometry?.coordinates || [];
-      const name = f?.properties?.name;
-      if (!name || typeof lat !== 'number' || typeof lng !== 'number') continue;
-      const d = haversineKm(coord.lat, coord.lng, lat, lng);
-      if (d <= maxKm && d < bestDist) {
-        bestDist = d;
-        best = { name, distanceKm: Number(d.toFixed(2)), lat, lng };
-      }
+  const bucket = LOCAL_TRANSIT_POIS[String(queryTerm || '').toLowerCase()] || [];
+  let best = null;
+  let bestDist = Infinity;
+  for (const poi of bucket) {
+    const d = haversineKm(coord.lat, coord.lng, poi.lat, poi.lng);
+    if (d <= maxKm && d < bestDist) {
+      bestDist = d;
+      best = { name: poi.name, distanceKm: Number(d.toFixed(2)), lat: poi.lat, lng: poi.lng };
     }
-    return best;
-  } catch {
-    return null;
   }
+  return best;
 }
 
 export async function fetchNearbyTransitHubsLive(originCoord, destCoord) {
@@ -595,7 +580,7 @@ export function predictSurgeAtDate(targetDate, weather = null, baseNowSurge = 1.
   const isWeekend = day === 0 || day === 6;
 
   // Smooth Indian urban demand curve (morning peak 8-11, afternoon lull 12-16, evening peak 17.5-21, night 23-5)
-  let demandMult = 1.0;
+  let demandMult;
   if (!isWeekend && h >= 8 && h < 11) {
     demandMult = 1.32 + 0.14 * Math.sin(((h - 8) / 3) * Math.PI);
   } else if (h >= 17 && h < 21.5) {

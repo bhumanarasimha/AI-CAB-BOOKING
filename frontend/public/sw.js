@@ -1,5 +1,5 @@
 // SmartRide AI Service Worker
-const CACHE_NAME = 'smartride-ai-v1';
+const CACHE_NAME = 'smartride-ai-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -33,7 +33,15 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Let API requests pass straight through to backend network
+  // Let cross-origin requests (images, CDNs, maps) and API requests bypass SW cache layer
+  try {
+    const reqUrl = new URL(event.request.url);
+    if (reqUrl.origin !== self.location.origin) {
+      return;
+    }
+  } catch {
+    return;
+  }
   if (event.request.url.includes('/api') || event.request.url.includes('/Backend/php')) {
     return;
   }

@@ -70,6 +70,7 @@ const BottomNavigation = () => {
           return (
             <Pressable
               key={item.path}
+              accessibilityRole="button"
               onPress={() => navigate(item.path)}
               style={[styles.item, active && styles.activeItem]}
             >
@@ -88,10 +89,7 @@ const BottomNavigation = () => {
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    position: 'relative',
     zIndex: 1000,
     width: '100%',
   },

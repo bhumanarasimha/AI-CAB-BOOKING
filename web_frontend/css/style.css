@@ -425,6 +425,10 @@ button, input, select, textarea {
 /* ==========================================================================
    Cards & Layout Components
    ========================================================================== */
+.app-grid > * {
+  min-width: 0;
+}
+
 .card {
   background: var(--card-glass);
   backdrop-filter: blur(14px);
@@ -434,6 +438,9 @@ button, input, select, textarea {
   box-shadow: var(--shadow-sm);
   margin-bottom: 20px;
   transition: var(--transition);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .card:hover {
@@ -490,9 +497,11 @@ button, input, select, textarea {
 .input-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   position: relative;
   z-index: 2;
+  min-width: 0;
+  width: 100%;
 }
 
 .input-marker {
@@ -511,6 +520,8 @@ button, input, select, textarea {
 
 .route-input {
   flex: 1;
+  min-width: 0;
+  width: 100%;
   background: transparent;
   border: none;
   font-size: 14px;
@@ -889,7 +900,7 @@ button, input, select, textarea {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding-bottom: 130px;
+  padding-bottom: 12px;
 }
 
 .quote-card {
@@ -1238,10 +1249,9 @@ button, input, select, textarea {
 
 /* Booking Action Area */
 .booking-bar {
-  position: sticky;
-  bottom: 12px;
-  z-index: 30;
-  margin-top: 18px;
+  position: relative;
+  z-index: 10;
+  margin-top: 16px;
   padding: 10px;
   border-radius: 16px;
   background: rgba(11, 17, 32, 0.9);
@@ -2431,10 +2441,35 @@ button, input, select, textarea {
    ========================================================================== */
 @media (max-width: 768px) {
   .site-header {
-    padding: 10px 16px;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .brand-title {
+    font-size: 16px;
+  }
+  .brand-badge,
+  .user-badge .user-name {
+    display: none;
+  }
+  #theme-picker {
+    max-width: 105px;
+    padding: 0 6px !important;
+    font-size: 11px !important;
+  }
+  .header-actions {
+    gap: 6px;
   }
   .app-container {
-    padding: 16px;
+    padding: 12px 10px 90px;
+  }
+  .card {
+    padding: 14px;
+  }
+  .route-input-group {
+    padding: 12px;
+  }
+  .route-connector {
+    left: 18px;
   }
   .chubby-fab-cluster {
     bottom: 84px;

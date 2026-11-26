@@ -175,7 +175,9 @@ function App() {
       if (c && (c.includes('Ekambareswara') || c.includes('Agraharam') || c.includes('Sowcarpet'))) {
         localStorage.removeItem('smartride_commute_profile');
       }
-    } catch {}
+    } catch {
+      // Ignore storage cleanup errors in restricted environments
+    }
   }, []);
 
   return (

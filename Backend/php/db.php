@@ -27,8 +27,16 @@ $options = [
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
-    // If DB connection fails, fallback gracefully or report error
-    $pdo = null;
+    // Retry via explicit TCP IPv4 loopback on Windows if localhost resolution fails
+    if ($host === 'localhost') {
+        try {
+            $pdo = new PDO("mysql:host=127.0.0.1;port=$port;dbname=$db;charset=$charset", $user, $pass, $options);
+        } catch (\PDOException $e2) {
+            $pdo = null;
+        }
+    } else {
+        $pdo = null;
+    }
 }
 
 function jsonResponse($data, $statusCode = 200) {

@@ -122,6 +122,14 @@ export class FleetRadarMap {
     this.recenter();
   }
 
+  setUserLocation(lat, lng, label = 'Current Location') {
+    this.userCoords = { lat: Number(lat), lng: Number(lng) };
+    if (label) {
+      this.pickup.name = label;
+    }
+    this.recenter();
+  }
+
   setDropoff(x, y, name = 'Selected Point') {
     this.dropoff.x = x;
     this.dropoff.y = y;

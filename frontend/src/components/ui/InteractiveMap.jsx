@@ -59,8 +59,9 @@ const loadGoogleMapsSDK = () => {
     if (typeof window !== 'undefined' && window.google && window.google.maps) {
       return resolve(window.google.maps);
     }
-    const existing = document.getElementById('google-maps-js-sdk');
+    const existing = document.getElementById('google-maps-js-sdk') || document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]');
     if (existing) {
+      if (window.google?.maps) return resolve(window.google.maps);
       existing.addEventListener('load', () => resolve(window.google?.maps));
       existing.addEventListener('error', reject);
       return;

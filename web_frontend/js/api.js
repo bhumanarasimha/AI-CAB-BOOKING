@@ -280,9 +280,24 @@ export const api = {
 
     me: async () => {
       try {
+        const headers = getHeaders();
+        const authHeader = headers.Authorization || headers.authorization || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        if (!token || token.startsWith('demo_') || token.startsWith('smartride_token_') || token === 'null' || token === 'undefined') {
+          const cached = localStorage.getItem('smartride_user');
+          if (cached) return JSON.parse(cached);
+          return {
+            id: 'user_guest',
+            email: 'rider@smartride.ai',
+            name: 'SmartRide Rider',
+            phone: '+91 79956 65477',
+            role: 'rider',
+            photoURL: 'https://ui-avatars.com/api/?name=Rider&background=00D8FF&color=080C14'
+          };
+        }
         const res = await fetchWithTimeout(`${API_CONFIG.BASE_URL}/auth/me`, {
           method: 'GET',
-          headers: getHeaders(),
+          headers,
         });
         const data = await handleResponse(res);
         notifyBackendStatus(true);
@@ -749,6 +764,47 @@ export const api = {
       } catch (e) {
         // Silent failure for telemetry
       }
+    }
+  },
+
+  geocode: {
+    reverse: async (lat, lng) => {
+      const numLat = Number(lat);
+      const numLng = Number(lng);
+      if (Number.isNaN(numLat) || Number.isNaN(numLng)) {
+        return { success: true, address: 'Current Location', lat: 13.0827, lng: 80.2707 };
+      }
+      try {
+        const res = await fetchWithTimeout(`${API_CONFIG.BASE_URL}/geocode/reverse?lat=${encodeURIComponent(numLat)}&lng=${encodeURIComponent(numLng)}`, {
+          method: 'GET',
+          headers: { Accept: 'application/json' }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.address) {
+            notifyBackendStatus(true);
+            return data;
+          }
+        }
+      } catch {
+        // Backend geocode proxy unavailable; try Photon CORS endpoint
+      }
+      try {
+        const pRes = await fetch(`https://photon.komoot.io/reverse?lat=${encodeURIComponent(numLat)}&lon=${encodeURIComponent(numLng)}`);
+        if (pRes.ok) {
+          const pData = await pRes.json();
+          const props = pData?.features?.[0]?.properties;
+          if (props) {
+            const road = props.street || props.name || props.district || '';
+            const city = props.city || props.county || '';
+            const label = road ? (city ? `${road}, ${city}` : road) : (city || '');
+            return { success: true, address: label, city, lat: numLat, lng: numLng };
+          }
+        }
+      } catch {
+        // Fallback to neutral label
+      }
+      return { success: true, address: '', lat: numLat, lng: numLng };
     }
   }
 };

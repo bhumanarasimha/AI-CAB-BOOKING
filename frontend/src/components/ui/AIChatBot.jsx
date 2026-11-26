@@ -38,9 +38,9 @@ const RealTimeAnalysisCard = ({ onChipClick, context }) => {
   const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const hour = now.getHours();
 
-  let trafficStatus = 'Moderate Afternoon Flow';
-  let trafficDelay = 2;
-  let surgeRange = '1.0x–1.2x';
+  let trafficStatus;
+  let trafficDelay;
+  let surgeRange;
 
   if (hour >= 8 && hour < 11) {
     trafficStatus = 'Heavy Morning Rush';
@@ -60,22 +60,24 @@ const RealTimeAnalysisCard = ({ onChipClick, context }) => {
     surgeRange = '1.0x (No Surge)';
   }
 
+  const contextCompetitors = context?.competitors;
+
   const calculatedSavings = useMemo(() => {
-    if (context?.competitors && Array.isArray(context.competitors) && context.competitors.length > 0) {
-      const fares = context.competitors.map(c => typeof c.fare === 'number' ? c.fare : parseInt(String(c.price || 0).replace(/\D/g, '') || 0));
+    if (contextCompetitors && Array.isArray(contextCompetitors) && contextCompetitors.length > 0) {
+      const fares = contextCompetitors.map(c => typeof c.fare === 'number' ? c.fare : parseInt(String(c.price || 0).replace(/\D/g, '') || 0));
       const maxFare = Math.max(...fares);
-      const smart = context.competitors.find(c => c.isSmart || (c.provider || '').toLowerCase().includes('smartride'));
+      const smart = contextCompetitors.find(c => c.isSmart || (c.provider || '').toLowerCase().includes('smartride'));
       const smartFare = smart ? (typeof smart.fare === 'number' ? smart.fare : parseInt(String(smart.price || 0).replace(/\D/g, '') || 0)) : autoPrice;
       if (maxFare > smartFare) {
         return maxFare - smartFare;
       }
     }
     return savings;
-  }, [context?.competitors, savings, autoPrice]);
+  }, [contextCompetitors, savings, autoPrice]);
 
   const competitors = useMemo(() => {
-    if (context?.competitors && Array.isArray(context.competitors) && context.competitors.length > 0) {
-      return context.competitors.slice(0, 5).map(c => {
+    if (contextCompetitors && Array.isArray(contextCompetitors) && contextCompetitors.length > 0) {
+      return contextCompetitors.slice(0, 5).map(c => {
         const name = c.type || c.provider || c.name || 'Cab';
         const price = typeof c.fare === 'number' ? `₹${c.fare}` : (c.price || `₹${cabPrice}`);
         const time = typeof c.eta === 'number' ? `${c.eta}m` : (c.time || `${estMinutes}m`);
@@ -91,7 +93,7 @@ const RealTimeAnalysisCard = ({ onChipClick, context }) => {
       { name: 'Uber Go', price: `₹${cabPrice + 25}`, time: `${Math.max(10, estMinutes - 2)}m`, status: '1.2x Surge', color: '#EF4444' },
       { name: 'Ola Mini', price: `₹${cabPrice + 40}`, time: `${Math.max(12, estMinutes + 2)}m`, status: '1.3x Surge', color: '#EF4444' },
     ];
-  }, [context?.competitors, transitPrice, autoPrice, cabPrice, estMinutes]);
+  }, [contextCompetitors, transitPrice, autoPrice, cabPrice, estMinutes]);
 
   const smartRideOption = context?.competitors?.find(c => c.isSmart || (c.provider || '').toLowerCase().includes('smartride'));
   const smartPriceDisplay = smartRideOption ? (typeof smartRideOption.fare === 'number' ? smartRideOption.fare : smartRideOption.price) : autoPrice;
@@ -1141,9 +1143,9 @@ const AIChatBot = ({ isOpen, onClose, pickup = 'Current Location', dropoff = 'yo
       const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const hour = now.getHours();
 
-      let trafficStatus = 'Moderate Afternoon Flow';
-      let trafficDelay = 2;
-      let surgeRange = '1.0x–1.2x';
+      let trafficStatus;
+      let trafficDelay;
+      let surgeRange;
 
       if (hour >= 8 && hour < 11) {
         trafficStatus = 'Heavy Morning Rush';

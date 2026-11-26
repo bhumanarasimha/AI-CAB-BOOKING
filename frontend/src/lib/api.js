@@ -1,4 +1,4 @@
-const getApiBaseUrl = () => {
+export const getApiBaseUrl = () => {
   const envUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || 'http://localhost:5000/api';
   if (typeof window !== 'undefined') {
     // Check if running inside native Android WebView (APK / Android Studio Emulator WebView)
@@ -195,9 +195,22 @@ export const api = {
     },
     me: async () => {
       try {
+        const headers = getHeaders();
+        const authHeader = headers.Authorization || headers.authorization || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        if (!token || token.startsWith('demo_') || token.startsWith('smartride_token_') || token === 'null' || token === 'undefined') {
+          const cachedEmail = localStorage.getItem('smartride_user_email') || 'rider@smartride.ai';
+          return {
+            id: 'user_me',
+            _id: 'user_me',
+            email: cachedEmail,
+            name: cachedEmail.split('@')[0],
+            role: 'rider'
+          };
+        }
         const res = await fetch(`${API_BASE_URL}/auth/me`, {
           method: 'GET',
-          headers: getHeaders(),
+          headers,
         });
         return await handleResponse(res);
       } catch {
@@ -375,6 +388,75 @@ export const api = {
         body: JSON.stringify(data),
       });
       return handleResponse(res);
+    }
+  },
+  geocode: {
+    reverse: async (lat, lng) => {
+      const numLat = Number(lat);
+      const numLng = Number(lng);
+      if (Number.isNaN(numLat) || Number.isNaN(numLng)) {
+        return { success: true, address: 'Current Location', city: '', lat: 13.0827, lng: 80.2707, source: 'Fallback' };
+      }
+      try {
+        const res = await fetch(`${API_BASE_URL}/geocode/reverse?lat=${encodeURIComponent(numLat)}&lng=${encodeURIComponent(numLng)}`, {
+          method: 'GET',
+          headers: { Accept: 'application/json' }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.address) return data;
+        }
+      } catch {
+        // Backend geocode proxy unavailable; fallback to CORS-safe Photon reverse geocoding
+      }
+      try {
+        const pRes = await fetch(`https://photon.komoot.io/reverse?lat=${encodeURIComponent(numLat)}&lon=${encodeURIComponent(numLng)}`);
+        if (pRes.ok) {
+          const pData = await pRes.json();
+          const props = pData?.features?.[0]?.properties;
+          if (props) {
+            const road = props.street || props.name || props.district || '';
+            const city = props.city || props.county || '';
+            const label = road ? (city ? `${road}, ${city}` : road) : (city || 'Current Location');
+            return { success: true, address: label, city, lat: numLat, lng: numLng, source: 'Photon' };
+          }
+        }
+      } catch {
+        // Ignore network errors and use clean fallback label
+      }
+      return { success: true, address: 'Current Location', city: '', lat: numLat, lng: numLng, source: 'Fallback' };
+    },
+    search: async (query, biasLat = 13.0827, biasLng = 80.2707) => {
+      const q = (query || '').trim();
+      if (!q) return { success: false, address: '', lat: Number(biasLat), lng: Number(biasLng) };
+      try {
+        const res = await fetch(`${API_BASE_URL}/geocode/search?q=${encodeURIComponent(q)}`, {
+          method: 'GET',
+          headers: { Accept: 'application/json' }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && typeof data.lat === 'number' && typeof data.lng === 'number') return data;
+        }
+      } catch {
+        // Backend geocode proxy unavailable; fallback to Photon forward geocoding
+      }
+      try {
+        const pRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&lat=${encodeURIComponent(biasLat)}&lon=${encodeURIComponent(biasLng)}&limit=1`);
+        if (pRes.ok) {
+          const pData = await pRes.json();
+          const feat = pData?.features?.[0];
+          const coords = feat?.geometry?.coordinates;
+          const props = feat?.properties;
+          if (Array.isArray(coords) && coords.length >= 2) {
+            const label = props?.name || props?.street || props?.city || q;
+            return { success: true, lat: Number(coords[1]), lng: Number(coords[0]), address: label, source: 'Photon' };
+          }
+        }
+      } catch {
+        // Ignore external search network failures
+      }
+      return { success: false, lat: Number(biasLat), lng: Number(biasLng), address: q, source: 'Fallback' };
     }
   }
 };

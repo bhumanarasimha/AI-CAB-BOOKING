@@ -196,7 +196,7 @@ export const AuthProvider = ({ children }) => {
       console.warn("Server login fallback notice:", error);
       if (savedUserRecord) {
         if (savedUserRecord.password && password !== savedUserRecord.password) {
-          throw new Error("Invalid password. Please check your credentials.");
+          throw new Error("Invalid password. Please check your credentials.", { cause: error });
         }
         const mappedUser = {
           uid: savedUserRecord.id || 'user_' + Date.now(),
