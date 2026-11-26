@@ -1,4 +1,4 @@
-name: SmartRide AI - 1500+ Automated E2E & Load Test Suite
+name: selenium-login.yml
 
 on:
   push:
@@ -7,127 +7,183 @@ on:
     branches: [ main, master, dev ]
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE20: "false"
-
 jobs:
   selenium-tests:
-    name: 🌐 Selenium Web & REST API Tests (1,540 Testcases)
+    name: Selenium E2E Web + API Tests
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_DATABASE: smartride_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      CI: 'true'
+      MYSQL_HOST: '127.0.0.1'
+      MYSQL_PORT: '3306'
+      MYSQL_DATABASE: 'smartride_db'
+      MYSQL_USER: 'root'
+      MYSQL_PASSWORD: ''
+
     steps:
-      - name: Setup Node.js
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.2 & MySQL PDO
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql, curl, json, mbstring
+
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Run Web UI & REST API Tests (1,540 Test Cases)
+      - name: Initialize Schema, PHP Lint & AI Unit Suites
         run: |
-          cat << 'EOF' > run-tests.js
-          const fs = require('fs');
-          const results = [];
+          for f in Backend/php/*.php; do
+            php -l "$f"
+          done
+          php .github/scripts/ci/init_ci_db.php
+          php .github/scripts/ci/test_ai_module.php
+          node .github/scripts/ci/test_ai_engine.mjs
+          node .github/scripts/ci/test_dynamic_ai_engine.mjs
+          node .github/scripts/ci/test_places.mjs
+          node .github/scripts/ci/test_safe_coords.mjs
 
-          const categories = [
-            "1. Functional Testing", "2. UI/UX Testing", "3. Compatibility Testing",
-            "4. Performance Testing", "5. Security Testing", "6. API Testing",
-            "7. Database Testing", "8. Accessibility Testing", "9. Mobile Web Testing",
-            "10. Regression Testing", "11. End-to-End (E2E) Testing"
-          ];
-
-          // Generate 1,540 Web & API test cases (140 per category)
-          let counter = 1;
-          categories.forEach(cat => {
-            for (let i = 1; i <= 140; i++) {
-              results.push({
-                testId: `WEB-API-${String(counter).padStart(4, '0')}`,
-                module: `${cat} - Web Component`,
-                description: `Verify ${cat.split('. ')[1]} scenario #${i} for Web & REST API`,
-                category: cat,
-                status: 'Passed',
-                durationMs: Math.floor(Math.random() * 80) + 15,
-                timestamp: new Date().toISOString()
-              });
-              counter++;
-            }
-          });
-
-          fs.writeFileSync('web-api-results.json', JSON.stringify(results, null, 2));
-          console.log(`Successfully executed ${results.length} Web & API test cases.`);
-          EOF
-          node run-tests.js
-
-      - name: Publish Web Test Summary to GitHub Actions
+      - name: Install CI Browser Test Harness
         run: |
-          echo "### 🌐 Selenium Web & REST API Test Suite" >> $GITHUB_STEP_SUMMARY
-          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| **Total Testcases** | **1,540** |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Passed Testcases** | **1,540** |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Failed Testcases** | **0** |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Pass Rate** | **100%** |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Status** | **✅ PASSED** |" >> $GITHUB_STEP_SUMMARY
+          cd .github/scripts/ci
+          npm install --no-audit --no-fund
+          if [ ! -x /usr/bin/google-chrome ] && [ ! -x /usr/bin/chromium ] && [ ! -x /usr/bin/chromium-browser ]; then
+            npx playwright install chromium
+          fi
 
-      - name: Upload Web/API Test Results
+      - name: Start Servers & Run Backend API + Web E2E Audit
+        run: |
+          nohup php -S 0.0.0.0:5000 Backend/php/index.php >/tmp/php_api.log 2>&1 &
+          nohup php -S 0.0.0.0:8080 -t web_frontend >/tmp/php_web.log 2>&1 &
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:5000/ >/dev/null && curl -fsS http://127.0.0.1:8080/ >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          JSON_OUT=api-results.json php .github/scripts/ci/test_all_endpoints.php
+          JSON_OUT=web-api-results.json node .github/scripts/ci/test_human_web.js
+
+      - name: Dump Server Logs on Failure
+        if: failure()
+        run: |
+          echo "=== PHP API LOG ===" && cat /tmp/php_api.log || true
+          echo "=== PHP WEB LOG ===" && cat /tmp/php_web.log || true
+
+      - name: Publish Web + API Summary
+        run: |
+          node -e '
+            const fs = require("fs");
+            const api = JSON.parse(fs.readFileSync("api-results.json", "utf8"));
+            const web = JSON.parse(fs.readFileSync("web-api-results.json", "utf8"));
+            const lines = [
+              "### Selenium E2E Web + Backend API Summary",
+              "| Suite | Executed | Passed | Failed | Status |",
+              "|---|---|---|---|---|",
+              `| Backend PHP + MySQL API | ${api.summary.total} | ${api.summary.passed} | ${api.summary.failed} | ${api.summary.failed === 0 ? "PASS" : "FAIL"} |`,
+              `| Web Application E2E (1280x880 & 390px) | ${web.summary.total} | ${web.summary.passed} | ${web.summary.failed} | ${web.summary.failed === 0 ? "PASS" : "FAIL"} |`
+            ];
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
+          '
+
+      - name: Upload Web & API Test Results
         uses: actions/upload-artifact@v4
         with:
           name: web-api-results
-          path: web-api-results.json
+          path: |
+            web-api-results.json
+            api-results.json
 
   appium-tests:
-    name: 📱 Appium Mobile Android Tests (1,540 Testcases)
+    name: Appium Mobile Tests Dry-Run
     runs-on: ubuntu-latest
 
+    env:
+      CI: 'true'
+
     steps:
-      - name: Setup Node.js
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: curl, json, mbstring
+
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Run Mobile Gestures & Android View Tests (1,540 Test Cases)
+      - name: Lint & Build Android Mobile WebView Bundle
         run: |
-          cat << 'EOF' > run-tests.js
-          const fs = require('fs');
-          const results = [];
+          cd frontend
+          npm install --no-audit --no-fund
+          npx eslint src --quiet
+          npm run build
 
-          const categories = [
-            "1. Functional Testing", "2. UI/UX Testing", "3. Compatibility Testing",
-            "4. Performance Testing", "5. Security Testing", "6. API Testing",
-            "7. Database Testing", "8. Accessibility Testing", "9. Mobile-Specific Testing",
-            "10. Regression Testing", "11. End-to-End (E2E) Testing"
-          ];
-
-          // Generate 1,540 Mobile Native test cases (140 per category)
-          let counter = 1;
-          categories.forEach(cat => {
-            for (let i = 1; i <= 140; i++) {
-              results.push({
-                testId: `MOB-${String(counter).padStart(4, '0')}`,
-                module: `${cat} - Mobile Native`,
-                description: `Verify ${cat.split('. ')[1]} scenario #${i} for Android Native App`,
-                category: cat,
-                status: 'Passed',
-                durationMs: Math.floor(Math.random() * 120) + 25,
-                timestamp: new Date().toISOString()
-              });
-              counter++;
-            }
-          });
-
-          fs.writeFileSync('mobile-results.json', JSON.stringify(results, null, 2));
-          console.log(`Successfully executed ${results.length} Mobile E2E test cases.`);
-          EOF
-          node run-tests.js
-
-      - name: Publish Mobile Test Summary to GitHub Actions
+      - name: Install CI Browser Test Harness
         run: |
-          echo "### 📱 Appium Mobile Android Test Suite" >> $GITHUB_STEP_SUMMARY
-          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| **Total Testcases** | **1,540** |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Passed Testcases** | **1,540** |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Failed Testcases** | **0** |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Pass Rate** | **100%** |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Status** | **✅ PASSED** |" >> $GITHUB_STEP_SUMMARY
+          cd .github/scripts/ci
+          npm install --no-audit --no-fund
+          if [ ! -x /usr/bin/google-chrome ] && [ ! -x /usr/bin/chromium ] && [ ! -x /usr/bin/chromium-browser ]; then
+            npx playwright install chromium
+          fi
+
+      - name: Run 34-Route Pixel 8 Mobile & Button Placement Audit
+        run: |
+          nohup php -S 0.0.0.0:5000 Backend/php/index.php >/tmp/php_mobile_api.log 2>&1 &
+          (cd frontend && nohup npx vite preview --host 0.0.0.0 --port 5173 >/tmp/vite_mobile.log 2>&1 &)
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:5000/ >/dev/null && curl -fsS http://127.0.0.1:5173/ >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          JSON_OUT=mobile-results.json node .github/scripts/ci/test_android_app.js
+
+      - name: Dump Mobile Server Logs on Failure
+        if: failure()
+        run: |
+          echo "=== MOBILE PHP LOG ===" && cat /tmp/php_mobile_api.log || true
+          echo "=== VITE PREVIEW LOG ===" && cat /tmp/vite_mobile.log || true
+
+      - name: Publish Mobile Audit Summary
+        run: |
+          node -e '
+            const fs = require("fs");
+            const mob = JSON.parse(fs.readFileSync("mobile-results.json", "utf8"));
+            const lines = [
+              "### Android Mobile App 34-Route & Button Placement Audit",
+              "| Metric | Value |",
+              "|---|---|",
+              `| Routes Verified | ${mob.summary.routesPassed}/${mob.summary.routesTotal} |`,
+              `| Key Button Spot-Checks | ${mob.summary.buttonsPassed}/${mob.summary.buttonsTotal} |`,
+              `| Layout / Layer / Image Violations | ${mob.summary.layoutViolations} |`,
+              `| Console Errors | ${mob.summary.consoleErrors} |`,
+              `| Status | ${mob.summary.failed === 0 && mob.summary.layoutViolations === 0 ? "PASS" : "FAIL"} |`
+            ];
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
+          '
 
       - name: Upload Mobile Test Results
         uses: actions/upload-artifact@v4
@@ -135,166 +191,84 @@ jobs:
           name: mobile-results
           path: mobile-results.json
 
-  load-tests:
-    name: ⚡ 1500+ Load, Concurrency & Stress Tests (1,540 Testcases)
+  deploy-pages:
+    name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
+    needs: selenium-tests
 
     steps:
-      - name: Setup Node.js
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Run High-Concurrency & Load Tests (1,540 Test Cases)
+      - name: Build & Stage Production Pages Bundle
         run: |
-          cat << 'EOF' > run-tests.js
-          const fs = require('fs');
-          const results = [];
+          cd frontend
+          npm install --no-audit --no-fund
+          npm run build
+          cd ..
+          mkdir -p _pages_dist/mobile
+          cp -r web_frontend/* _pages_dist/
+          cp -r app/src/main/assets/* _pages_dist/mobile/
+          echo "### Static Production Bundle Staged" >> $GITHUB_STEP_SUMMARY
+          echo "Staged web_frontend + compiled Android WebView assets cleanly." >> $GITHUB_STEP_SUMMARY
 
-          const loadCategories = [
-            "1. Concurrency & High Traffic Load", "2. Peak Surge Traffic Load", "3. Stress & Breaking Point Testing",
-            "4. Endurance & Soak Testing (24h)", "5. Spike & Burst Traffic Testing", "6. MySQL Database Lock Contention",
-            "7. Socket.io & WebSocket Broadcast", "8. Multi-Provider Fare Engine Latency", "9. AI XAI / SHAP Simulation Compute",
-            "10. Auth Token & Session Contention", "11. Network Latency & Throttled 3G/4G"
-          ];
-
-          // Generate 1,540 Load test cases (140 per category)
-          let counter = 1;
-          loadCategories.forEach(cat => {
-            for (let i = 1; i <= 140; i++) {
-              results.push({
-                testId: `LOAD-${String(counter).padStart(4, '0')}`,
-                module: `${cat}`,
-                description: `Verify ${cat.split('. ')[1]} scenario #${i} under peak simulated load`,
-                category: cat,
-                status: 'Passed',
-                durationMs: Math.floor(Math.random() * 45) + 12,
-                timestamp: new Date().toISOString()
-              });
-              counter++;
-            }
-          });
-
-          fs.writeFileSync('load-results.json', JSON.stringify(results, null, 2));
-          console.log(`Successfully executed ${results.length} Load test cases.`);
-          EOF
-          node run-tests.js
-
-      - name: Publish Load Test Summary to GitHub Actions
-        run: |
-          echo "### ⚡ 1500+ Load, Concurrency & Stress Test Suite" >> $GITHUB_STEP_SUMMARY
-          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| **Total Testcases** | **1,540** |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Passed Testcases** | **1,540** |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Failed Testcases** | **0** |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Peak Sustainable Throughput** | **6,500 req/s** |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Average P95 Latency** | **38.4 ms** |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Pass Rate** | **100%** |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Status** | **✅ PASSED** |" >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload Load Test Results
+      - name: Upload Pages Bundle Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: load-results
-          path: load-results.json
+          name: smartride-pages-bundle
+          path: _pages_dist
 
   generate-report:
-    name: 📊 Generate Consolidated Test Report (4,620 Total Cases)
+    name: Generate SmartRide Test Report
     runs-on: ubuntu-latest
-    needs: [selenium-tests, appium-tests, load-tests]
+    needs: [selenium-tests, appium-tests]
 
     steps:
-      - name: Setup Python Environment
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Install Excel Reporting Libraries
-        run: pip install pandas openpyxl
-
-      - name: Download Web/API Results
+      - name: Download Web & API Results
         uses: actions/download-artifact@v4
         with:
           name: web-api-results
-          path: .
+          path: ci-results
 
       - name: Download Mobile Results
         uses: actions/download-artifact@v4
         with:
           name: mobile-results
-          path: .
+          path: ci-results
 
-      - name: Download Load Results
-        uses: actions/download-artifact@v4
-        with:
-          name: load-results
-          path: .
-
-      - name: Compile and Format Excel Report (Report.xlsx)
+      - name: Generate & Validate Excel Report (Report.xlsx)
         run: |
-          cat << 'EOF' > make_report.py
-          import json
-          import pandas as pd
+          python3 .github/scripts/ci/generate_selenium_excel.py --results-dir ci-results --out Report.xlsx
 
-          files = ['web-api-results.json', 'mobile-results.json', 'load-results.json']
-          all_results = []
-          for f in files:
-              try:
-                  with open(f, 'r') as file:
-                      all_results.extend(json.load(file))
-              except Exception as e:
-                  print(f"Error parsing file {f}: {e}")
-
-          df = pd.DataFrame(all_results)
-          df.columns = ['Test ID', 'Module Name', 'Test Case Description', 'Execution Category', 'Status Result', 'Duration (ms)', 'Timestamp']
-
-          # Output to Excel
-          writer = pd.ExcelWriter('Report.xlsx', engine='openpyxl')
-          df.to_excel(writer, index=False, sheet_name='All 4620 Tests')
-
-          # Summary sheet
-          summary_data = [
-              {"Metric": "Total Combined Testcases", "Value": str(len(df))},
-              {"Metric": "Web & API Testcases", "Value": "1,540"},
-              {"Metric": "Mobile Android Testcases", "Value": "1,540"},
-              {"Metric": "Load & Stress Testcases", "Value": "1,540"},
-              {"Metric": "Total Passed", "Value": str(len(df))},
-              {"Metric": "Total Failed", "Value": "0"},
-              {"Metric": "Pass Rate", "Value": "100%"},
-              {"Metric": "Execution Status", "Value": "PASSED"}
-          ]
-          df_summary = pd.DataFrame(summary_data)
-          df_summary.to_excel(writer, index=False, sheet_name='Summary')
-
-          workbook  = writer.book
-          for sheetname in workbook.sheetnames:
-              ws = workbook[sheetname]
-              for col in ws.columns:
-                  max_len = max(len(str(cell.value or '')) for cell in col)
-                  col_letter = col[0].column_letter
-                  ws.column_dimensions[col_letter].width = max(max_len + 3, 12)
-
-          writer.close()
-          print(f"Excel report successfully compiled with {len(df)} total test cases!")
-          EOF
-          python make_report.py
-
-      - name: Publish Master Summary to GitHub Actions
+      - name: Publish Consolidated Report Summary
         run: |
-          echo "## 🏆 SmartRide AI - 4,620 Automated E2E & Load Test Suite Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Test Suite | Total Cases | Passed | Failed | Pass Rate | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|---|---|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| 🌐 **Selenium Web & REST API** | 1,540 | 1,540 | 0 | 100% | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📱 **Appium Mobile Android** | 1,540 | 1,540 | 0 | 100% | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
-          echo "| ⚡ **1500+ Load & Stress Testing** | 1,540 | 1,540 | 0 | 100% | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Total Consolidated** | **4,620** | **4,620** | **0** | **100%** | **✅ PASSED** |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📂 Execution Category Breakdown:" >> $GITHUB_STEP_SUMMARY
-          echo "- **Appium Mobile Native**: 1,540 test cases across 11 mobile categories - ✅ 100% Passed" >> $GITHUB_STEP_SUMMARY
-          echo "- **Selenium Web & API**: 1,540 test cases across 11 web categories - ✅ 100% Passed" >> $GITHUB_STEP_SUMMARY
-          echo "- **Load & Stress Testing**: 1,540 test cases across 11 load categories - ✅ 100% Passed" >> $GITHUB_STEP_SUMMARY
+          python3 -c '
+          import json, os
+          api = json.load(open("ci-results/api-results.json"))["summary"]
+          web = json.load(open("ci-results/web-api-results.json"))["summary"]
+          mob = json.load(open("ci-results/mobile-results.json"))["summary"]
+          summary = os.environ["GITHUB_STEP_SUMMARY"]
+          with open(summary, "a", encoding="utf-8") as fh:
+              fh.write("## SmartRide AI - Consolidated E2E & Mobile Test Report\n\n")
+              fh.write("| Suite | Total Checks | Passed | Failed | Status |\n")
+              fh.write("|---|---|---|---|---|\n")
+              fh.write(f"| Backend PHP & MySQL API | {api[\"total\"]} | {api[\"passed\"]} | {api[\"failed\"]} | PASS |\n")
+              fh.write(f"| Web Application E2E | {web[\"total\"]} | {web[\"passed\"]} | {web[\"failed\"]} | PASS |\n")
+              fh.write(f"| Android Mobile App (34 Routes + 27 Controls) | {mob[\"total\"]} | {mob[\"passed\"]} | {mob[\"failed\"]} | PASS |\n")
+          '
 
       - name: Upload Excel Test Report Artifact
         uses: actions/upload-artifact@v4

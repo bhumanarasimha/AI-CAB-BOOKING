@@ -1,0 +1,9 @@
+{
+  "name": "smartride-ci-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CI test harness dependencies for SmartRide AI GitHub Actions",
+  "dependencies": {
+    "playwright": "^1.50.0"
+  }
+}
